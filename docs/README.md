@@ -104,8 +104,56 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 * **RS11:** Todo el material criptográfico debe provenir de un generado de números aleatorios (pseudo-aleatorios) criptográficamente seguro.
 
 ## 5. Implementación Propuesta
-[Detalla cómo planeas construir el sistema, qué lenguajes/frameworks usarás y los pasos de ejecución.]
 
+### 5.1 Arquitectura general
+
+El proyecto se compone de tres elementos. El **cliente** concentra toda la lógica criptográfica y es el único punto donde existe el _plain text_. El **directorio de llaves** es un servicio propio que va a almacenar los pres (identificador **Discord** -> llave pública). Por último **Discord**, este actúa exclusivamente como una capa de transporte de los mesnajes y la persistencia de estos.
+
+### 5.2 Esquema criptográfico concreto
+
+1. Cada usaurio posee una llave de identidad de curva elíptica X25519
+
+2. Para cada mensaje, el emisor genera un par efímero X25519 y calcula un secreto copartido por ECDH contra la llave pública de indentidad del receptor.
+
+3. El secreto se pasas por HKDF-SHA256 para derivar la clave de sesión AES-256.
+
+4. El contendio se cifra con AES-256-GCM, usando datos adicionales autenticados los identificadores de emisor y receptor, lo que permite relacionar el criptograma a su contexto.
+
+5. Se descarta la calve efímera, de modo que el compromiso posterior de la llave de identidad no permite descrifrar los mensajes ya enviadas.
+
+### 5.3 Proceso de verificación
+
+La huella digiral se calcula como `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales agrupos de cinco en cinco, siguiendo el patrón de los _safety numbers_ de Signal.
+Luego los usuarios la compran por llamda telefónica, presencialmente o escanenado el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF9.
+
+### 5.4 Tecnologías
+
+* **Cliente:** Python 3.12 con `discord.py`para la PAI y la bilbioeca `cryptography`.
+
+* **Derivación de contrasea maestra:** `argon2-cffi`
+
+* **Interfaz:** Pagina web idependeinte al cliente oficial de Discord
+
+* **Directorio de llaves:** FastAPI + PostgreSQL.
+
+* **Control de secretos y versiones:** Git con `.env` excluido y variables de entorno en despliegue.
+
+### 5.5 Fases de ejecución
+
+1. **Núcleo criptográfico aislado:** Implementar el cifrado/descrifrado y la derivación de claves.
+
+2. **Almacén local de identidad:** Generación de llaves, cifrado con contraseña maestra, exportación e importación.
+
+3. **Dirección de llaves:** Servicio, esquema de datos y cliente HTTPS.
+
+4. **Integración con Discord:** Envío y recpeción de mensajes.
+
+5. **Proceso de verificación:** Huellas digirales, QR, indicadores de estado y alertas de cambio de clave.
+
+### 5.6 Limitaciones reconocidas
+
+El sistema protege el contenido, no el patrón de comunicación que se realiza a través de la API de **Discord**.
+ 
 ---
 
 ### Referencias Bibliográficas
