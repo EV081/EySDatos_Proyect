@@ -80,8 +80,28 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 
 ### 4.2. Requerimientos de Seguridad
-* **RS1:** Las contraseñas deben estar encriptadas...
-* **RS2:** El acceso a la base de datos estará restringido...
+
+* **RS1:** La llave privada del usuario debe permanecer en el sistema y no ser transmitido a algun tercero.
+
+* **RS2:** La llave privada en el dispositivo debe estar cifrada con una clave derivada de una contraseña maestra con **Argon2id** y con _salt_ unico por usaurio.
+
+* **RS3:** El texto plano debe permanecer en memoria el menor tiempo posible y no debe escribirse ni en registros ni archivos temporales.
+
+* **RS4:** Todo cifrado simétrico debe emplear AES-256 en modo GCM, con un _nonce_ de 96 bits generado por un CSPRNG del sistea operativo y jamás reutilizado bajo la misma clave.
+
+* **RS5:** El sistema debe rechazar todo mensaje cuya etiqueta de autentiación GCM no se válida.
+
+* **RS6:** La comunicación entre el cliente y el directorio de llaves debe realizarse sobre TLS 1.3, como defensa frente a un atacante en la red.
+
+* **RS7:** El proceso de verificación de un usuario debe ser fuera del canal de Discord.
+
+* **RS8:** La huella digital de verificación debe derivarse de las llaves públicas de ambas partes mediante una función hash resitent ante colisiones (SHA-256), con un orden determinístico que produzca el mismo valor en ambos extremos.
+
+* **RS9:** Las claves de sesión deben rotarse periodicamente.
+
+* **RS10:** Los tokens de acceso a la API de Discord deben gestionarse en variables de entorno.
+
+* **RS11:** Todo el material criptográfico debe provenir de un generado de números aleatorios (pseudo-aleatorios) criptográficamente seguro.
 
 ## 5. Implementación Propuesta
 [Detalla cómo planeas construir el sistema, qué lenguajes/frameworks usarás y los pasos de ejecución.]
