@@ -39,9 +39,9 @@ Para evitar el ataque de sustitución de llaves mencionado anteriormente, la cri
 
 ## 4. Requerimientos
 
-El proyecto tiene como fin crear una capa de seguridad en la comunicación de texto de discord. Los requerimientos se derivan del siguiente modelo de amenaza.
+El proyecto tiene como fin crear una capa de seguridad en la comunicación de texto de **Discord**. Los requerimientos se derivan del siguiente modelo de amenaza.
 
-**Modelo de amenaza**: Para el proveedor de la plataforma de discord y cualquier entidad con acceso a sus servidores, se considera como adversario a un atacante pasivo y activo en la red. Se asume que es confiable el dispositivo del usuario y el sistema operativo del cliente. Queda **fuera del alcance** la protección de los metadatos, la disponibiliad del servicio y el compromiso físico del endpoint.
+**Modelo de amenaza**: Para el proveedor de la plataforma de **Discord** y cualquier entidad con acceso a sus servidores, se considera como adversario a un atacante pasivo y activo en la red. Se asume que es confiable el dispositivo del usuario y el sistema operativo del cliente. Queda **fuera del alcance** la protección de los metadatos, la disponibiliad del servicio y el compromiso físico del endpoint.
 
 Para entender la distinción entre atacante pasivo y activo, se usa la definición de Dolev y Yao (1983) que menciona que la diferencia entre ambos es lo **qué puede hacer con los mensajes que ve**. El pasivo solo observa, lee, copia y almacena. En cambio, el activo puede modificar un mensaje, borrarlo, retrasarlo, reordenarlo, editarlo, etc.
 
@@ -83,7 +83,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 * **RS1:** La llave privada del usuario debe permanecer en el sistema y no ser transmitido a algun tercero.
 
-* **RS2:** La llave privada en el dispositivo debe estar cifrada con una clave derivada de una contraseña maestra con **Argon2id** y con _salt_ unico por usaurio.
+* **RS2:** La llave privada en el dispositivo debe estar cifrada con una clave derivada de la contraseña maestra con **Argon2id** y con _salt_ unico por usaurio.
 
 * **RS3:** El texto plano debe permanecer en memoria el menor tiempo posible y no debe escribirse ni en registros ni archivos temporales.
 
@@ -95,7 +95,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 * **RS7:** El proceso de verificación de un usuario debe ser fuera del canal de Discord.
 
-* **RS8:** La huella digital de verificación debe derivarse de las llaves públicas de ambas partes mediante una función hash resitent ante colisiones (SHA-256), con un orden determinístico que produzca el mismo valor en ambos extremos.
+* **RS8:** La huella digital de verificación debe derivarse de las llaves públicas de ambas partes mediante una función hash (SHA-256), con un orden determinístico que produzca el mismo valor en ambos extremos.
 
 * **RS9:** Las claves de sesión deben rotarse periodicamente.
 
@@ -107,7 +107,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 ### 5.1 Arquitectura general
 
-El proyecto se compone de tres elementos. El **cliente** concentra toda la lógica criptográfica y es el único punto donde existe el _plain text_. El **directorio de llaves** es un servicio propio que va a almacenar los pres (identificador **Discord** -> llave pública). Por último **Discord**, este actúa exclusivamente como una capa de transporte de los mesnajes y la persistencia de estos.
+El proyecto se compone de tres elementos. El **cliente** concentra toda la lógica criptográfica y es el único punto donde existe el _plain text_. El **directorio de llaves** es un servicio propio que va a almacenar los pares (identificador **Discord** -> llave pública). Por último **Discord**, actúa exclusivamente como una capa de transporte de los mesnajes y la persistencia de estos.
 
 ### 5.2 Esquema criptográfico concreto
 
@@ -119,18 +119,18 @@ El proyecto se compone de tres elementos. El **cliente** concentra toda la lógi
 
 4. El contendio se cifra con AES-256-GCM, usando datos adicionales autenticados los identificadores de emisor y receptor, lo que permite relacionar el criptograma a su contexto.
 
-5. Se descarta la calve efímera, de modo que el compromiso posterior de la llave de identidad no permite descrifrar los mensajes ya enviadas.
+5. Se descarta la clave efímera, de modo que el compromiso posterior de la llave de identidad no permite descrifrar los mensajes ya enviadas.
 
 ### 5.3 Proceso de verificación
 
-La huella digiral se calcula como `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales agrupos de cinco en cinco, siguiendo el patrón de los _safety numbers_ de Signal.
+La huella digital se calcula como `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales agrupos de cinco en cinco, siguiendo el patrón de los _safety numbers_ de Signal.
 Luego los usuarios la compran por llamda telefónica, presencialmente o escanenado el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF9.
 
 ### 5.4 Tecnologías
 
-* **Cliente:** Python 3.12 con `discord.py`para la PAI y la bilbioeca `cryptography`.
+* **Cliente:** Python 3.12 con `discord.py` para la API y la biblioteca `cryptography`.
 
-* **Derivación de contrasea maestra:** `argon2-cffi`
+* **Derivación de contraseña maestra:** `argon2-cffi`
 
 * **Interfaz:** Pagina web idependeinte al cliente oficial de Discord
 
@@ -146,7 +146,7 @@ Luego los usuarios la compran por llamda telefónica, presencialmente o escanena
 
 3. **Dirección de llaves:** Servicio, esquema de datos y cliente HTTPS.
 
-4. **Integración con Discord:** Envío y recpeción de mensajes.
+4. **Integración con Discord:** Envío y recepción de mensajes.
 
 5. **Proceso de verificación:** Huellas digirales, QR, indicadores de estado y alertas de cambio de clave.
 
