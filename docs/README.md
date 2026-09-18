@@ -124,7 +124,7 @@ El proyecto se compone de tres elementos. El **cliente** concentra toda la lógi
 ### 5.3 Proceso de verificación
 
 La huella digital se calcula como `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales agrupos de cinco en cinco, siguiendo el patrón de los _safety numbers_ de Signal.
-Luego los usuarios la compran por llamda telefónica, presencialmente o escanenado el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF9.
+Luego los usuarios la comparan por llamada telefónica, presencialmente o escanenado el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF9.
 
 ### 5.4 Tecnologías
 
