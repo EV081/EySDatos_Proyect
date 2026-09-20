@@ -108,18 +108,7 @@ El diseño se aborda desde dos aristas complementarias. El **diseño funcional**
 
 ### 4.1 Diseño funcional: interfaz y experiencia de usuario
 
-El cliente se implementa como una página web independiente del cliente oficial de Discord (véase 5.4). Su interfaz se organiza en cinco vistas, cada una vinculada a uno o más requerimientos funcionales:
-
-| Vista | Descripción | Requerimientos |
-|---    |---          |---              |
-| **Autenticación** | El usuario inicia sesión con su cuenta de Discord mediante OAuth2 o token de bot; las credenciales se gestionan en variables de entorno y nunca se exponen en la interfaz | RF10, RS10 |
-| **Registro de identidad** | Tras el primer ingreso, se genera el par de llaves X25519 en el dispositivo y se solicita la contraseña maestra para proteger la llave privada | RF1 |
-| **Gestión de identidad** | Permite exportar e importar la identidad criptográfica, siempre protegida por la contraseña maestra | RF12 |
-| **Lista de conversaciones** | Agrupa los canales del usuario y muestra, por cada conversación, si está cifrada y si la contraparte está verificada | RF9 |
-| **Conversación cifrada** | Concentra el flujo de mensajes: el texto plano se descifra en memoria y se muestra únicamente aquí, sin persistirse en disco ni en registros | RF5, RS3 |
-| **Panel de verificación** | Presenta la huella digital y guía la ceremonia de autenticación fuera de banda | RF6, RF7 |
-
-Para apoyar los RF7, RF8, RF9 y RF11, la interfaz incorpora los siguientes indicadores de estado por conversación:
+El cliente se implementa como una página web independiente del cliente oficial de Discord. Para apoyar los requerimientos descritos previamente, la interfaz incorpora los siguientes indicadores de estado por conversación:
 
 * **Candado cerrado:** la conversación opera bajo el esquema de cifrado descrito en 3.2.3.
 * **Insignia de verificación:** la contraparte completó la autenticación fuera del canal de Discord.
