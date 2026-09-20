@@ -36,8 +36,7 @@ Para evitar el ataque de sustitución de llaves mencionado anteriormente, la cri
 
     * **Implementación:** Siguiendo el estado del arte de aplicaciones como Signal o WhatsApp, los usuarios deberán someterse a una "Ceremonia de Autenticación" (Alatawi et al., 2023). Esto significa que la aplicación generará una huella digital (hash) criptográfica de la llave pública. Los usuarios deberán comparar este hash a través de una llamada telefónica, enviándolo por SMS, o escaneando un código QR en persona. Al corroborar que los hashes coinciden fuera de la red de Discord, se garantiza matemáticamente que ninguna entidad intermedia ha manipulado las llaves.
 
-
-## 4. Requerimientos
+## 3. Requerimientos
 
 El proyecto tiene como fin crear una capa de seguridad en la comunicación de texto de **Discord**. Los requerimientos se derivan del siguiente modelo de amenaza.
 
@@ -53,7 +52,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 | **Red** | Captura tráfico en una WiFi abierta o en un nodo intermedio | Se interpone en la conexión con el directorio de llaves y responde en su lugar |
 | **Directorio de llaves** | Un volcado de su base de datos revela qué usuarios se registraron y cuándo| **Sustitución de llaves:** devuelve la llave pública del atacante en lugar de la del receptor legítimo |
 
-### 4.1. Requerimientos Funcionales
+### 3.1. Requerimientos Funcionales
 * **RF1:** El sistema debe generar localmente, en el dispositivo del usario, un par de llaves asimétricas de identidad durante el registro inicial.
 
 * **RF2:** El sistema debe publicar la llave del usuario en un directorio de llaves, permitiendo a otras personas obtener esa llave con el identificador de su cuenta de Discord.
@@ -79,7 +78,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 * **RF12:** El usuario podra exportar e importar su identidad criptográfica para usarla en otro dispositivo , protegido por su contraseña maestra.
 
 
-### 4.2. Requerimientos de Seguridad
+### 3.2. Requerimientos de Seguridad
 
 * **RS1:** La llave privada del usuario debe permanecer en el sistema y no ser transmitido a algun tercero.
 
@@ -102,6 +101,97 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 * **RS10:** Los tokens de acceso a la API de Discord deben gestionarse en variables de entorno.
 
 * **RS11:** Todo el material criptográfico debe provenir de un generado de números aleatorios (pseudo-aleatorios) criptográficamente seguro.
+
+## 4. Diseño
+
+El diseño se aborda desde dos aristas complementarias. El **diseño funcional** define la interfaz y la experiencia de usuario que materializa los requerimientos funcionales; el **diseño de seguridad** especifica los algoritmos y los protocolos que hacen cumplibles los requerimientos de seguridad.
+
+### 4.1 Diseño funcional: interfaz y experiencia de usuario
+
+El cliente se implementa como una página web independiente del cliente oficial de Discord (véase 5.4). Su interfaz se organiza en cinco vistas, cada una vinculada a uno o más requerimientos funcionales:
+
+| Vista | Descripción | Requerimientos |
+|---    |---          |---              |
+| **Autenticación** | El usuario inicia sesión con su cuenta de Discord mediante OAuth2 o token de bot; las credenciales se gestionan en variables de entorno y nunca se exponen en la interfaz | RF10, RS10 |
+| **Registro de identidad** | Tras el primer ingreso, se genera el par de llaves X25519 en el dispositivo y se solicita la contraseña maestra para proteger la llave privada | RF1 |
+| **Gestión de identidad** | Permite exportar e importar la identidad criptográfica, siempre protegida por la contraseña maestra | RF12 |
+| **Lista de conversaciones** | Agrupa los canales del usuario y muestra, por cada conversación, si está cifrada y si la contraparte está verificada | RF9 |
+| **Conversación cifrada** | Concentra el flujo de mensajes: el texto plano se descifra en memoria y se muestra únicamente aquí, sin persistirse en disco ni en registros | RF5, RS3 |
+| **Panel de verificación** | Presenta la huella digital y guía la ceremonia de autenticación fuera de banda | RF6, RF7 |
+
+Para apoyar los RF7, RF8, RF9 y RF11, la interfaz incorpora los siguientes indicadores de estado por conversación:
+
+* **Candado cerrado:** la conversación opera bajo el esquema de cifrado descrito en 3.2.3.
+* **Insignia de verificación:** la contraparte completó la autenticación fuera del canal de Discord.
+* **Alerta de cambio de llave:** si la llave pública registrada de un contacto *verificado* cambia, el cliente revoca automáticamente la verificación y notifica al usuario.
+* **Marcador "mensaje no descifrable":** se reserva para los mensajes entrantes que no pueden autenticarse o descifrarse.
+
+El siguiente Wireframe ilustra una conversación con estos indicadores.
+
+![Diseño de la interfaz de conversación cifrada](img/interfaz.png)
+
+
+| Elemento de interfaz | Requerimientos |
+|---    |---              |
+| Indicador de cifrado (candado) por conversación | RF3, RF9 |
+| Insignia de contacto verificado | RF7, RF9 |
+| Alerta y revocación automática de verificación | RF8 |
+| Marcador "mensaje no descifrable" | RF11 |
+| Vistas de autenticación, registro y gestión de identidad | RF1, RF2, RF10, RF12 |
+
+### 4.2 Diseño de seguridad: algoritmos y protocolos
+
+El diseño de seguridad combina la criptografía híbrida presentada en la sección 2 (AES-256-GCM para el contenido y X25519/ECDH para el intercambio de claves) con protocolos que preservan la descentralización de la confianza. A continuación se describen los cuatro protocolos que implementan los requerimientos de seguridad.
+
+#### 4.2.1 Arquitectura y límite de confianza
+
+El sistema se compone de tres elementos: el **cliente**, único punto donde existe texto plano; el **directorio de llaves**, tablón pasivo que asocia identificadores de Discord a llaves públicas; y **Discord**, que transporta y persiste únicamente *ciphertext*. La comunicación entre el cliente y el directorio se protege con TLS 1.3 (RS6), neutralizando a un atacante activo en la red que intente interponerse en la descarga de llaves.
+
+![Arquitectura de componentes y flujos de información](img/arquitectura.png)
+
+
+#### 4.2.2 Registro y custodia de la identidad
+
+El diseño de manejo de llaves aborda directamente la vulnerabilidad centralizada descrita en 2. Durante el registro, el cliente genera el par X25519 **en el dispositivo** (RF1). La llave privada se cifra con una clave derivada de la contraseña maestra mediante **Argon2id** con *salt* único por usuario (RS2) y jamás abandona el dispositivo (RS1); la llave pública se publica en el directorio asociada al identificador de Discord (RF2), de modo que el directorio nunca custodia material secreto.
+
+![Flujo de registro y custodia de la identidad](img/flujo-registro.png)
+
+**Figura 4.3.** *Registro: generación local del par X25519, cifrado de la llave privada con Argon2id + contraseña maestra y publicación de la llave pública en el directorio.*
+
+#### 4.2.3 Protocolo de mensajería
+
+El protocolo de mensajería implementa el esquema criptográfico concreto de 5.2:
+
+1. **Envío.** El emisor genera un par efímero X25519 por mensaje y calcula el secreto compartido por **ECDH** contra la llave pública de identidad del receptor (RF4).
+2. **Derivación.** El secreto se procesa con **HKDF-SHA256** para derivar la clave de sesión AES-256 (RF3).
+3. **Cifrado.** El contenido se cifra con **AES-256-GCM**, usando como datos autenticados adicionales (AAD) los identificadores de emisor y receptor, lo que ata el criptograma a su contexto (RF3, RS4). El *nonce* de 96 bits proviene del CSPRNG del sistema operativo y jamás se reutiliza bajo la misma clave (RS4, RS11).
+4. **Transmisión.** El criptograma viaja por la API de Discord hasta el receptor.
+5. **Descarte.** La llave efímera se descarta tras el envío, de modo que el compromiso posterior de la llave de identidad no permite descifrar mensajes ya enviados (forward secrecy) (RS9).
+6. **Recepción.** El receptor extrae la llave efímera del mensaje, recupera el mismo secreto por ECDH, deriva la misma clave y descifra **verificando la etiqueta de autenticación GCM**; cualquier mensaje cuya etiqueta no valide es rechazado y marcado como no descifrable (RF5, RF11, RS5). El texto plano permanece en memoria el menor tiempo posible (RS3).
+
+![Protocolo de mensajería: envío y recepción](img/flujo-mensaje.png)
+
+**Figura 3.4.** *Protocolo de mensajería: ECDH efímero, HKDF-SHA256, AES-256-GCM con AAD y descarte de la llave efímera.*
+
+#### 4.2.4 Ceremonia de verificación
+
+La ceremonia de verificación ofrece protección contra el ataque de sustitución de llaves (RS7). Ambos extremos calculan la huella digital `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente (RS8), presentada truncada a 60 dígitos decimales en grupos de cinco. Los usuarios comparan esas huellas **fuera del canal de Discord** (llamada, presencia o código QR). Solo entonces el cliente persiste el estado de *verificado* junto con un *pin* de la llave pública (RF7); si la llave cambia posteriormente, el *pin* permite detectar la discrepancia, revocar la verificación y alertar al usuario (RF8).
+
+![Ceremonia de verificación fuera de banda](img/verificacion.png)
+
+**Figura 3.5.** *Ceremonia de verificación: cálculo de la huella en ambos extremos, comparación fuera de banda y persistencia del estado verificado con pin de llave.*
+
+| Protocolo / componente | Requerimientos |
+|---    |---              |
+| Cadena ECDH + HKDF-SHA256 + AES-256-GCM | RF3, RF4, RF5, RS4, RS5 |
+| Dato autenticado adicional (AAD) con identificadores | RF3, RS4 |
+| Descarte de la llave efímera por mensaje | RS9 |
+| Generación local y custodia cifrada de la llave privada | RF1, RF12, RS1, RS2 |
+| Texto plano solo en memoria | RS3 |
+| TLS 1.3 entre cliente y directorio de llaves | RS6 |
+| Huella SHA-256 y ceremonia fuera de banda | RF6, RF7, RF8, RS7, RS8 |
+| CSPRNG del sistema operativo | RS4, RS11 |
+
 
 ## 5. Implementación Propuesta
 
