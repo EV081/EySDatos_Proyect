@@ -22,11 +22,11 @@
       "frameId": null,
       "roundness": null,
       "seed": 691047934,
-      "version": 1,
-      "versionNonce": 1103393899,
-      "isDeleted": false,
+      "version": 3,
+      "versionNonce": 1689418533,
+      "isDeleted": true,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942484330,
       "link": null,
       "locked": false,
       "text": "Ceremonia de verificación fuera de banda",
@@ -38,18 +38,22 @@
       "originalText": "Ceremonia de verificación fuera de banda",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 6.5
+      "baseline": 6.5,
+      "index": "a0",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "rect2",
       "type": "rectangle",
-      "x": 80,
-      "y": 130,
-      "width": 520,
-      "height": 170,
+      "x": 187.45703125,
+      "y": 131.33984375,
+      "width": 380.08984375,
+      "height": 151.46484375,
       "angle": 0,
       "strokeColor": "#1e1e1e",
-      "backgroundColor": "#ffc9c9",
+      "backgroundColor": "#eebefa",
       "fillStyle": "hachure",
       "strokeWidth": 2,
       "strokeStyle": "solid",
@@ -61,25 +65,31 @@
         "type": 3
       },
       "seed": 2128913521,
-      "version": 1,
-      "versionNonce": 359738638,
+      "version": 322,
+      "versionNonce": 1976137445,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "txt3",
           "type": "text"
+        },
+        {
+          "id": "arr15",
+          "type": "arrow"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942867261,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "a1",
+      "created": null
     },
     {
       "id": "txt3",
       "type": "text",
-      "x": 80,
-      "y": 186.875,
-      "width": 409.2,
+      "x": 224.2908935546875,
+      "y": 178.947265625,
+      "width": 306.422119140625,
       "height": 56.25,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -93,31 +103,35 @@
       "frameId": null,
       "roundness": null,
       "seed": 912078893,
-      "version": 1,
-      "versionNonce": 858716278,
+      "version": 325,
+      "versionNonce": 1986793867,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942845281,
       "link": null,
       "locked": false,
-      "text": "ALICE\nhuella = SHA-256(sort(pk_A, pk_B))\n→ truncada a 60 dígitos en grupos de 5 (RS8)",
+      "text": "ALICE\nhuella = SHA-256(sort(pk_A, pk_B))\n-> truncada a 60 dígitos en grupos de 5",
       "fontSize": 15,
       "autoResize": true,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "rect2",
-      "originalText": "ALICE\nhuella = SHA-256(sort(pk_A, pk_B))\n→ truncada a 60 dígitos en grupos de 5 (RS8)",
+      "originalText": "ALICE\nhuella = SHA-256(sort(pk_A, pk_B))\n-> truncada a 60 dígitos en grupos de 5",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 41.25
+      "baseline": 41.25,
+      "index": "a2",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "rect4",
       "type": "rectangle",
-      "x": 810,
-      "y": 130,
-      "width": 520,
-      "height": 170,
+      "x": 893.13671875,
+      "y": 131.1796875,
+      "width": 377.0820312500001,
+      "height": 151.36328124999997,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "#a9d3ff",
@@ -132,25 +146,31 @@
         "type": 3
       },
       "seed": 2551850,
-      "version": 1,
-      "versionNonce": 886396745,
+      "version": 758,
+      "versionNonce": 285194661,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "txt5",
           "type": "text"
+        },
+        {
+          "id": "arr16",
+          "type": "arrow"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942728584,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "a3",
+      "created": null
     },
     {
       "id": "txt5",
       "type": "text",
-      "x": 810,
-      "y": 186.875,
-      "width": 334.8,
+      "x": 946.9393005371094,
+      "y": 178.736328125,
+      "width": 269.47686767578125,
       "height": 56.25,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -164,23 +184,27 @@
       "frameId": null,
       "roundness": null,
       "seed": 226732645,
-      "version": 1,
-      "versionNonce": 629114705,
+      "version": 767,
+      "versionNonce": 780352773,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942728584,
       "link": null,
       "locked": false,
-      "text": "BOB\nhuella = SHA-256(sort(pk_A, pk_B))\n→ mismo algoritmo, mismo orden (RS8)",
+      "text": "BOB\nhuella = SHA-256(sort(pk_A, pk_B))\n-> mismo algoritmo, mismo orden",
       "fontSize": 15,
       "autoResize": true,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "rect4",
-      "originalText": "BOB\nhuella = SHA-256(sort(pk_A, pk_B))\n→ mismo algoritmo, mismo orden (RS8)",
+      "originalText": "BOB\nhuella = SHA-256(sort(pk_A, pk_B))\n-> mismo algoritmo, mismo orden",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 41.25
+      "baseline": 41.25,
+      "index": "a4",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "txt6",
@@ -201,11 +225,11 @@
       "frameId": null,
       "roundness": null,
       "seed": 39564664,
-      "version": 1,
-      "versionNonce": 985723008,
-      "isDeleted": false,
+      "version": 3,
+      "versionNonce": 1229719627,
+      "isDeleted": true,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942487947,
       "link": null,
       "locked": false,
       "text": "Las huellas se calculan localmente en cada extremo (RF6)",
@@ -217,15 +241,19 @@
       "originalText": "Las huellas se calculan localmente en cada extremo (RF6)",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 3.5
+      "baseline": 3.5,
+      "index": "a5",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "rect7",
       "type": "rectangle",
-      "x": 60,
-      "y": 350,
-      "width": 1270,
-      "height": 300,
+      "x": 185.1796875,
+      "y": 339.83203125,
+      "width": 1082.44140625,
+      "height": 318.9375,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -240,8 +268,8 @@
         "type": 3
       },
       "seed": 847783728,
-      "version": 1,
-      "versionNonce": 517110249,
+      "version": 844,
+      "versionNonce": 1097173547,
       "isDeleted": false,
       "boundElements": [
         {
@@ -249,17 +277,19 @@
           "type": "text"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942715029,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "a6",
+      "created": null
     },
     {
       "id": "txt8",
       "type": "text",
-      "x": 60,
-      "y": 360,
-      "width": 0.0,
-      "height": 17.5,
+      "x": 190.1796875,
+      "y": 344.83203125,
+      "width": 198.1551513671875,
+      "height": 87.5,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -272,29 +302,33 @@
       "frameId": null,
       "roundness": null,
       "seed": 1996711131,
-      "version": 1,
-      "versionNonce": 1626710333,
+      "version": 918,
+      "versionNonce": 1615319339,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942789751,
       "link": null,
       "locked": false,
-      "text": "CANAL FUERA DE BANDA (RS7): llamada telefónica, presencia física o código QR",
+      "text": "  \n CANAL FUERA DE BANDA: \n- llamada telefónica\n- de forma presencial\n- código QR",
       "fontSize": 14,
       "autoResize": true,
-      "textAlign": "center",
+      "textAlign": "left",
       "verticalAlign": "top",
       "containerId": "rect7",
-      "originalText": "",
+      "originalText": "  \n CANAL FUERA DE BANDA: \n- llamada telefónica\n- de forma presencial\n- código QR",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 3.5
+      "baseline": 3.5,
+      "index": "a7",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "dia9",
       "type": "diamond",
-      "x": 455,
-      "y": 400,
+      "x": 484.83984375,
+      "y": 371.5,
       "width": 500,
       "height": 110,
       "angle": 0,
@@ -309,8 +343,8 @@
       "frameId": null,
       "roundness": null,
       "seed": 1359913241,
-      "version": 1,
-      "versionNonce": 1587060533,
+      "version": 112,
+      "versionNonce": 1336493349,
       "isDeleted": false,
       "boundElements": [
         {
@@ -328,19 +362,25 @@
         {
           "id": "arr18",
           "type": "arrow"
+        },
+        {
+          "type": "text",
+          "id": "txt10"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942889792,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "a8",
+      "created": null
     },
     {
       "id": "txt10",
       "type": "text",
-      "x": 455,
-      "y": 435.0,
-      "width": 119.04,
-      "height": 40.0,
+      "x": 685.119743347168,
+      "y": 406.5,
+      "width": 99.44020080566406,
+      "height": 40,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -353,11 +393,11 @@
       "frameId": null,
       "roundness": null,
       "seed": 1260865868,
-      "version": 1,
-      "versionNonce": 1467529056,
+      "version": 114,
+      "versionNonce": 116349061,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942889792,
       "link": null,
       "locked": false,
       "text": "¿Las huellas\ncoinciden?",
@@ -369,14 +409,18 @@
       "originalText": "¿Las huellas\ncoinciden?",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 24.0
+      "baseline": 24,
+      "index": "a9",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "rect11",
       "type": "rectangle",
-      "x": 140,
-      "y": 570,
-      "width": 560,
+      "x": 218.296875,
+      "y": 536.6953125,
+      "width": 354.296875,
       "height": 80,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -392,25 +436,31 @@
         "type": 3
       },
       "seed": 92025716,
-      "version": 1,
-      "versionNonce": 747356872,
+      "version": 367,
+      "versionNonce": 721094507,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "txt12",
           "type": "text"
+        },
+        {
+          "id": "arr17",
+          "type": "arrow"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942879330,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "aA",
+      "created": null
     },
     {
       "id": "txt12",
       "type": "text",
-      "x": 140,
-      "y": 591.25,
-      "width": 362.7,
+      "x": 238.42420959472656,
+      "y": 557.9453125,
+      "width": 314.0422058105469,
       "height": 37.5,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -424,30 +474,34 @@
       "frameId": null,
       "roundness": null,
       "seed": 341810585,
-      "version": 1,
-      "versionNonce": 665044071,
+      "version": 373,
+      "versionNonce": 1352458763,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942879330,
       "link": null,
       "locked": false,
-      "text": "SÍ → marcar contacto como VERIFICADO\ny guardar pin de la llave pública (RF7)",
+      "text": "SÍ -> marcar contacto como VERIFICADO\ny guardar pin de la llave pública",
       "fontSize": 15,
       "autoResize": true,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "rect11",
-      "originalText": "SÍ → marcar contacto como VERIFICADO\ny guardar pin de la llave pública (RF7)",
+      "originalText": "SÍ -> marcar contacto como VERIFICADO\ny guardar pin de la llave pública",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 22.5
+      "baseline": 22.5,
+      "index": "aB",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "rect13",
       "type": "rectangle",
-      "x": 720,
-      "y": 570,
-      "width": 600,
+      "x": 881.9921875,
+      "y": 539.70703125,
+      "width": 353.79296875,
       "height": 80,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -463,25 +517,31 @@
         "type": 3
       },
       "seed": 1142400622,
-      "version": 1,
-      "versionNonce": 557882484,
+      "version": 418,
+      "versionNonce": 1156751525,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "txt14",
           "type": "text"
+        },
+        {
+          "id": "arr18",
+          "type": "arrow"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942918471,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "aC",
+      "created": null
     },
     {
       "id": "txt14",
       "type": "text",
-      "x": 720,
-      "y": 591.25,
-      "width": 390.6,
+      "x": 898.8375854492188,
+      "y": 560.95703125,
+      "width": 320.1021728515625,
       "height": 37.5,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -495,31 +555,35 @@
       "frameId": null,
       "roundness": null,
       "seed": 291662690,
-      "version": 1,
-      "versionNonce": 1840604872,
+      "version": 423,
+      "versionNonce": 2089339147,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942876880,
       "link": null,
       "locked": false,
-      "text": "NO → no verificar; sospecha de sustitución\nde llaves (ataque MITM), alerta (RF8)",
+      "text": "NO -> no verificar; sospecha de sustitución\nde llaves (ataque MITM), y alerta",
       "fontSize": 15,
       "autoResize": true,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "rect13",
-      "originalText": "NO → no verificar; sospecha de sustitución\nde llaves (ataque MITM), alerta (RF8)",
+      "originalText": "NO -> no verificar; sospecha de sustitución\nde llaves (ataque MITM), y alerta",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 22.5
+      "baseline": 22.5,
+      "index": "aD",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     },
     {
       "id": "arr15",
       "type": "arrow",
-      "x": 340.0,
-      "y": 215.0,
-      "width": 295.0,
-      "height": 195.0,
+      "x": 377.01174229947605,
+      "y": 281.64347559311807,
+      "width": 259.8827941610923,
+      "height": 105.78445393988903,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -534,11 +598,11 @@
         "type": 2
       },
       "seed": 303703376,
-      "version": 1,
-      "versionNonce": 1968000951,
+      "version": 479,
+      "versionNonce": 1188823013,
       "isDeleted": false,
-      "boundElements": null,
-      "updated": 1789937873969,
+      "boundElements": [],
+      "updated": 1789942889792,
       "link": null,
       "locked": false,
       "points": [
@@ -547,22 +611,26 @@
           0
         ],
         [
-          295.0,
-          195.0
+          259.8827941610923,
+          105.78445393988903
         ]
       ],
       "lastCommittedPoint": null,
       "startBinding": {
         "elementId": "rect2",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "mode": "inside",
+        "fixedPoint": [
+          0.49871027644230775,
+          0.9923334558823529
+        ]
       },
       "endBinding": {
+        "mode": "orbit",
         "elementId": "dia9",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "fixedPoint": [
+          0.49614171491878867,
+          0.5001
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -573,15 +641,18 @@
       "scale": [
         1,
         1
-      ]
+      ],
+      "index": "aE",
+      "created": null,
+      "moveMidPointsWithElement": false
     },
     {
       "id": "arr16",
       "type": "arrow",
-      "x": 1070.0,
-      "y": 215.0,
-      "width": 295.0,
-      "height": 195.0,
+      "x": 1080.6277059495194,
+      "y": 279.97741678107764,
+      "width": 250.2466545639204,
+      "height": 106.6338512009068,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -596,11 +667,11 @@
         "type": 2
       },
       "seed": 469428712,
-      "version": 1,
-      "versionNonce": 1986443654,
+      "version": 972,
+      "versionNonce": 1702673221,
       "isDeleted": false,
-      "boundElements": null,
-      "updated": 1789937873969,
+      "boundElements": [],
+      "updated": 1789942889793,
       "link": null,
       "locked": false,
       "points": [
@@ -609,22 +680,26 @@
           0
         ],
         [
-          -295.0,
-          195.0
+          -250.2466545639204,
+          106.6338512009068
         ]
       ],
       "lastCommittedPoint": null,
       "startBinding": {
         "elementId": "rect4",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "mode": "inside",
+        "fixedPoint": [
+          0.4972153846153849,
+          0.9830503676470588
+        ]
       },
       "endBinding": {
+        "mode": "orbit",
         "elementId": "dia9",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "fixedPoint": [
+          0.5038102808962858,
+          0.5001
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -635,15 +710,18 @@
       "scale": [
         1,
         1
-      ]
+      ],
+      "index": "aF",
+      "created": null,
+      "moveMidPointsWithElement": false
     },
     {
       "id": "arr17",
       "type": "arrow",
-      "x": 585.0,
-      "y": 510,
-      "width": 165.0,
-      "height": 60,
+      "x": 609.8275838402632,
+      "y": 460.5267705002626,
+      "width": 197.4621670068836,
+      "height": 70.16854199973727,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -658,11 +736,11 @@
         "type": 2
       },
       "seed": 2090950336,
-      "version": 1,
-      "versionNonce": 1168614327,
+      "version": 420,
+      "versionNonce": 456067749,
       "isDeleted": false,
-      "boundElements": null,
-      "updated": 1789937873969,
+      "boundElements": [],
+      "updated": 1789942889793,
       "link": null,
       "locked": false,
       "points": [
@@ -671,22 +749,26 @@
           0
         ],
         [
-          -165.0,
-          60
+          -197.4621670068836,
+          70.16854199973727
         ]
       ],
       "lastCommittedPoint": null,
       "startBinding": {
+        "mode": "orbit",
         "elementId": "dia9",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "fixedPoint": [
+          0.44142388608914096,
+          0.5001
+        ]
       },
       "endBinding": {
         "elementId": "rect11",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "mode": "orbit",
+        "fixedPoint": [
+          0.5001,
+          0
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -697,15 +779,18 @@
       "scale": [
         1,
         1
-      ]
+      ],
+      "index": "aG",
+      "created": null,
+      "moveMidPointsWithElement": false
     },
     {
       "id": "arr18",
       "type": "arrow",
-      "x": 825.0,
-      "y": 510,
-      "width": 195.0,
-      "height": 60,
+      "x": 854.3715926541751,
+      "y": 461.9327501635825,
+      "width": 216.41888989342203,
+      "height": 71.77428108641749,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -720,11 +805,11 @@
         "type": 2
       },
       "seed": 444346272,
-      "version": 1,
-      "versionNonce": 1354726100,
+      "version": 406,
+      "versionNonce": 950038021,
       "isDeleted": false,
-      "boundElements": null,
-      "updated": 1789937873969,
+      "boundElements": [],
+      "updated": 1789942889793,
       "link": null,
       "locked": false,
       "points": [
@@ -733,22 +818,26 @@
           0
         ],
         [
-          195.0,
-          60
+          216.41888989342203,
+          71.77428108641749
         ]
       ],
       "lastCommittedPoint": null,
       "startBinding": {
+        "mode": "orbit",
         "elementId": "dia9",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "fixedPoint": [
+          0.5254511639068855,
+          0.5001
+        ]
       },
       "endBinding": {
         "elementId": "rect13",
-        "focus": 0.5,
-        "gap": 7,
-        "fixedPoint": null
+        "mode": "orbit",
+        "fixedPoint": [
+          0.7531101887710117,
+          0.24688981122898923
+        ]
       },
       "startArrowhead": null,
       "endArrowhead": "arrow",
@@ -759,14 +848,17 @@
       "scale": [
         1,
         1
-      ]
+      ],
+      "index": "aH",
+      "created": null,
+      "moveMidPointsWithElement": false
     },
     {
       "id": "rect19",
       "type": "rectangle",
-      "x": 60,
-      "y": 690,
-      "width": 1270,
+      "x": 183.72265625,
+      "y": 675.359375,
+      "width": 1087.3515625,
       "height": 60,
       "angle": 0,
       "strokeColor": "#1e1e1e",
@@ -782,8 +874,8 @@
         "type": 3
       },
       "seed": 1014537743,
-      "version": 1,
-      "versionNonce": 77964501,
+      "version": 149,
+      "versionNonce": 1186419403,
       "isDeleted": false,
       "boundElements": [
         {
@@ -791,17 +883,19 @@
           "type": "text"
         }
       ],
-      "updated": 1789937873969,
+      "updated": 1789942682196,
       "link": null,
-      "locked": false
+      "locked": false,
+      "index": "aI",
+      "created": null
     },
     {
       "id": "txt20",
       "type": "text",
-      "x": 60,
-      "y": 711.25,
-      "width": 1102.36,
-      "height": 17.5,
+      "x": 212.97735595703125,
+      "y": 687.859375,
+      "width": 1028.8421630859375,
+      "height": 35,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -814,28 +908,35 @@
       "frameId": null,
       "roundness": null,
       "seed": 2059635157,
-      "version": 1,
-      "versionNonce": 176526052,
+      "version": 222,
+      "versionNonce": 1538761547,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1789937873969,
+      "updated": 1789942833427,
       "link": null,
       "locked": false,
-      "text": "RF8: si la llave pública registrada de un contacto verificado cambia, el pin la detecta → revocación automática + notificación.",
+      "text": "Si la llave pública registrada de un contacto verificado cambia, el pin la detecta, entonces se hace una revocación automática con una notificación\nalertando al usuario.",
       "fontSize": 14,
       "autoResize": true,
       "textAlign": "center",
       "verticalAlign": "middle",
       "containerId": "rect19",
-      "originalText": "RF8: si la llave pública registrada de un contacto verificado cambia, el pin la detecta → revocación automática + notificación.",
+      "originalText": "Si la llave pública registrada de un contacto verificado cambia, el pin la detecta, entonces se hace una revocación automática con una notificación alertando al usuario.",
       "lineHeight": 1.25,
       "fontFamily": 1,
-      "baseline": 3.5
+      "baseline": 3.5,
+      "index": "aJ",
+      "created": null,
+      "labelPosition": null,
+      "baseFontSize": null
     }
   ],
   "appState": {
-    "gridSize": null,
-    "viewBackgroundColor": "#ffffff"
+    "gridSize": 20,
+    "gridStep": 5,
+    "gridModeEnabled": false,
+    "viewBackgroundColor": "#ffffff",
+    "lockedMultiSelections": {}
   },
   "files": {}
 }

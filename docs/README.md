@@ -152,15 +152,14 @@ El sistema se compone de tres elementos: el **cliente**, único punto donde exis
 
 #### 4.2.2 Registro y custodia de la identidad
 
-El diseño de manejo de llaves aborda directamente la vulnerabilidad centralizada descrita en 2. Durante el registro, el cliente genera el par X25519 **en el dispositivo** (RF1). La llave privada se cifra con una clave derivada de la contraseña maestra mediante **Argon2id** con *salt* único por usuario (RS2) y jamás abandona el dispositivo (RS1); la llave pública se publica en el directorio asociada al identificador de Discord (RF2), de modo que el directorio nunca custodia material secreto.
+Durante el registro, el cliente genera el par X25519 **en el dispositivo** (RF1). La llave privada se cifra con una clave derivada de la contraseña maestra mediante **Argon2id** con *salt* único por usuario (RS2) y jamás abandona el dispositivo (RS1); la llave pública se publica en el directorio asociada al identificador de Discord (RF2), de modo que el directorio nunca custodia material secreto.
 
 ![Flujo de registro y custodia de la identidad](img/flujo-registro.png)
 
-**Figura 4.3.** *Registro: generación local del par X25519, cifrado de la llave privada con Argon2id + contraseña maestra y publicación de la llave pública en el directorio.*
 
 #### 4.2.3 Protocolo de mensajería
 
-El protocolo de mensajería implementa el esquema criptográfico concreto de 5.2:
+El protocolo de mensajería implementa el esquema criptográfico:
 
 1. **Envío.** El emisor genera un par efímero X25519 por mensaje y calcula el secreto compartido por **ECDH** contra la llave pública de identidad del receptor (RF4).
 2. **Derivación.** El secreto se procesa con **HKDF-SHA256** para derivar la clave de sesión AES-256 (RF3).
@@ -171,26 +170,12 @@ El protocolo de mensajería implementa el esquema criptográfico concreto de 5.2
 
 ![Protocolo de mensajería: envío y recepción](img/flujo-mensaje.png)
 
-**Figura 3.4.** *Protocolo de mensajería: ECDH efímero, HKDF-SHA256, AES-256-GCM con AAD y descarte de la llave efímera.*
 
 #### 4.2.4 Ceremonia de verificación
 
 La ceremonia de verificación ofrece protección contra el ataque de sustitución de llaves (RS7). Ambos extremos calculan la huella digital `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente (RS8), presentada truncada a 60 dígitos decimales en grupos de cinco. Los usuarios comparan esas huellas **fuera del canal de Discord** (llamada, presencia o código QR). Solo entonces el cliente persiste el estado de *verificado* junto con un *pin* de la llave pública (RF7); si la llave cambia posteriormente, el *pin* permite detectar la discrepancia, revocar la verificación y alertar al usuario (RF8).
 
 ![Ceremonia de verificación fuera de banda](img/verificacion.png)
-
-**Figura 3.5.** *Ceremonia de verificación: cálculo de la huella en ambos extremos, comparación fuera de banda y persistencia del estado verificado con pin de llave.*
-
-| Protocolo / componente | Requerimientos |
-|---    |---              |
-| Cadena ECDH + HKDF-SHA256 + AES-256-GCM | RF3, RF4, RF5, RS4, RS5 |
-| Dato autenticado adicional (AAD) con identificadores | RF3, RS4 |
-| Descarte de la llave efímera por mensaje | RS9 |
-| Generación local y custodia cifrada de la llave privada | RF1, RF12, RS1, RS2 |
-| Texto plano solo en memoria | RS3 |
-| TLS 1.3 entre cliente y directorio de llaves | RS6 |
-| Huella SHA-256 y ceremonia fuera de banda | RF6, RF7, RF8, RS7, RS8 |
-| CSPRNG del sistema operativo | RS4, RS11 |
 
 
 ## 5. Implementación Propuesta
