@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from client.api import create_app
+from client.privacy import NOTICE_VERSION
 from conftest import ALICE, BOB, PASSWORD
 
 TOKEN = "token-de-prueba"
@@ -45,8 +46,8 @@ def test_cors_solo_para_el_origen_del_frontend(apis):
 
 def test_validacion_de_entradas(apis):
     _, c = apis
-    assert c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": "corta"}).status_code == 422
-    assert c[ALICE].post("/identity", headers=AUTH, json={"discord_id": "no-numerico", "password": PASSWORD}).status_code == 422
+    assert c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": "corta", "consent_version": NOTICE_VERSION}).status_code == 422
+    assert c[ALICE].post("/identity", headers=AUTH, json={"discord_id": "no-numerico", "password": PASSWORD, "consent_version": NOTICE_VERSION}).status_code == 422
     assert c[ALICE].get("/contacts/abc", headers=AUTH).status_code == 422
 
 
@@ -60,7 +61,7 @@ def test_bloqueado_responde_423_sin_detalles_internos(apis):
 def test_flujo_completo_por_http_entre_dos_usuarios(apis):
     world, c = apis
     for uid in (ALICE, BOB):
-        assert c[uid].post("/identity", headers=AUTH, json={"discord_id": uid, "password": PASSWORD}).status_code == 201
+        assert c[uid].post("/identity", headers=AUTH, json={"discord_id": uid, "password": PASSWORD, "consent_version": NOTICE_VERSION}).status_code == 201
     other = {ALICE: BOB, BOB: ALICE}
     for uid in (ALICE, BOB):
         assert c[uid].post("/contacts", headers=AUTH, json={"discord_id": other[uid], "alias": "x"}).status_code == 201
@@ -83,21 +84,30 @@ def test_flujo_completo_por_http_entre_dos_usuarios(apis):
 
 def test_exportar_e_importar_por_http(apis):
     world, c = apis
-    c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD})
+    c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD, "consent_version": NOTICE_VERSION})
     exportada = c[ALICE].post("/identity/export", headers=AUTH, json={"password": "otra-contraseña-1"})
     assert exportada.status_code == 200
     vault = exportada.json()["vault"]
     assert c[BOB].post("/identity/import", headers=AUTH,
-                       json={"discord_id": ALICE, "vault": vault, "password": "incorrecta"}).status_code == 401
+                       json={"discord_id": ALICE, "vault": vault, "password": "incorrecta", "consent_version": NOTICE_VERSION}).status_code == 401
     ok = c[BOB].post("/identity/import", headers=AUTH,
-                     json={"discord_id": ALICE, "vault": vault, "password": "otra-contraseña-1"})
+                     json={"discord_id": ALICE, "vault": vault, "password": "otra-contraseña-1", "consent_version": NOTICE_VERSION})
     assert ok.status_code == 201 and ok.json()["discord_id"] == ALICE
 
 
 def test_bloquear_y_desbloquear_por_http(apis):
     _, c = apis
-    c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD})
+    c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD, "consent_version": NOTICE_VERSION})
     assert c[ALICE].post("/identity/lock", headers=AUTH).status_code == 204
     assert c[ALICE].get("/status", headers=AUTH).json()["unlocked"] is False
     assert c[ALICE].post("/identity/unlock", headers=AUTH, json={"password": "mal"}).status_code == 401
     assert c[ALICE].post("/identity/unlock", headers=AUTH, json={"password": PASSWORD}).status_code == 200
+
+
+def test_crear_identidad_sin_consentimiento_se_rechaza(apis):
+    _, c = apis
+    sin = c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD})
+    assert sin.status_code == 422  # el campo es obligatorio
+    mala = c[ALICE].post("/identity", headers=AUTH, json={"discord_id": ALICE, "password": PASSWORD, "consent_version": "0.1"})
+    assert mala.status_code == 409 and mala.json()["error"] == "conflict"
+    assert c[ALICE].get("/status", headers=AUTH).json()["vault_exists"] is False

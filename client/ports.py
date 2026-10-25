@@ -7,8 +7,12 @@ class DirectoryError(Exception):
 
 
 class DirectoryPort(Protocol):
-    def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes]) -> None:
-        """Publica la llave. El directorio entrega un nonce; `sign(nonce)` devuelve la prueba de posesión."""
+    def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes],
+                 consent_version: str) -> None:
+        """Publica la llave. El directorio entrega un nonce; `sign(nonce)` devuelve la prueba de posesión.
+
+        `consent_version` es la versión del aviso de privacidad que la persona aceptó: el directorio debe
+        guardarla junto con la fecha para poder demostrar el consentimiento."""
 
     def get_key(self, discord_id: str) -> bytes | None:
         """Llave de firma publicada de ese usuario, o None si no está registrado (TLS 1.3, RS6)."""

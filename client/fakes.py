@@ -11,10 +11,12 @@ class FakeDirectory:
 
     def __init__(self):
         self.keys: dict[str, bytes] = {}
+        self.consents: dict[str, str] = {}
         self.down = False
         self._nonce = 0
 
-    def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes]) -> None:
+    def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes],
+                 consent_version: str) -> None:
         if self.down:
             raise DirectoryError("directorio caído")
         self._nonce += 1
@@ -24,6 +26,7 @@ class FakeDirectory:
         except SignatureError:
             raise DirectoryError("prueba de posesión inválida") from None
         self.keys[discord_id] = public_key
+        self.consents[discord_id] = consent_version
 
     def get_key(self, discord_id: str) -> bytes | None:
         if self.down:

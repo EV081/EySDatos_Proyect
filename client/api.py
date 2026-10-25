@@ -23,12 +23,14 @@ TICK_SECONDS = 5
 class CreateIdentity(BaseModel):
     discord_id: str = Field(pattern=ID_PATTERN)
     password: str = Field(min_length=10, max_length=256)
+    consent_version: str = Field(min_length=1, max_length=16)
 
 
 class ImportIdentity(BaseModel):
     discord_id: str = Field(pattern=ID_PATTERN)
     vault: dict
     password: str = Field(min_length=1, max_length=256)
+    consent_version: str = Field(min_length=1, max_length=16)
 
 
 class Password(BaseModel):
@@ -96,7 +98,7 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
 
     @app.post("/identity", status_code=201, dependencies=[api])
     def create_identity(body: CreateIdentity):
-        return orchestrator.create_identity(body.discord_id, body.password)
+        return orchestrator.create_identity(body.discord_id, body.password, body.consent_version)
 
     @app.post("/identity/unlock", dependencies=[api])
     def unlock(body: Password):
@@ -112,7 +114,8 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
 
     @app.post("/identity/import", status_code=201, dependencies=[api])
     def import_identity(body: ImportIdentity):
-        return orchestrator.import_identity(body.discord_id, json.dumps(body.vault).encode(), body.password)
+        return orchestrator.import_identity(body.discord_id, json.dumps(body.vault).encode(), body.password,
+                                           body.consent_version)
 
     # --- contactos y verificación --------------------------------------------------------
     @app.get("/contacts", dependencies=[api])

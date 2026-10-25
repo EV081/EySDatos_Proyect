@@ -854,12 +854,19 @@
             "maxLength": 256,
             "minLength": 10,
             "title": "Password"
+          },
+          "consent_version": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Consent Version"
           }
         },
         "type": "object",
         "required": [
           "discord_id",
-          "password"
+          "password",
+          "consent_version"
         ],
         "title": "CreateIdentity"
       },
@@ -908,13 +915,20 @@
             "maxLength": 256,
             "minLength": 1,
             "title": "Password"
+          },
+          "consent_version": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Consent Version"
           }
         },
         "type": "object",
         "required": [
           "discord_id",
           "vault",
-          "password"
+          "password",
+          "consent_version"
         ],
         "title": "ImportIdentity"
       },

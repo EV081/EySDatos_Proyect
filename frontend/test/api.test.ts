@@ -46,3 +46,19 @@ test('sin red se informa como network, sin filtrar el error original', async () 
   const api = new Api('http://x', 't', async () => { throw new TypeError('fetch failed: ECONNREFUSED 127.0.0.1'); });
   await assert.rejects(() => api.status(), (e: ApiError) => e.code === 'network' && !/ECONNREFUSED/.test(e.message));
 });
+
+test('RF1: crear o importar una identidad envía la versión del aviso aceptado', async () => {
+  const calls: { url: string; init?: RequestInit }[] = [];
+  const api = new Api('http://127.0.0.1:8001', 'tok', fakeFetch(201, {}, calls));
+  await api.createIdentity('1', 'contraseña-larga', '1.0');
+  await api.importIdentity('1', { v: 1 }, 'x', '1.0');
+  assert.equal(JSON.parse(calls[0].init!.body as string).consent_version, '1.0');
+  assert.equal(JSON.parse(calls[1].init!.body as string).consent_version, '1.0');
+});
+
+test('la versión del aviso del frontend coincide con la del cliente local', async () => {
+  const { NOTICE_VERSION } = await import('../lib/privacy.ts');
+  const { readFileSync } = await import('node:fs');
+  const py = readFileSync(new URL('../../client/privacy.py', import.meta.url), 'utf8');
+  assert.ok(py.includes(`NOTICE_VERSION = "${NOTICE_VERSION}"`));
+});

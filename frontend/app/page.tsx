@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Api } from '@/lib/api';
+import { isLocal } from '@/lib/conn';
 import { errorMessage } from '@/lib/format';
 import type { Status } from '@/lib/types';
 import { Banner } from '@/components/Banner';
@@ -13,16 +14,6 @@ const KEY = 'e2ee.conn';
 interface Conn {
   base: string;
   token: string;
-}
-
-// Solo http://127.0.0.1 o http://localhost: el token de la API local nunca debe ir a otro destino.
-function isLocal(base: string): boolean {
-  try {
-    const u = new URL(base);
-    return u.protocol === 'http:' && (u.hostname === '127.0.0.1' || u.hostname === 'localhost');
-  } catch {
-    return false;
-  }
 }
 
 function loadConn(): Conn | null {

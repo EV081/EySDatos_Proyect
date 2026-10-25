@@ -4,6 +4,7 @@ import pytest
 
 from client.errors import BadPassword, Conflict, Locked, NotFound, TooManyAttempts
 from client.ports import DirectoryError
+from client.privacy import NOTICE_VERSION
 from conftest import ALICE, BOB, PASSWORD
 
 
@@ -38,7 +39,7 @@ def test_bloqueado_nada_funciona(world):
 def test_no_se_sobrescribe_una_identidad(world):
     alice = world.user(ALICE)
     with pytest.raises(Conflict):
-        alice.create_identity(ALICE, PASSWORD)
+        alice.create_identity(ALICE, PASSWORD, NOTICE_VERSION)
 
 
 def test_unlock_sin_identidad(world):
@@ -59,10 +60,10 @@ def test_RF12_exportar_e_importar_en_otro_dispositivo(world, tmp_path):
     alice = world.user(ALICE)
     blob = alice.export_identity("contraseña-de-exportación")
     otro = world.user("999999999999999999", create=False)
-    otro_status = otro.import_identity(ALICE, blob, "contraseña-de-exportación")
+    otro_status = otro.import_identity(ALICE, blob, "contraseña-de-exportación", NOTICE_VERSION)
     assert otro_status["public_key"] == alice.status()["public_key"]
     with pytest.raises(BadPassword):
-        world.user("888888888888888888", create=False).import_identity(ALICE, blob, "incorrecta")
+        world.user("888888888888888888", create=False).import_identity(ALICE, blob, "incorrecta", NOTICE_VERSION)
 
 
 def test_directorio_caido_al_crear_identidad(world):
@@ -78,3 +79,29 @@ def test_si_el_directorio_falla_se_puede_reintentar_la_creacion(world):
     world.directory.down = False
     alice = world.user(ALICE)
     assert alice.status()["unlocked"] and ALICE in world.directory.keys
+
+
+def test_publicar_la_llave_exige_aceptar_el_aviso_de_privacidad_vigente(world):
+    alice = world.user(ALICE, create=False)
+    for version in ("", "0.9", "2.0"):
+        with pytest.raises(Conflict):
+            alice.create_identity(ALICE, PASSWORD, version)
+    assert world.directory.keys == {} and not alice.status()["vault_exists"]  # no se creó ni publicó nada
+
+
+def test_el_directorio_recibe_la_version_del_aviso_aceptado(world):
+    world.user(ALICE)
+    assert world.directory.consents[ALICE] == NOTICE_VERSION
+
+
+def test_importar_tambien_exige_el_consentimiento(world):
+    blob = world.user(ALICE).export_identity("contraseña-de-exportación")
+    otro = world.user("999999999999999999", create=False)
+    with pytest.raises(Conflict):
+        otro.import_identity(ALICE, blob, "contraseña-de-exportación", "")
+    assert not otro.status()["vault_exists"]
+
+
+def test_el_consentimiento_queda_registrado_en_el_almacen_cifrado(world, clock):
+    alice = world.user(ALICE)
+    assert alice._doc["consent"] == {"version": NOTICE_VERSION, "at": clock()}

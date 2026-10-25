@@ -2,6 +2,7 @@ import pytest
 
 from client.fakes import FakeChannel, FakeDirectory, FakeDiscord
 from client.orchestrator import Orchestrator
+from client.privacy import NOTICE_VERSION
 from crypto import KdfParams
 
 ALICE, BOB, CAROL = "111111111111111111", "222222222222222222", "333333333333333333"
@@ -34,7 +35,7 @@ class World:
         orch = Orchestrator(self.tmp / discord_id, self.directory, discord, self.clock, FAST_KDF)
         self.discord[discord_id], self.orch[discord_id] = discord, orch
         if create:
-            orch.create_identity(discord_id, PASSWORD)
+            orch.create_identity(discord_id, PASSWORD, NOTICE_VERSION)
         return orch
 
     def restart(self, discord_id) -> Orchestrator:

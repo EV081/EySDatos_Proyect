@@ -73,12 +73,17 @@ try {
   };
   const alice = await open('Alice', 8001), bob = await open('Bob', 8002);
 
+  console.log('Aviso de privacidad');
+  const aviso = await alice.eval(`fetch('/privacidad').then((r) => r.text())`);
+  check('el aviso completo está publicado en la aplicación', aviso.includes('Aviso de privacidad') && aviso.includes('Quién es el responsable') && aviso.includes('Tus derechos'));
+
   console.log('Identidad');
   for (const [page, id, pass] of [[alice, ALICE, PASS_A], [bob, BOB, PASS_B]]) {
     await page.waitText('Crear identidad');
     await page.type('input[inputmode="numeric"]', id);
     await page.eval(`document.querySelectorAll('input[type=password]')[0].focus()`); await page.send('Input.insertText', { text: pass });
     await page.eval(`document.querySelectorAll('input[type=password]')[1].focus()`); await page.send('Input.insertText', { text: pass });
+    await page.click('input[type=checkbox]');
     await page.clickText('Crear identidad');
     await page.waitText('CONTACTOS');
   }

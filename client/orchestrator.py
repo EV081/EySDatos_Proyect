@@ -23,6 +23,7 @@ from .errors import (
     BadPassword, Conflict, KeyChanged, Locked, NotFound, PeerUnavailable, TooManyAttempts,
 )
 from .ports import DirectoryPort, DiscordPort
+from .privacy import NOTICE_VERSION
 from .store import EncryptedStore, VaultFile
 
 log = logging.getLogger("client")  # solo eventos: nunca texto plano, llaves ni contraseñas (RS3)
@@ -118,8 +119,14 @@ class Orchestrator:
                     "discord_id": self._my_id if self.unlocked else None,
                     "public_key": b64e(self._identity.public_key) if self.unlocked else None}
 
-    def create_identity(self, discord_id: str, password: str) -> dict:
+    def _require_consent(self, consent_version: str) -> None:
+        """Publicar el ID de Discord y la llave en el directorio exige haber aceptado el aviso vigente."""
+        if consent_version != NOTICE_VERSION:
+            raise Conflict(f"debes aceptar el aviso de privacidad vigente (versión {NOTICE_VERSION})")
+
+    def create_identity(self, discord_id: str, password: str, consent_version: str) -> dict:
         with self._lock:
+            self._require_consent(consent_version)
             if self._vault_file.exists():
                 raise Conflict("ya existe una identidad en este dispositivo")
             identity = Identity.create()
@@ -128,9 +135,10 @@ class Orchestrator:
             self._publish_or_rollback()
             return self.status()
 
-    def import_identity(self, discord_id: str, vault: bytes, password: str) -> dict:
+    def import_identity(self, discord_id: str, vault: bytes, password: str, consent_version: str) -> dict:
         """RF12: carga en este dispositivo una identidad exportada desde otro."""
         with self._lock:
+            self._require_consent(consent_version)
             if self._vault_file.exists():
                 raise Conflict("ya existe una identidad en este dispositivo")
             try:
@@ -206,7 +214,10 @@ class Orchestrator:
     def _publish_key(self) -> None:
         ident, my_id = self._identity, self._my_id
         try:
-            self._directory.register(my_id, ident.public_key, lambda nonce: sign_registration(ident, my_id, nonce))
+            self._directory.register(my_id, ident.public_key, lambda nonce: sign_registration(ident, my_id, nonce),
+                                     NOTICE_VERSION)
+            self._doc["consent"] = {"version": NOTICE_VERSION, "at": self._clock()}
+            self._save()
         except Exception:
             log.warning("no se pudo publicar la llave en el directorio")
             raise PeerUnavailable("no se pudo publicar la llave en el directorio") from None

@@ -299,6 +299,84 @@ El sistema protege el contenido, no el patrón de comunicación que se realiza a
 * No hay seguridad posterior al compromiso dentro de una sesión (*post-compromise security*) ni *ratchet* por mensaje; la rotación periódica limita el daño.
 * No se firma cada mensaje, por lo que no hay no repudio.
  
+## 6. Privacidad y ética
+
+### 6.1 Evaluación de impacto en la protección de datos (DPIA)
+
+Antes de que entre un solo dato real, se evaluó el sistema con la plantilla de siete pasos de las autoridades de protección de datos (necesidad de la evaluación, descripción del tratamiento, consulta, necesidad y proporcionalidad, riesgos, medidas y aprobación), adaptada a la Ley 29733 y su reglamento. El documento completo es [la DPIA](dpia/DPIA.md); esta sección resume sus resultados.
+
+**Qué datos se tratan.** El directorio guarda únicamente el ID de Discord, la llave pública de firma, las fechas de registro y la versión del aviso de privacidad aceptado. El contenido de los mensajes y las llaves privadas nunca salen del dispositivo: Discord solo almacena texto cifrado, aunque sí puede observar los **metadatos** (quién, a quién y cuándo).
+
+**Riesgos identificados.** Se evaluaron 13 riesgos, recorriendo el ciclo de vida del dato y las categorías LINDDUN, con la probabilidad y la gravedad de cada uno:
+
+| ID | Riesgo | Riesgo inicial | Riesgo residual |
+|---|---|---|---|
+| R1 | Exposición de metadatos a Discord y al canal | Alto | Medio (aceptado) |
+| R2 | Sustitución de llaves por un directorio malicioso | Alto | Medio (aceptado) |
+| R3 | Robo o infección del dispositivo | Alto | Medio (aceptado) |
+| R4 | Contraseña maestra débil o perdida | Medio | Bajo |
+| R5 | Brecha de la base de datos del directorio | Medio | Bajo |
+| R6 | Conservación excesiva o borrado incompleto | Alto | Bajo |
+| R7 | Falta de transparencia hacia las personas | Alto | Bajo |
+| R8 | Datos personales en los registros del servicio | Medio | Bajo |
+| R9 | Incumplimiento legal (banco de datos, transferencias, notificación) | Medio | Bajo |
+| R10 | Filtración del token del bot | Medio | Bajo |
+| R11 | Robo de la llave de identidad | Alto | Medio (aceptado) |
+| R12 | Personas menores de edad | Medio | Bajo |
+| R13 | Defecto del protocolo, sin auditoría externa | Alto | Medio (aceptado) |
+
+**Medidas.** Cada riesgo se mitiga con restricciones verificables (24 en total), cada una con la prueba, archivo o revisión que la comprueba, su responsable y su estado real. Entre ellas: cifrado de extremo a extremo y *forward secrecy* (R1, R3, R13), verificación fuera de banda con *pin* de llaves (R2, R11), cifrado en reposo con Argon2id y bloqueo temporal tras intentos fallidos (R3, R4), esquema mínimo del directorio, TLS 1.3 con CA propia, registros sin datos personales y plazos de retención con borrado (R5, R6, R8), y consentimiento por versión con aviso de privacidad (R7, R12).
+
+**Decisión.** Ningún riesgo residual es alto, por lo que no se requiere consulta previa a la autoridad. El sistema **puede lanzarse con condiciones**: la demostración local puede usar lo ya implementado, pero **no debe usarse con datos reales de terceros** mientras estén pendientes las restricciones del servicio de directorio, el plan de incidentes y el análisis de código. Los cinco riesgos que quedan en nivel medio se aceptan de forma explícita en la DPIA, con sus razones. La DPIA es un documento vivo y se revisa ante cualquier cambio de datos, finalidad, tecnología o proveedor.
+
+### 6.2 Cumplimiento de la Ley 29733 y su reglamento
+
+El sistema se construye en Perú y trata datos personales de personas identificables (el ID de Discord y su llave), por lo que le aplican la Ley N.° 29733 de Protección de Datos Personales y su reglamento (DS 016-2024-JUS). Si en el futuro participaran personas ubicadas en la Unión Europea a las que se les ofrezca el servicio, también podría aplicar el GDPR (art. 3.2): hoy no se dirige a ese público y habría que revisarlo antes de abrirlo. Lo que sigue no es asesoría legal; el texto vigente debe verificarse antes de un uso real.
+
+**Principios.** Cada uno de los ocho principios de la ley se traduce en una decisión de diseño:
+
+| Principio | Cómo se cumple |
+|---|---|
+| Legalidad | Los datos los entrega la propia persona al registrarse; no se obtienen por otros medios ni de otras fuentes |
+| Consentimiento (libre, previo, expreso, informado, inequívoco) | Casilla desmarcada, finalidad única y versión del aviso registrada; el aviso completo se muestra antes de aceptar. Un cambio del aviso exige aceptarlo de nuevo |
+| Finalidad | Dos finalidades explícitas: que otras personas encuentren la llave y que puedan verificarse entre sí. Nada de publicidad ni análisis |
+| Proporcionalidad | El directorio guarda solo ID, llave pública, fechas y versión del aviso. No hay nombre, correo, teléfono, foto, nombre de usuario ni IP |
+| Calidad | Plazos de conservación definidos para cada dato; la persona corrige su llave cuando cambia |
+| Seguridad | Cifrado de extremo a extremo, cifrado en reposo, control de acceso mínimo, registros de auditoría y plan de incidentes (secciones 4 y 6.1) |
+| Disposición de recurso | Contacto para ejercer derechos y vía de reclamo ante la autoridad (ANPD), indicados en el aviso |
+| Nivel de protección adecuado | A Discord, en Estados Unidos, solo viajan texto cifrado y metadatos; el contenido no puede leerse allí |
+
+**Derechos del titular.** El aviso informa y la aplicación facilita el ejercicio de los derechos de acceso, rectificación, cancelación y oposición, además de la portabilidad (exportar la identidad cifrada) y la información. No hay decisiones automatizadas sobre las personas. El detalle y el estado de cada derecho están en la DPIA.
+
+**Obligaciones del responsable:**
+
+| Obligación | Situación |
+|---|---|
+| Aviso de privacidad con lo que la ley exige informar (responsable y domicilio, finalidad, destinatarios, carácter obligatorio u opcional, transferencias, plazos, banco de datos, derechos) | Hecho: [aviso de privacidad](privacidad/aviso-de-privacidad.md) v1.0, publicado también dentro de la aplicación. El domicilio postal y un correo del equipo se completarán antes de un uso real |
+| Medidas de seguridad proporcionales al riesgo (cifrado, control de acceso por roles, registros de auditoría, plan de respuesta a incidentes) | En curso; ver las restricciones C-01 a C-20 de la DPIA |
+| Notificar una brecha a la ANPD dentro de las 48 horas desde que se conoce, y a las personas afectadas si el impacto es alto | Plan de incidentes pendiente (restricción C-19) |
+| Inscribir el banco de datos en el Registro Nacional de Protección de Datos Personales | Pendiente: la demostración es académica; se evaluará antes de un uso real (C-24) |
+| Oficial de datos personales | Obligatorio para entidades públicas y para quien trata datos sensibles o a gran escala. El responsable no puede leer los mensajes y el volumen es pequeño, por lo que no se prevé; se designa una persona de contacto y se revisará si el uso crece |
+| Evaluación de impacto | Hecha de forma voluntaria (sección 6.1); además de ser buena práctica, es un atenuante si llegara una sanción |
+
+La práctica sancionadora en Perú castiga sobre todo faltas de proporcionalidad, consentimiento y finalidad, más que fallas criptográficas. Por eso el diseño empieza por no recolectar lo que no se necesita.
+
+### 6.3 Consideraciones éticas
+
+**No hay acceso excepcional ni llave de custodia.** Es la decisión ética central del proyecto. Una llave que permita a una autoridad (o al operador) leer conversaciones es, por definición, una llave de larga vida que anula la *forward secrecy* y que tarde o temprano se filtra, se roba o se usa mal (Abelson et al., 2015). Quien pierde la confianza en el sistema no es solo el sospechoso, sino todas las personas usuarias. El costo de esta decisión es real y se asume: ante una orden válida solo podemos entregar lo que tenemos (ID, llave pública y fechas), nunca el contenido, y no podemos ayudar a investigar un delito que ocurra dentro de una conversación. El aviso lo dice con claridad.
+
+**Quién controla las llaves.** Solo la persona usuaria. La contrapartida es que **no hay recuperación de contraseña**: olvidarla significa perder la identidad y el historial. Se prefirió esa carga a la alternativa (guardar un respaldo de la llave en un servidor), que reintroduciría al operador como un punto capaz de leer los mensajes. Para reducir el daño se ofrece exportar la identidad cifrada y se advierte de forma explícita.
+
+**El directorio concentra confianza.** Quien opera el directorio podría entregar una llave falsa. Tiene por eso obligaciones concretas: guardar lo mínimo, no registrar direcciones IP, dejar rastro de cada cambio de llave para que los clientes puedan detectarlo, conservar los datos solo el tiempo definido, notificar las brechas y no sustituir ninguna llave. Lo que no puede evitarse con reglas se limita con diseño: la ceremonia de verificación fuera de banda permite a las personas comprobar que el directorio no las engaña.
+
+**Advertencias sin botón de "continuar".** Ante un cambio de llave de un contacto verificado, la aplicación no ofrece seguir de todos modos: obliga a repetir la verificación. Es una decisión algo paternalista, pero está respaldada por la evidencia: en estudios de campo, entre un tercio y siete de cada diez personas ignoraron las advertencias de certificado que sí permitían continuar (Akhawe & Felt, 2013). Se prefiere proteger por defecto antes que confiar en que cada persona sepa evaluar el riesgo.
+
+**Abuso y moderación.** El cifrado de extremo a extremo protege por igual a quien conversa en privado y a quien acosa o comete un delito; el operador no puede moderar lo que no puede leer. El sistema no pretende resolver esto: cada persona conserva las herramientas de Discord para bloquear o silenciar, y puede denunciar mostrando voluntariamente lo que recibió. Se deja como recomendación futura un mecanismo de denuncia verificable que no rompa el cifrado.
+
+**Menores y accesibilidad.** Discord admite usuarios de 13 años o más y la aplicación no verifica la edad: pedir un documento obligaría a recoger más datos de los necesarios. En su lugar, el aviso está dirigido a mayores de edad y el consentimiento incluye una declaración de mayoría de edad; antes de un uso real habrá que fijar una edad mínima. La comparación de una huella de 60 dígitos puede ser difícil para algunas personas; el código QR y la lectura por grupos de cinco dígitos son las vías previstas.
+
+**Respeto a la plataforma y a terceros.** Se usa únicamente la API oficial de Discord con bots, nunca el token de la cuenta de una persona. Las conversaciones ocurren en un canal privado creado para el proyecto. Los contactos que cada persona guarda en su dispositivo no salen de él; el directorio solo contiene a quienes se registraron y aceptaron el aviso.
+
 ---
 
 ### Referencias Bibliográficas
@@ -327,4 +405,14 @@ El sistema protege el contenido, no el patrón de comunicación que se realiza a
 
 * Josefsson, S., & Liusvaara, I. (2017). Edwards-Curve Digital Signature Algorithm (EdDSA) (RFC 8032). IETF. https://www.rfc-editor.org/rfc/rfc8032
 
-* Dolev, D., & Yao, A. C. (1983). On the security of public key protocols. IEEE Transactions on Information Theory, 29(2), 198–208. https://doi.org/10.1109/TIT.1983.1056650
+* Deng, M., Wuyts, K., Scandariato, R., Preneel, B., & Joosen, W. (2011). A privacy threat analysis framework: supporting the elicitation and fulfillment of privacy requirements. Requirements Engineering, 16(1), 3–32. https://doi.org/10.1007/s00766-010-0115-7
+
+* Abelson, H., Anderson, R., Bellovin, S. M., Benaloh, J., Blaze, M., Diffie, W., Gilmore, J., Green, M., Landau, S., Neumann, P. G., Rivest, R. L., Schiller, J. I., Schneier, B., Specter, M., & Weitzner, D. J. (2015). Keys under doormats: mandating insecurity by requiring government access to all data and communications. Journal of Cybersecurity, 1(1), 69–79. https://doi.org/10.1093/cybsec/tyv009
+
+* Akhawe, D., & Felt, A. P. (2013). Alice in Warningland: a large-scale field study of browser security warning effectiveness. En Proceedings of the 22nd USENIX Security Symposium (pp. 257–272).
+
+* Cavoukian, A. (2009). Privacy by Design: The 7 Foundational Principles. Information and Privacy Commissioner of Ontario.
+
+* Congreso de la República del Perú (2011). Ley N.° 29733, Ley de Protección de Datos Personales; y su reglamento, Decreto Supremo N.° 016-2024-JUS.
+
+* * Dolev, D., & Yao, A. C. (1983). On the security of public key protocols. IEEE Transactions on Information Theory, 29(2), 198–208. https://doi.org/10.1109/TIT.1983.1056650

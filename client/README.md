@@ -37,7 +37,7 @@ Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 
 ## Puertos que implementa Farid ([`ports.py`](ports.py))
 
-* `DirectoryPort.register(discord_id, public_key, sign)` y `get_key(discord_id)`. Debe lanzar `DirectoryError` ante cualquier fallo.
+* `DirectoryPort.register(discord_id, public_key, sign, consent_version)` (guardar la versión del aviso aceptado y la fecha) y `get_key(discord_id)`. Debe lanzar `DirectoryError` ante cualquier fallo.
 * `DiscordPort.send(text)` y `set_receiver(callback)`. Debe llamar al `callback` con cada texto nuevo del canal (el autor es siempre un bot y no se usa) y **no** reentregar el historial viejo salvo al reconectar. `client/fakes.py` es la implementación de referencia.
 
 ## Qué se guarda en disco (todo cifrado)

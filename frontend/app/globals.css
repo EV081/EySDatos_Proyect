@@ -94,3 +94,15 @@ dialog h2 { margin-top: 0; font-size: 18px; }
 
 .badge.bad { background: var(--bad-soft); color: var(--bad); border-color: var(--bad-line); }
 .pill.brand, .pill.off { background: var(--panel); color: var(--muted); border-color: var(--line); }
+
+.notice { margin: 4px 0 10px; font-size: 13px; color: var(--muted); }
+.notice summary { cursor: pointer; color: var(--brand); }
+.notice ul { padding-left: 18px; margin: 8px 0; }
+label.check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; }
+label.check input { width: auto; margin-top: 3px; }
+
+.legal { max-width: 720px; margin: 32px auto; padding: 0 20px 48px; line-height: 1.6; }
+.legal h1 { font-size: 26px; }
+.legal h2 { font-size: 18px; margin-top: 28px; padding-top: 8px; border-top: 1px solid var(--line); }
+.legal li { margin: 4px 0; }
+a.out { color: var(--brand); }
