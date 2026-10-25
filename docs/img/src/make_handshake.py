@@ -38,7 +38,7 @@ box(XB-175, 90, 350, 56, "#f8fafc", "#64748b", ["0. Obtiene pk_A del directorio 
 # hs1
 arrow(XA, XB, 192, ["1. hs1:  ids, sid, R_A, epk_A = g^a"], "#1d4ed8")
 box(XB-205, 208, 410, 104, "#ecfdf5", "#047857",
-    ["Bob genera b efímero y R_B", "T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión",
+    ["Bob genera b efímero y R_B; calcula g^ab y destruye b", "T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión",
      "PRK = HKDF(g^ab, sal = SHA-256(T)) → K_AB, K_BA, K_conf", "σ_B = Sign_B(ctx_resp ‖ T);  tag_B = HMAC(K_conf, \"B\" ‖ H(T))"], 12)
 # hs2
 arrow(XB, XA, 354, ["2. hs2:  R_B, epk_B = g^b, σ_B, tag_B"], "#047857")
@@ -50,7 +50,7 @@ box(XA-205, 372, 410, 122, "#eff6ff", "#1d4ed8",
 # hs3
 arrow(XA, XB, 536, ["3. hs3:  σ_A, tag_A"], "#1d4ed8")
 box(XB-205, 552, 410, 78, "#ecfdf5", "#047857",
-    ["Bob verifica σ_A con pk_A y tag_A → si falla: ABORTA", "Destruye b (efímero)  →  SESIÓN ACTIVA (PFS en ambos lados)"], 12)
+    ["Bob verifica σ_A con pk_A y tag_A → si falla: ABORTA", "Si todo valida  →  SESIÓN ACTIVA (PFS en ambos lados)"], 12)
 # messages
 arrow(XA, XB, 672, ["4. msg:  sid, ctr, nonce, AES-256-GCM(K_AB, m; AAD)"], "#b45309", both=False)
 arrow(XB, XA, 712, ["4'. msg:  sid, ctr, nonce, AES-256-GCM(K_BA, m; AAD)"], "#b45309")

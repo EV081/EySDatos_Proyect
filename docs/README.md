@@ -175,9 +175,9 @@ Durante el registro, el cliente genera el par de firma **Ed25519** en el disposi
 Antes de intercambiar mensajes, dos usuarios establecen una sesión con tres mensajes enviados por Discord. Sea `T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión` la transcripción, donde `R_A` y `R_B` son nonces de 256 bits, `sid` es un identificador de sesión y `epk` son las llaves públicas X25519 efímeras (`g^a`, `g^b`):
 
 1. **hs1 (A→B).** A genera `a` y `R_A`, y envía `ids, sid, R_A, epk_A`. Antes, ambos extremos consultan la llave de firma del otro en el directorio por TLS 1.3 y la comparan con el *pin* si el contacto fue verificado (RF8).
-2. **hs2 (B→A).** B genera `b` y `R_B`, calcula `g^ab` y deriva las claves (ver abajo). Responde `R_B, epk_B, σ_B, tag_B` con `σ_B = Sign_B(ctx_resp ‖ T)` y `tag_B = HMAC(K_conf, "B" ‖ SHA-256(T))`.
+2. **hs2 (B→A).** B genera `b` y `R_B`, calcula `g^ab`, deriva las claves (ver abajo) y **destruye `b`**, que ya no necesita. Responde `R_B, epk_B, σ_B, tag_B` con `σ_B = Sign_B(ctx_resp ‖ T)` y `tag_B = HMAC(K_conf, "B" ‖ SHA-256(T))`.
 3. **hs3 (A→B).** A verifica `σ_B` con la llave de B y `tag_B`; **si alguno falla, aborta**. Calcula las mismas claves y responde `σ_A = Sign_A(ctx_ini ‖ T)` y `tag_A`. A **destruye `a`**.
-4. **Activación.** B verifica `σ_A` y `tag_A` (si fallan, aborta) y **destruye `b`**. La sesión queda activa para ambos (RF13).
+4. **Activación.** B verifica `σ_A` y `tag_A` (si fallan, aborta). La sesión queda activa para ambos (RF13).
 
 **Derivación.** `PRK = HKDF-Extract(sal = SHA-256(T), IKM = g^ab)`; luego `HKDF-Expand` produce tres llaves independientes: `K_AB` (A→B), `K_BA` (B→A) y `K_conf` (confirmación). Todo el material aleatorio proviene del CSPRNG del sistema operativo (RS11).
 
@@ -187,7 +187,7 @@ Antes de intercambiar mensajes, dos usuarios establecen una sesión con tres men
 * **Reflexión y oráculo de firma:** los roles son asimétricos (`ctx_ini ≠ ctx_resp`), la identidad de quien firma y del destinatario está dentro de lo firmado y la llave de identidad solo firma datos con prefijo de contexto fijo; nunca firma un valor elegido por el otro extremo sin ese prefijo.
 * **Degradación:** la versión viaja en `T`; no hay negociación de algoritmos (una sola suite), de modo que no existe un ataque de *downgrade*.
 * **Confirmación de clave:** `tag_A` y `tag_B` prueban que ambos derivaron la misma clave a partir de la misma transcripción (análogo al `Finished` de TLS).
-* **Frescura:** `R_A`, `R_B` y `sid` evitan el *replay* del *handshake*; una sesión pendiente caduca a los 5 minutos y su llave efímera se destruye.
+* **Frescura:** `R_A`, `R_B` y `sid` evitan el *replay* del *handshake*; un intento pendiente caduca a los 5 minutos y su llave efímera se destruye. Un `hs2` o `hs3` inválido se descarta sin cancelar el intento, de modo que un tercero con acceso al canal no puede impedir un *handshake* legítimo enviando mensajes falsos; solo el éxito o la caducidad lo cierran.
 
 **Cola de salida y reintentos.** Los mensajes que el usuario escribe sin sesión activa esperan en una cola local, guardada en el almacén cifrado del dispositivo (RF14); no salen del dispositivo hasta que la sesión esté activa. Lo que caduca es el **intento** de *handshake*: si el otro extremo no responde, el cliente destruye su llave efímera y, de forma automática, inicia un intento nuevo (con `a`, `R_A` y `sid` nuevos) con espera creciente entre reintentos (15 min, 30 min, 60 min…), hasta un máximo de intentos, tras el cual la conversación muestra "contacto no disponible" y el usuario puede reintentar manualmente. El receptor ignora cualquier `hs1` cuya antigüedad supere la caducidad, por lo que un `hs1` viejo que aparezca al reconectarse no inicia una sesión.
 
@@ -199,7 +199,7 @@ Antes de intercambiar mensajes, dos usuarios establecen una sesión con tres men
 Una vez activa la sesión, cada mensaje se protege con cifrado autenticado:
 
 1. **Cifrado.** El emisor cifra con **AES-256-GCM** usando la llave de su dirección (`K_AB` o `K_BA`), un *nonce* de 96 bits del CSPRNG que jamás se reutiliza bajo la misma clave (RS4, RS11) y como datos autenticados adicionales (AAD) `sid ‖ emisor ‖ receptor ‖ ctr`, donde `ctr` es un contador por dirección (RF3).
-2. **Transmisión.** Viaja por Discord `E2EE1:{sid, ctr, nonce, ciphertext+tag}`.
+2. **Transmisión.** Viaja por Discord `E2EE1:{sid, ctr, nonce, ciphertext+tag}`. Cada mensaje admite hasta 900 bytes de texto (el límite de Discord es de 2000 caracteres por mensaje); los textos más largos se dividen en varios mensajes.
 3. **Recepción.** El receptor comprueba que `sid` corresponde a una sesión activa y que `ctr` no fue visto ni cae fuera de la ventana de recepción (RS14). Luego descifra **verificando la etiqueta GCM**; cualquier mensaje cuya etiqueta no valide es rechazado y marcado como no descifrable (RF5, RF11, RS5). El texto plano permanece en memoria el menor tiempo posible (RS3).
 
 **Identidad del emisor.** Cada mensaje queda atribuido a su autor porque solo A y B conocen `K_AB` y `K_BA`, que se derivaron de un *handshake* en el que ambos demostraron su identidad con firmas. Esto es lo mismo que hacen SSH y TLS, que firman el *handshake* y no cada registro. No se firma cada mensaje por decisión de diseño: una firma por mensaje sería una prueba transferible a terceros (no repudio) que una conversación privada no necesita, y multiplicaría los usos de la llave de identidad. Las claves por dirección impiden además que un mensaje de A se refleje hacia A como si fuera de B.
