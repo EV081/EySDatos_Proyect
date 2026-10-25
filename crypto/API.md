@@ -1,6 +1,6 @@
 # API de `crypto/`
 
-Librería pura de Python 3.12: sin red, sin Discord, sin disco. El cliente local (`client/`) la usa; el directorio (`directory/`) y el adaptador de Discord (`discord_adapter/`) **no** la importan, salvo `verify_registration`/`verify_key_change` en el directorio, que solo verifican firmas con llaves públicas.
+Librería pura de Python 3.12: sin red, sin Discord, sin disco. El cliente local (`client/`) la usa; el directorio (`directory/`) y el adaptador de Discord (`discord_adapter/`) **no** la importan, salvo `verify_registration`/`verify_key_change` y `Pseudonymizer`/`mask_id` en el directorio, que solo verifican firmas con llaves públicas y protegen los IDs de los registros.
 
 ```python
 from crypto import (Identity, Initiator, Responder, SidCache, Session, fingerprint,
@@ -71,6 +71,15 @@ session = resp.finish(hs3)            # <- Hs3 recibido
 
 `fingerprint(pk_a, pk_b) -> "48291 37502 ..."` (60 dígitos en 12 grupos de 5, igual en ambos extremos). `crypto.fingerprint.qr_payload(pk_a, pk_b)` devuelve los 32 bytes completos para el QR.
 
+## Seudonimización y enmascarado (registros y diagnóstico)
+
+| Función | Qué hace |
+|---|---|
+| `Pseudonymizer(key)` / `Pseudonymizer.from_env("PSEUDONYM_KEY")` | HMAC-SHA256 con clave secreta (mínimo 32 bytes, base64url en la variable de entorno). Falla si la clave falta o es débil |
+| `pseudonymizer.pseudonym(discord_id)` | 16 caracteres hex estables mientras no cambie la clave. **Úsese para los IDs en los registros de auditoría**; nunca un SHA-256 sin clave |
+| `mask_id(discord_id)` | `1234…5678`, para mensajes de diagnóstico. No sirve para almacenar |
+| `generate_key()` | Clave nueva (rotarla cada 90 días, el plazo de retención de los registros) |
+
 ## Qué **no** hace esta librería
 
 * No consulta el directorio ni compara *pins*: lo hace `client/` (RF7, RF8).
@@ -80,7 +89,7 @@ session = resp.finish(hs3)            # <- Hs3 recibido
 ## Pruebas
 
 ```bash
-cd crypto && ../.venv/bin/python -m pytest -q      # 110 pruebas
+cd crypto && ../.venv/bin/python -m pytest -q      # 126 pruebas
 ```
 
 Los nombres de los tests llevan el requerimiento que cubren (`test_RS5_etiqueta_gcm_invalida_se_rechaza`) para armar la tabla de trazabilidad.

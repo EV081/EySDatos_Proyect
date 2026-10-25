@@ -377,6 +377,70 @@ La práctica sancionadora en Perú castiga sobre todo faltas de proporcionalidad
 
 **Respeto a la plataforma y a terceros.** Se usa únicamente la API oficial de Discord con bots, nunca el token de la cuenta de una persona. Las conversaciones ocurren en un canal privado creado para el proyecto. Los contactos que cada persona guarda en su dispositivo no salen de él; el directorio solo contiene a quienes se registraron y aceptaron el aviso.
 
+### 6.4 Clasificación de datos y técnicas de privacidad
+
+No se puede proteger lo que no se sabe que se tiene. Cada dato que el sistema toca se etiqueta con una **categoría** (qué tipo de dato es) y un **nivel de sensibilidad** (cuánto hay que protegerlo); la etiqueta completa se escribe como "personal, restringido". Las categorías son **P** personal (identifica a una persona, directa o indirectamente), **S** sensible (puede causar daño o discriminación si se expone, como la salud, las creencias o los ingresos en la Ley 29733), **C** confidencial (secreto para el sistema) y **U** público. Los niveles, de menor a mayor riesgo, son **público**, **interno**, **confidencial** y **restringido**, con controles crecientes: acceso abierto, inicio de sesión, control de acceso por roles con cifrado, y lo anterior más autenticación reforzada y auditoría.
+
+El contenido de los mensajes es libre y puede incluir datos sensibles de cualquier tipo; como el sistema no puede saberlo, **todo el contenido se trata siempre como sensible y restringido**.
+
+#### Inventario y etiquetas
+
+| Dato | Etiqueta | Por qué | Técnicas y controles | Dónde |
+|---|---|---|---|---|
+| Contenido de los mensajes (texto plano) | S · restringido | Puede contener cualquier dato sensible | Cifrado de extremo a extremo; texto plano solo en memoria; cifrado en reposo; nunca en servidores ni registros | Dispositivo |
+| Historial y cola de salida | S · restringido | Es el mismo contenido, guardado | Cifrado en reposo con AES-256-GCM; clave derivada de la contraseña maestra | Dispositivo |
+| Llave privada de identidad | C · restringido | Permite suplantar a la persona | Cifrada con Argon2id y AES-256-GCM; nunca sale del dispositivo | Dispositivo |
+| Contraseña maestra | C · restringido | Abre todo lo demás | No se almacena ni se transmite fuera del dispositivo; bloqueo tras 5 intentos fallidos | — |
+| Llaves de sesión y efímeras | C · restringido | Descifran una sesión | Solo en memoria; se destruyen al rotar o bloquear | Dispositivo |
+| Archivo de identidad exportado | C · restringido | Contiene la llave privada | Cifrado con una contraseña elegida para la exportación | Elegido por la persona |
+| Token del bot de Discord | C · restringido | Permite leer y escribir en el canal | Variable de entorno; fuera del repositorio; rotación ante sospecha | Equipo de la persona |
+| ID de Discord | P · confidencial | Identifica a la persona y revela que usa la herramienta | Se guarda solo en el directorio; en los registros va seudonimizado | Directorio |
+| Fechas de registro y de cambio de llave | P · confidencial | Metadato que describe a la persona | Mínimo necesario; retención de 90 días para llaves reemplazadas | Directorio |
+| Versión del aviso aceptado y fecha | P · confidencial | Prueba de consentimiento | Se guarda con el registro; se borra con él | Directorio y dispositivo |
+| Metadatos de los mensajes (emisor, destinatario, hora, tamaño) | P · confidencial | Revelan con quién se relaciona la persona | No pueden ocultarse; canal privado de acceso acotado; el aviso lo declara | Discord y canal |
+| Alias, *pines* y estado de verificación de los contactos | P · confidencial | Revelan la red de contactos | Solo local, cifrado en reposo | Dispositivo |
+| Registros de auditoría | P · confidencial | Eventos con ID | ID seudonimizado con HMAC; sin texto ni llaves; retención de 90 días | Servidor |
+| Copias de seguridad del directorio | P · confidencial | Réplica del directorio | Cifradas, fuera del servidor, rotación de 30 días | Fuera del servidor |
+| Llave pública de firma | P · interno | Pública por diseño, pero ligada a un ID | Sin secreto que proteger; integridad garantizada por TLS y verificación fuera de banda | Directorio |
+| Mensajes del *handshake* | P · interno | Contienen IDs y valores públicos efímeros | Autenticados con firmas; sin información secreta | Discord y canal |
+| Texto cifrado | P · interno | Ilegible sin las claves de sesión | Cifrado autenticado; las claves se destruyen | Discord y canal |
+| Huella de verificación | U · interno | Derivada de llaves públicas | Se compara fuera de Discord | Pantalla |
+| Token de la API local | C · confidencial | Autoriza al frontend | Se genera por ejecución; solo viaja a la propia máquina | Memoria |
+
+**Datos que se decidió no recoger:** nombre, correo, teléfono, foto, nombre de usuario de Discord, dirección IP, edad o documento de identidad y ubicación. Cada campo que no se recoge es un campo que no hay que cifrar, auditar, exportar, borrar ni notificar si hay una brecha.
+
+#### Técnicas aplicadas
+
+Ninguna técnica sirve sola; se combinan sobre el dato y sobre el acceso a él.
+
+Las técnicas del lado del dispositivo (cifrado, *handshake*, derivación de claves) están implementadas y probadas. Las del directorio y los registros (esquema mínimo, rol de base de datos, seudonimización dentro de los registros reales) dependen del servicio que aún está en construcción; su estado figura en las restricciones C-05 a C-12 de la DPIA.
+
+| Técnica | Dónde se aplica | Qué consigue | Límite |
+|---|---|---|---|
+| **Minimización y supresión** | El directorio guarda solo ID, llave pública, fechas y versión del aviso | Lo que no existe no se filtra | Ninguno; es la medida más barata y la más fuerte |
+| **Cifrado simétrico** (AES-256-GCM) | Mensajes, bóveda de identidad y almacén local | Confidencialidad e integridad; reversible solo con la clave | Todo depende de dónde vive la clave y de quién la tiene |
+| **Firmas y Diffie-Hellman efímero** | *Handshake* de cada sesión | Autenticación mutua y *forward secrecy* | No protege un dispositivo ya comprometido |
+| **Derivación de claves con sal** (Argon2id) | Contraseña maestra | Encarece el ataque por fuerza bruta contra una bóveda robada | Una contraseña débil sigue siendo débil |
+| **Seudonimización con HMAC-SHA256 y clave secreta** | IDs de Discord en los registros de auditoría | Permite correlacionar eventos de una misma persona (por ejemplo, intentos repetidos) sin mostrar su ID | Sigue siendo dato personal; quien tenga la clave puede calcular el seudónimo de un ID conocido |
+| **Enmascarado** (`1234…5678`) | Mensajes de diagnóstico y pantallas donde alguien debe reconocer un ID | Se reconoce sin revelar el dato completo | No protege datos almacenados |
+| **Control de acceso y mínimo privilegio** | Rol de base de datos sin permisos de DDL, token de la API local, una llave por propósito | Limita quién puede hacer qué, incluso dentro del sistema | Solo vale si la autenticación es sólida |
+| **Datos falsos en pruebas** | Todas las pruebas y los entornos de desarrollo usan IDs inventados | Los desarrolladores nunca ven datos reales | — |
+| Tokenización | No aplica | No hay números de tarjeta ni datos de pago | — |
+| Anonimización | **No se pretende** | No se publica ningún conjunto de datos; no se afirma que algo sea anónimo | Ver los límites de abajo |
+
+**Por qué HMAC y no un hash simple.** Un hash sin clave es unidireccional en teoría, pero un ID de Discord tiene una estructura conocida (lleva la fecha de creación) y se puede enumerar: bastaría recorrer los candidatos y comparar. Con HMAC y una clave secreta guardada en una variable de entorno, quien ve un registro no puede recuperar el ID. La clave se rota cada 90 días, el plazo de retención de los registros, para que no se pueda seguir a una persona entre periodos. Hay una implementación de referencia con pruebas en `crypto/pseudonym.py`.
+
+#### Límites y compromisos
+
+* **Seudonimizar no es anonimizar.** El seudónimo sigue siendo dato personal, y el cifrado protege mucho frente a un ladrón pero nada frente a quien tiene la clave. Por eso el aviso y la DPIA tratan estos datos como personales.
+* **Los metadatos permiten reidentificar.** El caso más conocido es el de los 100 millones de calificaciones "anonimizadas" de un concurso de recomendaciones: se eliminaron los nombres y aun así se identificó al 99 % de las personas cruzándolas con reseñas públicas (Narayanan & Shmatikov, 2008); y cuatro puntos de espacio y tiempo bastan para identificar al 95 % de las personas en datos de movilidad (de Montjoye et al., 2013). Por analogía, el patrón de con quién y cuándo se conversa puede identificar y describir a una persona aunque no se vea el contenido. Es el riesgo R1 de la DPIA, que se acepta y se declara, con las mejoras previstas (relleno de mensajes, un canal por par de contactos).
+* **Utilidad frente a privacidad.** Los registros seudonimizados conservan la utilidad que necesita el operador (detectar un ataque repetido) y quitan la que no necesita (saber quién es); por eso se eligió el HMAC y no la supresión total.
+* **La autenticación de un solo factor.** Los datos restringidos están protegidos por la contraseña maestra; una autenticación reforzada (llaves de acceso o un segundo factor) queda como recomendación futura.
+
+#### Mantenimiento de la clasificación
+
+La clasificación es un ciclo, no un evento: se **descubren** los datos (este inventario), se **etiquetan** (la tabla), se **controlan** (las técnicas), se **monitorean** (alertas y revisión de registros) y se **revisan**. La tabla se revisa cada vez que cambia un dato, una finalidad o un proveedor, y al menos cada seis a doce meses, junto con la DPIA.
+
 ---
 
 ### Referencias Bibliográficas
@@ -410,6 +474,10 @@ La práctica sancionadora en Perú castiga sobre todo faltas de proporcionalidad
 * Abelson, H., Anderson, R., Bellovin, S. M., Benaloh, J., Blaze, M., Diffie, W., Gilmore, J., Green, M., Landau, S., Neumann, P. G., Rivest, R. L., Schiller, J. I., Schneier, B., Specter, M., & Weitzner, D. J. (2015). Keys under doormats: mandating insecurity by requiring government access to all data and communications. Journal of Cybersecurity, 1(1), 69–79. https://doi.org/10.1093/cybsec/tyv009
 
 * Akhawe, D., & Felt, A. P. (2013). Alice in Warningland: a large-scale field study of browser security warning effectiveness. En Proceedings of the 22nd USENIX Security Symposium (pp. 257–272).
+
+* Narayanan, A., & Shmatikov, V. (2008). Robust de-anonymization of large sparse datasets. En 2008 IEEE Symposium on Security and Privacy (pp. 111–125). IEEE. https://doi.org/10.1109/SP.2008.33
+
+* de Montjoye, Y.-A., Hidalgo, C. A., Verleysen, M., & Blondel, V. D. (2013). Unique in the crowd: the privacy bounds of human mobility. Scientific Reports, 3, 1376. https://doi.org/10.1038/srep01376
 
 * Cavoukian, A. (2009). Privacy by Design: The 7 Foundational Principles. Information and Privacy Commissioner of Ontario.
 

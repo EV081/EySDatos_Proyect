@@ -24,7 +24,7 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 | E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, verificación, alertas | ✔ (18 pruebas + 15 en navegador). Falta dibujar el código QR |
 | E5 | DPIA con la plantilla de siete pasos ([dpia/DPIA.md](dpia/DPIA.md)); consentimiento por versión en cliente y frontend | ✔ (firmas pendientes) |
 | E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | ✔ (falta completar domicilio y correo del equipo antes de un uso real) |
-| E7 | Clasificación de datos y técnicas de privacidad (minimización, seudonimización, enmascarado) | ○ |
+| E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | ✔ (16 pruebas) |
 | E8 | Riesgos (entidades afectadas) y recomendaciones futuras | ○ |
 | E9 | Lecciones aprendidas y retrospectiva (parte de Elmer) | ○ |
 
@@ -38,7 +38,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | ○ |
 | F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | ○ |
 | F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | ○ |
-| F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro; retención de 90 días | ○ |
+| F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | ○ |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | ○ |
 | F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ○ |
 | F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ○ |
@@ -56,7 +56,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | Contrato | Dónde | Lo usan |
 |---|---|---|
 | Formato de mensaje en Discord (`E2EE1:<base64url(JSON)>`, tipos `hs1`, `hs2`, `hs3`, `msg`) | [`crypto/API.md`](../crypto/API.md) | `client/`, adaptador de Discord |
-| Interfaz de la librería | [`crypto/API.md`](../crypto/API.md) | `client/`; el directorio solo usa `verify_registration` y `verify_key_change` |
+| Interfaz de la librería | [`crypto/API.md`](../crypto/API.md) | `client/`; el directorio solo usa `verify_registration`, `verify_key_change`, `Pseudonymizer` y `mask_id` |
 | Puertos del directorio y de Discord | [`client/ports.py`](../client/ports.py) y [`client/README.md`](../client/README.md) | Farid los implementa; `client/fakes.py` es la referencia de comportamiento |
 | API local cliente ↔ frontend | [`api/client.openapi.json`](api/client.openapi.json) | `frontend/` |
 | API del directorio | `api/directory.yaml` (○ a definir por Farid) | `client/`, directorio |
@@ -106,7 +106,7 @@ frontend ──HTTP──▶ client ──▶ crypto
 ```
 
 - `crypto/` no importa a nadie y es lo único que ve texto plano y llaves privadas.
-- `directory/` y `discord_adapter/` no importan `crypto/` (salvo la verificación de firmas en el directorio): solo manejan texto cifrado y llaves públicas.
+- `directory/` y `discord_adapter/` no importan `crypto/` (salvo la verificación de firmas y la seudonimización de IDs en el directorio): solo manejan texto cifrado y llaves públicas.
 - Ninguno de los servicios registra contenido de mensajes ni llaves.
 
 **Convenciones.** Ramas `elmer/<tarea>` y `farid/<tarea>`, con revisión del otro. Commits al estilo `feat(crypto): …` y `docs(informe): …`. Nunca se versiona `.env`, llaves, la bóveda ni volcados de base de datos. Python 3.12, dependencias con versión fija por componente. Los tests se nombran por requerimiento (`test_RS4_nonce_unico`) para armar la tabla de trazabilidad. Las pruebas se corren por carpeta (`cd crypto && ../.venv/bin/python -m pytest`).
@@ -114,7 +114,7 @@ frontend ──HTTP──▶ client ──▶ crypto
 ## 5. Orden de trabajo
 
 1. Hecho: diseño, `crypto/`, `client/`, `frontend/`, DPIA y aviso de privacidad.
-2. Ahora, en paralelo: **E7 y E8** (Elmer) ‖ **F1, F2, F3** (Farid).
+2. Ahora, en paralelo: **E8** (Elmer) ‖ **F1, F2, F3** (Farid).
 3. Luego: **F4, F5, F6** y **F7** (Farid); integración.
 4. Al final: lecciones aprendidas, presentación y ensayo.
 
