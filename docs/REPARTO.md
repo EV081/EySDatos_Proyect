@@ -78,7 +78,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 2. **API del directorio** (`docs/api/directory.yaml`, OpenAPI): `GET /challenge`, `PUT /keys/{discord_id}` (llave pública + firma del challenge), `GET /keys/{discord_id}`, `GET /keys/{discord_id}/history`. Usan F1 y el cliente (E3).
 3. **Interfaz de `crypto/`** (`crypto/API.md`): `create_identity(pw)`, `unlock(pw)`, `start_handshake(peer)`, `handle(wire)`, `encrypt(session, msg)`, `decrypt(wire)`, `fingerprint(pk_a, pk_b)`, `export/import`. F3 usa un stub passthrough hasta que E2 termine.
 4. **Interfaz del adaptador Discord**: `send(user_id, text)`, `on_message(callback)`. E3 lo consume; F3 lo implementa. Y un cliente HTTP del directorio (`DirectoryClient`) que F1 entrega para E3.
-5. **API local ↔ frontend** (`docs/api/client.yaml`): `/identity`, `/contacts`, `/conversations/{id}/messages`, `/verify`. E4 usa un mock.
+5. **API local ↔ frontend** (`docs/api/client.openapi.json`): `/identity`, `/contacts`, `/conversations/{id}/messages`, `/verify`. E4 usa un mock.
 
 ### Estructura del proyecto
 
@@ -100,13 +100,13 @@ EySDatos_Proyect/
 │   ├── fingerprint.py           # SHA-256(pk_A‖pk_B) -> 60 dígitos, QR
 │   └── tests/                   # vectores, firma inválida, tag inválido, replay, roles
 ├── client/                      # ── ELMER ── API local (FastAPI, solo localhost) (E3)
-│   ├── main.py                  # rutas de client.yaml
+│   ├── main.py                  # rutas de client.openapi.json
 │   ├── orchestrator.py          # une crypto + DirectoryClient + DiscordAdapter
 │   ├── store.py                 # contactos, pines de llave, estado verificado
 │   └── tests/
 ├── frontend/                    # ── ELMER ── web simple (E4)
 │   ├── src/                     # candado, insignia, alerta de llave, "no descifrable"
-│   └── mocks/                   # mock de client.yaml para trabajar sin el backend
+│   └── mocks/                   # mock de client.openapi.json para trabajar sin el backend
 │
 ├── directory/                   # ── FARID ── servicio de llaves (F1)
 │   ├── app/                     # main.py, routes/, models.py, auth.py (challenge + OAuth2)
@@ -126,7 +126,7 @@ EySDatos_Proyect/
 └── docs/                        # informe en GitHub Pages
     ├── README.md                # el informe (secciones repartidas según §2)
     ├── REPARTO.md
-    ├── api/                     # directory.yaml, client.yaml, wire-format.md (día 1, juntos)
+    ├── api/                     # directory.yaml, client.openapi.json, wire-format.md (día 1, juntos)
     ├── dpia/                    # DPIA llenada con la plantilla ICO (Elmer, E5)
     ├── politicas/               # políticas de uso y plan de incidentes (Farid, F7)
     ├── img/                     # diagramas y excalidraw
