@@ -441,6 +441,93 @@ Las técnicas del lado del dispositivo (cifrado, *handshake*, derivación de cla
 
 La clasificación es un ciclo, no un evento: se **descubren** los datos (este inventario), se **etiquetan** (la tabla), se **controlan** (las técnicas), se **monitorean** (alertas y revisión de registros) y se **revisan**. La tabla se revisa cada vez que cambia un dato, una finalidad o un proveedor, y al menos cada seis a doce meses, junto con la DPIA.
 
+## 7. Riesgos de una brecha y entidades afectadas
+
+La DPIA (sección 6.1) evalúa los riesgos desde la privacidad de las personas. Esta sección los mira desde la seguridad: **qué ocurre si falla cada componente, qué datos quedan expuestos, a quién afecta y qué defensa existe**. Los datos se nombran con las etiquetas del inventario de la sección 6.4.
+
+### 7.1 Escenarios de brecha
+
+La idea de fondo del diseño es que ninguna brecha de un servicio expone el **contenido** de las conversaciones: solo el dispositivo de cada persona ve el texto plano. Las brechas más graves son, por eso, las que ocurren en el dispositivo, en la llave de identidad o en el propio código.
+
+| # | Escenario | Qué queda expuesto | Entidades afectadas | Impacto | Defensas y estado |
+|---|---|---|---|---|---|
+| S1 | **Brecha en los servidores de Discord** o intercepción en la red | Texto cifrado, mensajes del *handshake* y metadatos (quién, a quién, cuándo, tamaño). **No el contenido**: las claves de sesión se destruyen | Personas usuarias y sus contactos; Discord | Confidencialidad de los metadatos (R1) | Cifrado de extremo a extremo con *forward secrecy* ✔. Los metadatos son un límite aceptado |
+| S2 | **Brecha en la base de datos del directorio** | IDs de Discord, llaves públicas, fechas y versión del aviso: se sabe **quién usa la herramienta** y desde cuándo | Personas usuarias; equipo responsable | Confidencialidad de datos personales (R5) | Esquema mínimo, rol sin permisos de DDL, TLS, copias cifradas (pendientes de F1, F2 y F4) |
+| S3 | **Directorio comprometido de forma activa**: entrega la llave del atacante | Una conversación completa con quien aún no verificó al contacto | Personas que hablan por primera vez con alguien sin verificar y sus contactos | Confidencialidad e integridad (R2) | Firmas, verificación fuera de banda, *pin* y alerta de cambio de llave ✔. Un primer contacto sin verificar sigue expuesto |
+| S4 | **Robo o infección del dispositivo** | Con la aplicación desbloqueada: historial, contactos, llaves de sesión. Con la aplicación bloqueada: solo una bóveda y un almacén cifrados | La persona, sus contactos y los terceros que se mencionan en las conversaciones | Confidencialidad (R3) | Argon2id, AES-256-GCM, bloqueo tras 5 intentos y destrucción de sesiones al bloquear ✔. Un dispositivo ya comprometido queda fuera de alcance |
+| S5 | **Robo de la llave de identidad** | Permite firmar *handshakes* futuros y suplantar a la persona. No descifra lo ya grabado | La persona y sus contactos (engañados) | Integridad y autenticidad (R11) | *Forward secrecy* ✔; alerta de cambio de llave a los contactos ✔. La firma que autoriza un cambio de llave existe en la librería; falta el punto de entrada del directorio (F1) |
+| S6 | **Fuga del token del bot** | Lectura del canal (texto cifrado y metadatos) y publicación de mensajes falsos: el protocolo los rechaza, pero pueden llenar la conversación de avisos de "mensaje no descifrable" | Dueño del bot; Discord (puede revocar el bot); personas del canal | Confidencialidad de metadatos y disponibilidad (R10) | Token en variables de entorno, sin repositorio; escaneo de secretos (pendiente de F6) |
+| S7 | **Compromiso de la cadena de suministro**: una dependencia maliciosa en el cliente, el frontend o el servidor | Todo lo que ve la aplicación, **incluido el texto plano** | Todas las personas usuarias | Confidencialidad total | Pocas dependencias, con versión fija ✔; escaneo de dependencias y SBOM (pendientes de F6). Es el riesgo más difícil de cerrar |
+| S8 | **Defecto en el protocolo o su implementación** | Contenido o suplantación, según el defecto | Todas las personas usuarias | Confidencialidad e integridad (R13) | Componentes estándar, pruebas automáticas de los caminos de rechazo (126 en la librería y 55 en el cliente local) y tabla de ataques considerados ✔. Sin auditoría externa |
+| S9 | **Fuga de copias de seguridad o de registros** | Lo mismo que S2; los registros llevan IDs seudonimizados | Personas usuarias; equipo | Confidencialidad (R5, R8) | Cifrado de copias, seudonimización con HMAC ✔ (herramienta), retención limitada (aplicación pendiente de F4 y F5) |
+| S10 | **Uso indebido por un integrante del equipo o suplantación del equipo (*phishing*)** | Lo que el servidor del directorio contiene; podría intentar sustituir una llave | Personas usuarias; equipo | Confidencialidad e integridad | Permisos mínimos, registros de auditoría, ceremonia de verificación; el operador no tiene acceso al contenido |
+| S11 | **Página web maliciosa contra la API local** (otro sitio abierto en el navegador) | Con la aplicación desbloqueada, la lectura de conversaciones y el envío de mensajes | La persona y sus contactos | Confidencialidad e integridad | Token por ejecución, CORS restringido y validación del `Host` ✔ |
+| S12 | **Caída de Discord, del directorio o revocación del bot** | Nada se expone; no se pueden enviar ni recibir mensajes nuevos | Todas las personas | Disponibilidad (fuera del modelo de amenaza) | La cola de salida local conserva los mensajes y los reintentos son automáticos ✔ |
+
+### 7.2 Entidades afectadas
+
+| Entidad | Cómo la afecta una brecha | Qué le corresponde |
+|---|---|---|
+| **Persona usuaria** (titular de los datos) | Pierde la confidencialidad de sus conversaciones, puede ser suplantada y se revela con quién se relaciona. Es quien sufre el daño directo | Proteger su dispositivo y su contraseña maestra; exportar su identidad; verificar a sus contactos |
+| **Contactos o interlocutores** | Sus mensajes quedan expuestos aunque su propio dispositivo esté seguro, o son engañados por una suplantación. No eligieron el nivel de seguridad de la otra persona | Verificar la huella; atender las alertas de cambio de llave |
+| **Terceros mencionados en las conversaciones** | Sus datos aparecen en mensajes que no controlan ni conocen | No hay medida técnica posible; es una de las razones para proteger el dispositivo |
+| **Personas menores de edad** | Pueden estar entre las usuarias de Discord y tener menos conciencia del riesgo | El aviso se dirige a mayores de edad; antes de un uso real, fijar una edad mínima |
+| **Equipo responsable** | Debe notificar a la ANPD dentro de las 48 horas desde que conoce la brecha, y a las personas afectadas si el impacto es alto. Notificar tarde es una infracción aparte. Las multas llegan a 100 UIT por infracción, con tope del 10 % de los ingresos anuales (Ley 29733, art. 39), además del daño reputacional | Plan de respuesta a incidentes, registros de auditoría y conservación de evidencia |
+| **Discord** | Es un responsable independiente: puede revocar el bot o suspender el canal si se hace un uso abusivo de su API | Cumplir sus condiciones; usar solo bots oficiales |
+| **Institución académica** | Su nombre queda asociado al proyecto si hay una brecha con datos reales | Por eso el sistema no debe usarse con datos de terceros hasta cerrar las condiciones de la DPIA |
+| **Autoridad de protección de datos (ANPD)** | Recibe las notificaciones y puede fiscalizar y sancionar | Recibir la notificación a tiempo |
+| **Proveedor de alojamiento** (si se contratara) | Un incidente en su infraestructura afecta al directorio | Contrato con obligaciones de seguridad y de notificación |
+
+### 7.3 Puntos únicos de falla y efectos en cascada
+
+* **La contraseña maestra** protege a la vez la bóveda, el historial, los contactos y la cola. Una contraseña débil entrega todo lo local de una sola vez.
+* **El dispositivo desbloqueado** es el punto donde convergen el texto plano, las llaves de sesión y el token de la API local; es el objetivo más rentable para un atacante (S4, S7, S11).
+* **El directorio** concentra la confianza en las llaves; su compromiso solo se detecta si las personas verifican (S3).
+* **Un mismo servidor para el directorio y sus copias** convertiría una brecha en la pérdida de todo: por eso las copias van fuera del servidor y cifradas.
+* **El servidor del proyecto y el bot comparten al operador:** una sola persona con acceso a ambos vería los metadatos del canal y los datos del directorio, aunque nunca el contenido.
+
+## 8. Recomendaciones de protección futura
+
+Estas medidas **no se implementan ahora**, pero se recomiendan. Para cada una se indica el riesgo que reduce, por qué se justifica y por qué queda fuera de esta entrega. Se ordenan por horizonte: lo primero es lo que habría que hacer antes de un uso real.
+
+### 8.1 Antes de un uso real
+
+| Recomendación | Riesgo que reduce | Justificación | Por qué no ahora |
+|---|---|---|---|
+| **Auditoría externa del protocolo y del código**, y verificación formal del protocolo con una herramienta como ProVerif o Tamarin | R13, S8 | Los defectos de los protocolos casi nunca están en la criptografía sino en cómo se combinan; una revisión independiente encuentra lo que el equipo que lo diseñó ya no ve | Requiere un presupuesto y un tiempo que el proyecto no tiene |
+| **Autenticación reforzada para desbloquear** (llaves de acceso WebAuthn o un segundo factor) y **llave protegida por hardware** (módulo TPM, Secure Enclave) | R3, R4, R11, S4 | Hoy los datos restringidos dependen de una sola contraseña; con hardware, robar el archivo de la bóveda ya no basta para probar contraseñas | Depende del soporte del navegador y del dispositivo, y complica la exportación a otro equipo |
+| **Bloqueo automático por inactividad** y mensajes con tiempo de vida en el historial local | R3, R6 | Reduce la ventana en que un dispositivo desbloqueado queda expuesto y la cantidad de datos que hay que proteger | Es sencillo pero afecta la usabilidad; conviene decidirlo con la opinión de las personas usuarias |
+| **Gestión de secretos del servidor con un almacén de claves** (la clave de seudonimización, la CA privada fuera de línea) | R5, R8, R10 | Una clave en una variable de entorno es tan segura como el servidor que la contiene | Un servicio de claves tiene un costo y no aporta en una demostración local |
+| **Cadena de suministro endurecida**: dependencias con *hashes* verificados, SBOM publicado, actualizaciones automáticas revisadas y artefactos firmados | S7 | Es el riesgo con mayor impacto y más difícil de cerrar; no lo detecta ninguna prueba funcional | Parte está en curso (escaneo y SBOM por Farid); lo demás exige infraestructura de publicación |
+| **Política de divulgación responsable de vulnerabilidades** y pruebas de intrusión periódicas | S8, S10 | Quien encuentre un fallo necesita saber cómo avisar; un equipo propio no basta para probar su sistema | No tiene sentido sin usuarios reales |
+| **Cumplimiento previo al uso real**: inscripción del banco de datos, contrato con el proveedor, edad mínima, correo de contacto y domicilio, revisión del GDPR si hay personas en la Unión Europea | R9, R12 | Son obligaciones legales del uso real, no mejoras opcionales | Fuera del alcance de una demostración académica |
+
+### 8.2 A mediano plazo
+
+| Recomendación | Riesgo que reduce | Justificación | Por qué no ahora |
+|---|---|---|---|
+| **Renovación de claves por mensaje (*double ratchet*)** | S4, S5 | Hoy, si se roba una clave de sesión, quedan expuestos los mensajes de esa sesión y los siguientes hasta rotar. Con renovación continua, el sistema se recupera solo tras un robo (*post-compromise security*; Cohn-Gordon et al., 2016) | Es el cambio más grande al protocolo y exige un diseño y pruebas de nuevo |
+| **Mensajes asíncronos con llaves previas (X3DH)** | Limitación del *handshake* interactivo | Permitiría escribir a un contacto desconectado sin esperar a que vuelva | Reintroduce una llave de mediano plazo que hay que rotar y razonar con cuidado |
+| **Transparencia de llaves**: un registro público y auditable de las llaves publicadas (Melara et al., 2015) | R2, S3 | Un directorio que sustituya una llave dejaría una prueba que cualquiera podría detectar, sin depender de que cada persona verifique | Es un componente propio y complejo |
+| **Protección de metadatos**: relleno de mensajes a tamaño fijo, un canal por par de contactos y envíos de relleno | R1, S1 | Es la mayor exposición aceptada; reducirla limita lo que Discord y el canal pueden inferir | Cuesta ancho de banda y complica los canales |
+| **Varios dispositivos por persona**, con una llave por dispositivo, lista visible y revocación | R11, S5 | Hoy una identidad vive en un dispositivo o en una exportación manual; con llaves por dispositivo, perder uno no obliga a rotar todo | Cambia el modelo de identidad y el directorio |
+| **Respaldo de la identidad repartido** entre contactos de confianza (reparto de secretos de Shamir, 1979) | R4 | Evita elegir entre "no hay recuperación" y "el operador guarda una copia", que anularía la confidencialidad | Introduce un flujo de recuperación nuevo y difícil de explicar |
+| **Monitoreo y simulacros periódicos**: alertas sobre los registros, ejercicios de recuperación y simulacro del plan de incidentes | S2, S9 | Un plan que nunca se ensaya suele fallar cuando hace falta; la detección rápida limita el daño | Exige un servicio con usuarios reales |
+| **Código QR en la verificación** y otras vías accesibles | Accesibilidad | Comparar 60 dígitos no es viable para todas las personas | El cliente local ya entrega el contenido; falta dibujarlo |
+
+### 8.3 A largo plazo
+
+| Recomendación | Riesgo que reduce | Justificación | Por qué no ahora |
+|---|---|---|---|
+| **Criptografía poscuántica híbrida** (acuerdo de clave y firmas, con los estándares FIPS 203 y 204 de NIST) | Descifrado futuro de lo grabado hoy | Un adversario puede guardar tráfico hoy y descifrarlo cuando exista un computador cuántico; combinarla con X25519 mantiene la seguridad si una de las dos falla | Las bibliotecas aún no ofrecen soporte estable |
+| **Mensajes de grupo** con un protocolo diseñado para ello (MLS, RFC 9420) | Ampliación funcional | Los grupos introducen problemas nuevos (altas y bajas de miembros, orden de mensajes) que no se resuelven repitiendo el protocolo entre pares | Cambia todo el diseño; hoy las conversaciones son de a dos |
+| **Denuncia verificable sin romper el cifrado** (*message franking*; Grubbs et al., 2017) | Abuso y moderación (6.3) | Permite a quien recibe un mensaje abusivo demostrarlo ante el operador sin que este pueda leer los demás | Requiere cambiar el cifrado de mensajes y definir quién modera |
+| **Pruebas de conocimiento cero** para acreditar la mayoría de edad sin revelar la fecha de nacimiento | R12 | Cumple el objetivo de edad mínima sin recoger datos adicionales | Tecnología aún poco madura para este uso |
+
+### 8.4 Cómo se priorizó
+
+Se ordenó por **riesgo reducido frente al esfuerzo**, dando prioridad a lo que el uso real vuelve obligatorio (cumplimiento, secretos, cadena de suministro y autenticación reforzada) y a lo que reduce la mayor exposición aceptada (metadatos). Ninguna de estas medidas sustituye a las anteriores: la seguridad se construye con capas independientes, y cada una cubre la falla de otra.
+
 ---
 
 ### Referencias Bibliográficas
@@ -478,6 +565,18 @@ La clasificación es un ciclo, no un evento: se **descubren** los datos (este in
 * Narayanan, A., & Shmatikov, V. (2008). Robust de-anonymization of large sparse datasets. En 2008 IEEE Symposium on Security and Privacy (pp. 111–125). IEEE. https://doi.org/10.1109/SP.2008.33
 
 * de Montjoye, Y.-A., Hidalgo, C. A., Verleysen, M., & Blondel, V. D. (2013). Unique in the crowd: the privacy bounds of human mobility. Scientific Reports, 3, 1376. https://doi.org/10.1038/srep01376
+
+* Cohn-Gordon, K., Cremers, C., & Garratt, L. (2016). On post-compromise security. En 2016 IEEE 29th Computer Security Foundations Symposium (pp. 164–178). IEEE. https://doi.org/10.1109/CSF.2016.19
+
+* Melara, M. S., Blankstein, A., Bonneau, J., Felten, E. W., & Freedman, M. J. (2015). CONIKS: bringing key transparency to end users. En Proceedings of the 24th USENIX Security Symposium (pp. 383–398).
+
+* Grubbs, P., Lu, J., & Ristenpart, T. (2017). Message franking via committing authenticated encryption. En CRYPTO 2017 (LNCS 10403, pp. 66–97). Springer.
+
+* Shamir, A. (1979). How to share a secret. Communications of the ACM, 22(11), 612–613.
+
+* Barnes, R., Beurdouche, B., Robert, R., Millican, J., Omara, E., & Cohn-Gordon, K. (2023). The Messaging Layer Security (MLS) Protocol (RFC 9420). IETF. https://www.rfc-editor.org/rfc/rfc9420
+
+* National Institute of Standards and Technology (2024). Module-Lattice-Based Key-Encapsulation Mechanism Standard (FIPS 203) y Module-Lattice-Based Digital Signature Standard (FIPS 204).
 
 * Cavoukian, A. (2009). Privacy by Design: The 7 Foundational Principles. Information and Privacy Commissioner of Ontario.
 

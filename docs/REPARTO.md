@@ -25,7 +25,7 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 | E5 | DPIA con la plantilla de siete pasos ([dpia/DPIA.md](dpia/DPIA.md)); consentimiento por versión en cliente y frontend | ✔ (firmas pendientes) |
 | E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | ✔ (falta completar domicilio y correo del equipo antes de un uso real) |
 | E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | ✔ (16 pruebas) |
-| E8 | Riesgos (entidades afectadas) y recomendaciones futuras | ○ |
+| E8 | Riesgos de una brecha y entidades afectadas (informe, sección 7) y recomendaciones futuras (sección 8) | ✔ |
 | E9 | Lecciones aprendidas y retrospectiva (parte de Elmer) | ○ |
 
 ### Farid — Directorio, Discord, operaciones y herramientas
@@ -114,7 +114,7 @@ frontend ──HTTP──▶ client ──▶ crypto
 ## 5. Orden de trabajo
 
 1. Hecho: diseño, `crypto/`, `client/`, `frontend/`, DPIA y aviso de privacidad.
-2. Ahora, en paralelo: **E8** (Elmer) ‖ **F1, F2, F3** (Farid).
+2. Ahora, en paralelo: **E9** (Elmer, al final) ‖ **F1, F2, F3** (Farid).
 3. Luego: **F4, F5, F6** y **F7** (Farid); integración.
 4. Al final: lecciones aprendidas, presentación y ensayo.
 
