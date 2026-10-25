@@ -14,11 +14,19 @@ El E2EE es un paradigma de seguridad que garantiza que los mensajes permanezcan 
 
 
 * **Criptografía Híbrida:**
-Como se abordo en clase, depender de un solo tipo de algoritmo es ineficiente para aplicaciones de mensajería. Por lo cual para este proyecto se va usar el esquema híbrido:
+Depender de un solo tipo de algoritmo es ineficiente para aplicaciones de mensajería. Por lo cual para este proyecto se va usar el esquema híbrido:
 
     * **Cifrado Simétrico (AES-GCM):** AES (Advanced Encryption Standard) es el estándar académico e industrial para cifrar el contenido del mensaje en sí, justificado por su altísima eficiencia computacional al procesar grandes volúmenes de datos (Garg et al., 2024). Se emplea la modalidad GCM (Galois/Counter Mode) porque proporciona simultáneamente confidencialidad e integridad, mitigando intentos de alteración del mensaje en tránsito.
 
-    * **Criptografía de Llave Pública (RSA/ECC):** Algoritmos como RSA o la Criptografía de Curva Elíptica (ECC) son esenciales para la distribución segura de llaves sin requerir un encuentro físico previo. En el proyecto, la criptografía asimétrica no cifra el mensaje largo, sino que se utiliza para cifrar y compartir de manera segura la clave simétrica (AES) generada de forma única para cada sesión. ECC suele preferirse sobre RSA clásico por ofrecer un nivel de seguridad equivalente con tamaños de llave mucho menores, optimizando el rendimiento web.
+    * **Criptografía de Llave Pública (ECC):** RSA y la Criptografía de Curva Elíptica (ECC) permiten establecer secretos y autenticar identidades sin un encuentro físico previo. ECC se prefiere sobre RSA por ofrecer un nivel de seguridad equivalente con llaves mucho menores. En el proyecto la criptografía asimétrica **no cifra el mensaje**: se usa para (i) **autenticar** a los interlocutores mediante firmas digitales **Ed25519** y (ii) acordar una clave simétrica de sesión mediante Diffie-Hellman sobre la curva **X25519** con llaves **efímeras**. Firmar y cifrar son operaciones distintas, por lo que cada par de llaves cumple un único propósito (separación de dominio).
+
+* **Protocolos de autenticación y *Perfect Forward Secrecy* (PFS):**
+Las primitivas seguras no garantizan un protocolo seguro: casi todos los ataques reales no rompen la criptografía, sino que usan al propio protocolo como herramienta. Para razonar sobre ello se adopta el modelo de Dolev y Yao (1983), en el que el atacante controla la red.
+
+    * **La "trifecta":** un protocolo de establecimiento de sesión debe lograr simultáneamente (1) autenticación mutua, (2) una llave de sesión y (3) PFS, es decir, que el compromiso posterior de las llaves de largo plazo no comprometa las sesiones pasadas. Esta propiedad cobra relevancia por el ataque *harvest now, decrypt later*: un adversario guarda tráfico cifrado hoy y lo descifra cuando obtiene la llave. Este es el patrón de SSH (RFC 4253) y de TLS 1.3 (RFC 8446), que eliminó el intercambio con RSA estático precisamente porque robar esa llave descifraba todo el tráfico grabado.
+    * **Lo que no es PFS:** cifrar con la llave pública *de larga vida* del receptor, aunque el emisor use una llave efímera, **no** otorga PFS para el receptor: quien obtenga su llave privada descifra todos los mensajes anteriores. Se necesita un valor efímero **en ambos extremos**, que se destruye al derivar la clave.
+    * **Ataques al protocolo, no a la criptografía:** los ataques de *replay* (repetir un mensaje grabado), de *reflexión* (usar al otro extremo como oráculo de sus propios retos) y de oráculo de firma o descifrado se evitan con nonces frescos, roles asimétricos, identidades dentro de lo firmado (Abadi y Needham, 1996), llaves distintas por propósito y un contexto fijo en cada firma. El orden de operaciones también importa: firmar el cifrado sin incluir las identidades permite a un tercero reemplazar la firma (Davis, 2001).
+    * **Cifrado autenticado y confirmación de clave:** como en TLS, el contenido se protege con un cifrado autenticado (AEAD) y el *handshake* termina con una confirmación de clave (MAC sobre la transcripción) que detecta cualquier alteración de la negociación (Krawczyk, 2003).
 
 * **Discord API y OAuth**: Interfaces que permiten la interacción programática con la plataforma. Se requerirá el uso de OAuth o tokens de bot para hacer uso de la API y poder interceptar, enviar y leer mensajes.
 
@@ -27,20 +35,20 @@ El manejo de llaves es el componente más crítico y vulnerable en cualquier sis
 
     * **El desafío (Vulnerabilidad Centralizada):** Tradicionalmente, se utiliza una Infraestructura de Clave Pública (PKI) basada en Autoridades Certificadoras (CA) centralizadas. Sin embargo, en E2EE, depender de un servidor centralizado administrado por un tercero para distribuir llaves públicas introduce un punto único de fallo (Park et al., 2023). Un servidor comprometido podría perpetrar un "ataque de sustitución de llaves", entregando la llave de un atacante en lugar de la del receptor legítimo (Alatawi et al., 2023).
 
-    * **Alternativa: :** Para evitar este riesgo, el diseño propone descentralizar la confianza. El servidor backend actuará únicamente como un directorio pasivo (un tablón de anuncios) para la distribución de llaves públicas. Las llaves privadas nunca abandonarán el dispositivo; se asegurará que la data guardada permanezca en *plaintext* solo por un período corto de tiempo en memoria, y si se guarda en disco local, estará protegida mediante encriptación con una contraseña maestra.
+    * **Alternativa:** Para evitar este riesgo, el diseño propone descentralizar la confianza. El servidor backend actuará únicamente como un directorio pasivo (un tablón de anuncios) para la distribución de llaves públicas **de firma**; las llaves de intercambio son efímeras y nunca se publican. Las llaves privadas nunca abandonarán el dispositivo; se asegurará que la data guardada permanezca en *plaintext* solo por un período corto de tiempo en memoria, y si se guarda en disco local, estará protegida mediante encriptación con una contraseña maestra.
 
 * **Autenticación y Protección contra ataques Man-in-the-Middle (MitM):**
 Para evitar el ataque de sustitución de llaves mencionado anteriormente, la criptografía por sí sola no es suficiente; se requiere certificar la identidad de los extremos.
 
     * **Autenticación Fuera de Banda (Out-of-Band - OOB):** Este es un requisito de diseño crítico para asegurar la integridad del E2EE. La autenticación OOB implica utilizar un canal secundario, completamente independiente al medio principal (Discord), para verificar las identidades (Naor et al., 2018).
 
-    * **Implementación:** Siguiendo el estado del arte de aplicaciones como Signal o WhatsApp, los usuarios deberán someterse a una "Ceremonia de Autenticación" (Alatawi et al., 2023). Esto significa que la aplicación generará una huella digital (hash) criptográfica de la llave pública. Los usuarios deberán comparar este hash a través de una llamada telefónica, enviándolo por SMS, o escaneando un código QR en persona. Al corroborar que los hashes coinciden fuera de la red de Discord, se garantiza matemáticamente que ninguna entidad intermedia ha manipulado las llaves.
+    * **Implementación:** Siguiendo el estado del arte de aplicaciones como Signal o WhatsApp, los usuarios deberán someterse a una "Ceremonia de Autenticación" (Alatawi et al., 2023). Esto significa que la aplicación generará una huella digital (hash) criptográfica de la llave pública. Los usuarios deberán comparar este hash a través de una llamada telefónica, enviándolo por SMS, o escaneando un código QR en persona. Al corroborar que los hashes coinciden fuera de la red de Discord, se garantiza matemáticamente que ninguna entidad intermedia ha manipulado las llaves. Esto resuelve además el problema de *trust on first use* (TOFU) de SSH, donde casi nadie verifica la huella la primera vez.
 
 ## 3. Requerimientos
 
 El proyecto tiene como fin crear una capa de seguridad en la comunicación de texto de **Discord**. Los requerimientos se derivan del siguiente modelo de amenaza.
 
-**Modelo de amenaza**: Para el proveedor de la plataforma de **Discord** y cualquier entidad con acceso a sus servidores, se considera como adversario a un atacante pasivo y activo en la red. Se asume que es confiable el dispositivo del usuario y el sistema operativo del cliente. Queda **fuera del alcance** la protección de los metadatos, la disponibiliad del servicio y el compromiso físico del endpoint.
+**Modelo de amenaza**: Para el proveedor de la plataforma de **Discord** y cualquier entidad con acceso a sus servidores, se considera como adversario a un atacante pasivo y activo en la red. Se asume que es confiable el dispositivo del usuario y el sistema operativo del cliente. Queda **fuera del alcance** la protección de los metadatos, la disponibiliad del servicio y el compromiso físico del endpoint. El atacante activo puede además intervenir en el protocolo (repetir, reflejar, reordenar o suplantar mensajes del *handshake*), pero no puede romper las primitivas; y se asume que podría obtener **más adelante** la llave de identidad de un usuario, sin que eso deba exponer las conversaciones pasadas.
 
 Para entender la distinción entre atacante pasivo y activo, se usa la definición de Dolev y Yao (1983) que menciona que la diferencia entre ambos es lo **qué puede hacer con los mensajes que ve**. El pasivo solo observa, lee, copia y almacena. En cambio, el activo puede modificar un mensaje, borrarlo, retrasarlo, reordenarlo, editarlo, etc.
 
@@ -53,13 +61,13 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 | **Directorio de llaves** | Un volcado de su base de datos revela qué usuarios se registraron y cuándo| **Sustitución de llaves:** devuelve la llave pública del atacante en lugar de la del receptor legítimo |
 
 ### 3.1. Requerimientos Funcionales
-* **RF1:** El sistema debe generar localmente, en el dispositivo del usario, un par de llaves asimétricas de identidad durante el registro inicial.
+* **RF1:** El sistema debe generar localmente, en el dispositivo del usuario, un par de llaves de identidad de firma (Ed25519) durante el registro inicial.
 
 * **RF2:** El sistema debe publicar la llave del usuario en un directorio de llaves, permitiendo a otras personas obtener esa llave con el identificador de su cuenta de Discord.
 
 * **RF3:** El sistema debe cifrar con una llave simétrica cada mensaje antes de ser enviado por la API de Discord.
 
-* **RF4:** El sistema debe poder encapsular la clave de sesión mediante una criptografía de llave pública, de modo que solo el destinatario previsto pueda recuperarla.
+* **RF4:** El sistema debe establecer una clave de sesión compartida con el destinatario mediante un intercambio Diffie-Hellman efímero autenticado con las llaves de identidad, de modo que solo ambos extremos puedan derivarla.
 
 * **RF5:** El sistema debe detectar y descifrar automáticamente los mensajes entrantes dirigidos al usuario, mostrando el texto plano únicamente en la interfaz local.
 
@@ -76,6 +84,10 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 * **RF11:** El sistema debe permitir identificar un mensaje que no se pueda descifrar.
 
 * **RF12:** El usuario podra exportar e importar su identidad criptográfica para usarla en otro dispositivo , protegido por su contraseña maestra.
+
+* **RF13:** El sistema debe autenticar a ambos interlocutores al establecer una sesión, verificando la firma del otro extremo contra la llave publicada en el directorio, y rechazarla si no coincide con la llave verificada (*pin*).
+
+* **RF14:** El sistema debe mantener en cola los mensajes del usuario mientras la sesión no esté establecida, y enviarlos cifrados cuando el *handshake* termine.
 
 
 ### 3.2. Requerimientos de Seguridad
@@ -96,11 +108,19 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 * **RS8:** La huella digital de verificación debe derivarse de las llaves públicas de ambas partes mediante una función hash (SHA-256), con un orden determinístico que produzca el mismo valor en ambos extremos.
 
-* **RS9:** Las claves de sesión deben rotarse periodicamente.
+* **RS9:** Las claves de sesión deben rotarse periódicamente (por número de mensajes y por tiempo) mediante un nuevo *handshake*, destruyendo las claves anteriores.
 
 * **RS10:** Los tokens de acceso a la API de Discord deben gestionarse en variables de entorno.
 
 * **RS11:** Todo el material criptográfico debe provenir de un generado de números aleatorios (pseudo-aleatorios) criptográficamente seguro.
+
+* **RS12:** (*Perfect forward secrecy*) Las llaves Diffie-Hellman de sesión deben ser efímeras en ambos extremos y destruirse apenas se deriva la clave; el compromiso posterior de la llave de identidad no debe permitir descifrar sesiones pasadas.
+
+* **RS13:** Toda firma del *handshake* debe cubrir las identidades de ambos interlocutores, los nonces, ambas llaves efímeras y la versión del protocolo, y debe llevar una cadena de contexto distinta según el rol (iniciador/respondedor). Toda sesión cuya firma o confirmación de clave no valide debe abortarse.
+
+* **RS14:** El sistema debe rechazar mensajes repetidos, reordenados fuera de ventana o provenientes de otra sesión, mediante un contador por dirección y un identificador de sesión incluidos en los datos autenticados.
+
+* **RS15:** Cada llave debe tener un único propósito: la llave de identidad solo firma; las llaves de sesión se derivan de forma independiente por dirección (emisor→receptor y receptor→emisor).
 
 ## 4. Diseño
 
@@ -110,7 +130,7 @@ El diseño se aborda desde dos aristas complementarias. El **diseño funcional**
 
 El cliente se implementa como una página web independiente del cliente oficial de Discord. Para apoyar los requerimientos descritos previamente, la interfaz incorpora los siguientes indicadores de estado por conversación:
 
-* **Candado cerrado:** la conversación opera bajo el esquema de cifrado descrito en 3.2.3.
+* **Candado cerrado:** la conversación tiene una sesión activa bajo el esquema descrito en 4.2.3 y 4.2.4. Mientras el *handshake* no termina, la conversación muestra "estableciendo sesión" y los mensajes quedan en cola (RF14).
 * **Insignia de verificación:** la contraparte completó la autenticación fuera del canal de Discord.
 * **Alerta de cambio de llave:** si la llave pública registrada de un contacto *verificado* cambia, el cliente revoca automáticamente la verificación y notifica al usuario.
 * **Marcador "mensaje no descifrable":** se reserva para los mensajes entrantes que no pueden autenticarse o descifrarse.
@@ -122,7 +142,7 @@ El siguiente Wireframe ilustra una conversación con estos indicadores.
 
 | Elemento de interfaz | Requerimientos |
 |---    |---              |
-| Indicador de cifrado (candado) por conversación | RF3, RF9 |
+| Indicador de cifrado (candado) y estado de sesión por conversación | RF3, RF9, RF13, RF14 |
 | Insignia de contacto verificado | RF7, RF9 |
 | Alerta y revocación automática de verificación | RF8 |
 | Marcador "mensaje no descifrable" | RF11 |
@@ -130,65 +150,119 @@ El siguiente Wireframe ilustra una conversación con estos indicadores.
 
 ### 4.2 Diseño de seguridad: algoritmos y protocolos
 
-El diseño de seguridad combina la criptografía híbrida presentada en la sección 2 (AES-256-GCM para el contenido y X25519/ECDH para el intercambio de claves) con protocolos que preservan la descentralización de la confianza. A continuación se describen los cuatro protocolos que implementan los requerimientos de seguridad.
+El diseño de seguridad sigue el patrón de SSH y TLS 1.3 clásico de SSH y TLS 1.3: **identidad de largo plazo para firmar, Diffie-Hellman efímero para la sesión y cifrado autenticado para los mensajes**. Combina Ed25519 (autenticación), X25519 (acuerdo de clave), HKDF-SHA256 (derivación) y AES-256-GCM (contenido). Cada llave cumple un único propósito. A continuación se describen los protocolos que implementan los requerimientos de seguridad.
+
+> **Decisión de diseño.** No existe una llave Diffie-Hellman de larga vida: cifrar contra la llave pública de identidad del receptor no sería efímero para él, ya que robar su llave privada permitiría descifrar todo el historial. Por ello (i) la identidad es solo de firma, (ii) se usan llaves efímeras **en ambos extremos**, destruidas al derivar la clave (PFS), y (iii) ambos extremos se autentican con firmas sobre toda la transcripción del *handshake*.
 
 #### 4.2.1 Arquitectura y límite de confianza
 
-El sistema se compone de tres elementos: el **cliente**, único punto donde existe texto plano; el **directorio de llaves**, tablón pasivo que asocia identificadores de Discord a llaves públicas; y **Discord**, que transporta y persiste únicamente *ciphertext*. La comunicación entre el cliente y el directorio se protege con TLS 1.3 (RS6), neutralizando a un atacante activo en la red que intente interponerse en la descarga de llaves.
+El sistema se compone de tres elementos: el **cliente**, único punto donde existe texto plano y material secreto; el **directorio de llaves**, tablón pasivo que asocia identificadores de Discord a llaves públicas de firma; y **Discord**, que transporta y persiste únicamente mensajes del protocolo y *ciphertext*. La comunicación entre el cliente y el directorio se protege con TLS 1.3 (RS6), neutralizando a un atacante activo en la red que intente interponerse en la descarga de llaves.
+
+**Discord como canal de transporte.** La API oficial no permite enviar mensajes en nombre de un usuario (OAuth2 solo entrega su identidad), por lo que el cliente de cada persona usa un **bot** propio, con su token en variables de entorno (RS10), que publica y lee mensajes en un canal privado de un servidor de Discord creado para el proyecto. Como el autor de todos los mensajes que Discord muestra es un bot, **no se confía en el autor que reporta Discord**: el emisor y el receptor viajan dentro del mensaje (`from`, `to`) y se autentican mediante el *handshake* firmado y las claves por dirección. Cada cliente lee el canal, descarta los mensajes que no van dirigidos a su identificador y procesa el resto. Cualquier miembro del canal ve únicamente mensajes del protocolo (`hs1`, `hs2`, `hs3`) y ciphertext.
 
 ![Arquitectura de componentes y flujos de información](img/arquitectura.png)
 
 
 #### 4.2.2 Registro y custodia de la identidad
 
-Durante el registro, el cliente genera el par X25519 **en el dispositivo** (RF1). La llave privada se cifra con una clave derivada de la contraseña maestra mediante **Argon2id** con *salt* único por usuario (RS2) y jamás abandona el dispositivo (RS1); la llave pública se publica en el directorio asociada al identificador de Discord (RF2), de modo que el directorio nunca custodia material secreto.
+Durante el registro, el cliente genera el par de firma **Ed25519** en el dispositivo (RF1). La llave privada se cifra con una clave derivada de la contraseña maestra mediante **Argon2id** con *salt* único por usuario (RS2) y jamás abandona el dispositivo (RS1). La llave pública se publica en el directorio asociada al identificador de Discord (RF2) y el directorio nunca custodia material secreto. Para impedir que alguien registre una llave a nombre de otro, el directorio exige **prueba de posesión**: entrega un *nonce* y el cliente lo devuelve firmado junto con su identificador y la llave (`Sign(ctx_registro ‖ id ‖ pk ‖ nonce)`), mientras que el vínculo con la cuenta de Discord se comprueba con OAuth2. Un cambio posterior de llave debe firmarse con la llave anterior o repetir la autenticación OAuth2; en este último caso los contactos reciben la alerta de RF8.
 
 ![Flujo de registro y custodia de la identidad](img/flujo-registro.png)
 
 
-#### 4.2.3 Protocolo de mensajería
+#### 4.2.3 Establecimiento de sesión: *handshake* autenticado con PFS
 
-El protocolo de mensajería implementa el esquema criptográfico:
+Antes de intercambiar mensajes, dos usuarios establecen una sesión con tres mensajes enviados por Discord. Sea `T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión` la transcripción, donde `R_A` y `R_B` son nonces de 256 bits, `sid` es un identificador de sesión y `epk` son las llaves públicas X25519 efímeras (`g^a`, `g^b`):
 
-1. **Envío.** El emisor genera un par efímero X25519 por mensaje y calcula el secreto compartido por **ECDH** contra la llave pública de identidad del receptor (RF4).
-2. **Derivación.** El secreto se procesa con **HKDF-SHA256** para derivar la clave de sesión AES-256 (RF3).
-3. **Cifrado.** El contenido se cifra con **AES-256-GCM**, usando como datos autenticados adicionales (AAD) los identificadores de emisor y receptor, lo que ata el criptograma a su contexto (RF3, RS4). El *nonce* de 96 bits proviene del CSPRNG del sistema operativo y jamás se reutiliza bajo la misma clave (RS4, RS11).
-4. **Transmisión.** El criptograma viaja por la API de Discord hasta el receptor.
-5. **Descarte.** La llave efímera se descarta tras el envío, de modo que el compromiso posterior de la llave de identidad no permite descifrar mensajes ya enviados (forward secrecy) (RS9).
-6. **Recepción.** El receptor extrae la llave efímera del mensaje, recupera el mismo secreto por ECDH, deriva la misma clave y descifra **verificando la etiqueta de autenticación GCM**; cualquier mensaje cuya etiqueta no valide es rechazado y marcado como no descifrable (RF5, RF11, RS5). El texto plano permanece en memoria el menor tiempo posible (RS3).
+1. **hs1 (A→B).** A genera `a` y `R_A`, y envía `ids, sid, R_A, epk_A`. Antes, ambos extremos consultan la llave de firma del otro en el directorio por TLS 1.3 y la comparan con el *pin* si el contacto fue verificado (RF8).
+2. **hs2 (B→A).** B genera `b` y `R_B`, calcula `g^ab` y deriva las claves (ver abajo). Responde `R_B, epk_B, σ_B, tag_B` con `σ_B = Sign_B(ctx_resp ‖ T)` y `tag_B = HMAC(K_conf, "B" ‖ SHA-256(T))`.
+3. **hs3 (A→B).** A verifica `σ_B` con la llave de B y `tag_B`; **si alguno falla, aborta**. Calcula las mismas claves y responde `σ_A = Sign_A(ctx_ini ‖ T)` y `tag_A`. A **destruye `a`**.
+4. **Activación.** B verifica `σ_A` y `tag_A` (si fallan, aborta) y **destruye `b`**. La sesión queda activa para ambos (RF13).
 
-![Protocolo de mensajería: envío y recepción](img/flujo-mensaje.png)
+**Derivación.** `PRK = HKDF-Extract(sal = SHA-256(T), IKM = g^ab)`; luego `HKDF-Expand` produce tres llaves independientes: `K_AB` (A→B), `K_BA` (B→A) y `K_conf` (confirmación). Todo el material aleatorio proviene del CSPRNG del sistema operativo (RS11).
+
+**Por qué este diseño resiste los ataques conocidos contra protocolos** (RS12, RS13, RS15):
+* **Autenticación mutua:** cada extremo firma toda la transcripción con su llave de identidad; un atacante activo que reemplace `epk_A` o `epk_B` invalida las firmas.
+* **PFS en ambos extremos:** `a` y `b` solo existen durante el *handshake*. Quien robe después la llave de identidad podrá suplantar al usuario en sesiones **futuras**, pero no recuperar `K_AB` ni `K_BA` de sesiones pasadas.
+* **Reflexión y oráculo de firma:** los roles son asimétricos (`ctx_ini ≠ ctx_resp`), la identidad de quien firma y del destinatario está dentro de lo firmado y la llave de identidad solo firma datos con prefijo de contexto fijo; nunca firma un valor elegido por el otro extremo sin ese prefijo.
+* **Degradación:** la versión viaja en `T`; no hay negociación de algoritmos (una sola suite), de modo que no existe un ataque de *downgrade*.
+* **Confirmación de clave:** `tag_A` y `tag_B` prueban que ambos derivaron la misma clave a partir de la misma transcripción (análogo al `Finished` de TLS).
+* **Frescura:** `R_A`, `R_B` y `sid` evitan el *replay* del *handshake*; una sesión pendiente caduca a los 5 minutos y su llave efímera se destruye.
+
+**Cola de salida y reintentos.** Los mensajes que el usuario escribe sin sesión activa esperan en una cola local, guardada en el almacén cifrado del dispositivo (RF14); no salen del dispositivo hasta que la sesión esté activa. Lo que caduca es el **intento** de *handshake*: si el otro extremo no responde, el cliente destruye su llave efímera y, de forma automática, inicia un intento nuevo (con `a`, `R_A` y `sid` nuevos) con espera creciente entre reintentos (15 min, 30 min, 60 min…), hasta un máximo de intentos, tras el cual la conversación muestra "contacto no disponible" y el usuario puede reintentar manualmente. El receptor ignora cualquier `hs1` cuya antigüedad supere la caducidad, por lo que un `hs1` viejo que aparezca al reconectarse no inicia una sesión.
+
+![Handshake autenticado y mensajería](img/flujo-handshake.png)
 
 
-#### 4.2.4 Ceremonia de verificación
+#### 4.2.4 Protocolo de mensajería
 
-La ceremonia de verificación ofrece protección contra el ataque de sustitución de llaves (RS7). Ambos extremos calculan la huella digital `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente (RS8), presentada truncada a 60 dígitos decimales en grupos de cinco. Los usuarios comparan esas huellas **fuera del canal de Discord** (llamada, presencia o código QR). Solo entonces el cliente persiste el estado de *verificado* junto con un *pin* de la llave pública (RF7); si la llave cambia posteriormente, el *pin* permite detectar la discrepancia, revocar la verificación y alertar al usuario (RF8).
+Una vez activa la sesión, cada mensaje se protege con cifrado autenticado:
+
+1. **Cifrado.** El emisor cifra con **AES-256-GCM** usando la llave de su dirección (`K_AB` o `K_BA`), un *nonce* de 96 bits del CSPRNG que jamás se reutiliza bajo la misma clave (RS4, RS11) y como datos autenticados adicionales (AAD) `sid ‖ emisor ‖ receptor ‖ ctr`, donde `ctr` es un contador por dirección (RF3).
+2. **Transmisión.** Viaja por Discord `E2EE1:{sid, ctr, nonce, ciphertext+tag}`.
+3. **Recepción.** El receptor comprueba que `sid` corresponde a una sesión activa y que `ctr` no fue visto ni cae fuera de la ventana de recepción (RS14). Luego descifra **verificando la etiqueta GCM**; cualquier mensaje cuya etiqueta no valide es rechazado y marcado como no descifrable (RF5, RF11, RS5). El texto plano permanece en memoria el menor tiempo posible (RS3).
+
+**Identidad del emisor.** Cada mensaje queda atribuido a su autor porque solo A y B conocen `K_AB` y `K_BA`, que se derivaron de un *handshake* en el que ambos demostraron su identidad con firmas. Esto es lo mismo que hacen SSH y TLS, que firman el *handshake* y no cada registro. No se firma cada mensaje por decisión de diseño: una firma por mensaje sería una prueba transferible a terceros (no repudio) que una conversación privada no necesita, y multiplicaría los usos de la llave de identidad. Las claves por dirección impiden además que un mensaje de A se refleje hacia A como si fuera de B.
+
+#### 4.2.5 Rotación de claves y destrucción
+
+Las sesiones se renuevan con un nuevo *handshake* después de un número máximo de mensajes (por defecto 100), de un tiempo máximo (por defecto 8 h) o a petición del usuario (RS9). Al activarse la nueva sesión, las claves anteriores se destruyen tras una breve ventana de gracia para mensajes en tránsito. Como consecuencia de la PFS, Discord conserva mensajes que ya nadie puede descifrar con las claves de sesión; por eso el cliente guarda el historial **ya descifrado** únicamente en un almacén local cifrado con AES-256-GCM bajo una clave derivada de la contraseña maestra (Argon2id), nunca en registros ni archivos temporales (RS3).
+
+#### 4.2.6 Ceremonia de verificación
+
+La ceremonia de verificación ofrece protección contra el ataque de sustitución de llaves en el directorio (RS7), que las firmas por sí solas no impiden, pues un directorio malicioso podría entregar una llave de identidad propia. Ambos extremos calculan la huella digital `SHA-256(pk_A || pk_B)` con las llaves de firma ordenadas lexicográficamente (RS8), presentada truncada a 60 dígitos decimales en grupos de cinco. Los usuarios comparan esas huellas **fuera del canal de Discord** (llamada, presencia o código QR). Solo entonces el cliente persiste el estado de *verificado* junto con un *pin* de la llave pública (RF7); si la llave cambia posteriormente, el *pin* permite detectar la discrepancia, revocar la verificación, **abortar el *handshake*** y alertar al usuario (RF8). El cliente no ofrece un botón de "continuar de todos modos" ante un cambio de llave.
 
 ![Ceremonia de verificación fuera de banda](img/verificacion.png)
 
+
+#### 4.2.7 Análisis de ataques
+
+Siguiendo el modelo de Dolev y Yao, se revisan los ataques considerados contra el protocolo:
+
+| Ataque | Cómo se intenta | Defensa |
+|---|---|---|
+| Espionaje pasivo (Discord, red) | Leer o guardar mensajes y *handshakes* | AES-256-GCM; las claves se derivan de DH efímero, que no viaja |
+| *Man-in-the-middle* en el *handshake* | Reemplazar `epk_A` o `epk_B` | Las firmas cubren ambas llaves efímeras y los ids (RS13) |
+| Sustitución de llaves en el directorio | Devolver una llave de firma del atacante | TLS 1.3 con CA propia (RS6), ceremonia OOB y *pin* (RS7, RF8). **Riesgo residual:** un primer contacto no verificado es vulnerable, como el TOFU de SSH |
+| *Replay* de *handshake* o de mensajes | Reenviar un mensaje grabado | Nonces `R_A`/`R_B`, `sid`, contador `ctr` y ventana (RS14); caducidad de sesiones pendientes |
+| Reflexión | Usar a B como oráculo de sus propios mensajes | Roles asimétricos, ids firmados, claves por dirección (RS13, RS15) |
+| Oráculo de firma o descifrado | Hacer que la víctima firme o descifre datos elegidos | La llave de identidad solo firma con prefijo de contexto; no se descifra nada fuera de una sesión (RS15) |
+| Degradación | Forzar un algoritmo débil | Suite única; versión dentro de la transcripción firmada |
+| Suplantación (*misbinding*) | Hacer que B crea hablar con otra persona | Los ids de ambos están dentro de la firma y del AAD |
+| Compromiso posterior de la llave de identidad | Robarla y descifrar tráfico guardado | PFS: `a` y `b` destruidas (RS12). No protege sesiones **futuras** ni un dispositivo ya comprometido (fuera de alcance) |
+| Alteración o inyección de mensajes | Modificar o falsificar el ciphertext | Etiqueta GCM con AAD (RS5) |
+| Eliminación o reordenamiento por Discord | Borrar o reordenar mensajes | Los huecos y el desorden se detectan por `ctr`; la disponibilidad queda fuera de alcance |
 
 ## 5. Implementación Propuesta
 
 ### 5.1 Arquitectura general
 
-El proyecto se compone de tres elementos. El **cliente** concentra toda la lógica criptográfica y es el único punto donde existe el _plain text_. El **directorio de llaves** es un servicio propio que va a almacenar los pares (identificador **Discord** -> llave pública). Por último **Discord**, actúa exclusivamente como una capa de transporte de los mesnajes y la persistencia de estos.
+El proyecto se compone de tres elementos. El **cliente** concentra toda la lógica criptográfica y es el único punto donde existe el _plain text_. El **directorio de llaves** es un servicio propio que va a almacenar los pares (identificador **Discord** -> llave pública). Por último **Discord**, actúa exclusivamente como una capa de transporte de los mesnajes y la persistencia de estos, a través de un bot y un canal privado.
 
 ### 5.2 Esquema criptográfico concreto
 
-1. Cada usaurio posee una llave de identidad de curva elíptica X25519
+| Elemento | Algoritmo / parámetro |
+|---|---|
+| Identidad (autenticación) | Ed25519, un par por usuario, generado en el dispositivo |
+| Acuerdo de clave | X25519, par **efímero** por sesión en cada extremo, destruido tras derivar la clave |
+| Derivación | HKDF-SHA256 con sal `SHA-256(T)`; salidas independientes `K_AB`, `K_BA`, `K_conf` |
+| Confirmación de clave | HMAC-SHA256 con `K_conf` sobre `SHA-256(T)` |
+| Cifrado de mensajes | AES-256-GCM, *nonce* de 96 bits del CSPRNG, AAD = `sid ‖ emisor ‖ receptor ‖ ctr` |
+| Custodia de la identidad | Argon2id + *salt* único; AES-256-GCM sobre la llave privada |
+| Huella de verificación | SHA-256 sobre las llaves de firma ordenadas, 60 dígitos |
+| Rotación | Nuevo *handshake* cada 100 mensajes o 8 h; ventana de gracia breve |
 
-2. Para cada mensaje, el emisor genera un par efímero X25519 y calcula un secreto copartido por ECDH contra la llave pública de indentidad del receptor.
-
-3. El secreto se pasas por HKDF-SHA256 para derivar la clave de sesión AES-256.
-
-4. El contendio se cifra con AES-256-GCM, usando datos adicionales autenticados los identificadores de emisor y receptor, lo que permite relacionar el criptograma a su contexto.
-
-5. Se descarta la clave efímera, de modo que el compromiso posterior de la llave de identidad no permite descrifrar los mensajes ya enviadas.
+1. Cada usuario posee una llave de identidad **Ed25519**, que solo firma.
+2. Para iniciar una sesión, cada extremo genera un par efímero X25519 y ambos intercambian `epk`, nonces e identificadores.
+3. Cada extremo firma la transcripción completa con su llave de identidad y verifica la del otro; ambos se confirman la clave con un MAC.
+4. Del secreto Diffie-Hellman se derivan, por HKDF-SHA256, una clave AES-256 distinta para cada dirección.
+5. Los mensajes se cifran con AES-256-GCM con el contador y el identificador de sesión como datos autenticados.
+6. Las llaves efímeras se destruyen al derivar la clave, de modo que el compromiso posterior de la llave de identidad no permite descifrar sesiones pasadas.
 
 ### 5.3 Proceso de verificación
 
-La huella digital se calcula como `SHA-256(pk_A || pk_B)` con las llaves ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales agrupos de cinco en cinco, siguiendo el patrón de los _safety numbers_ de Signal.
-Luego los usuarios la comparan por llamada telefónica, presencialmente o escanenado el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF9.
+La huella digital se calcula como `SHA-256(pk_A || pk_B)` con las llaves de firma ordenadas lexicográficamente, y se presenta truncada a 60 dígitos decimales en grupos de cinco, siguiendo el patrón de los _safety numbers_ de Signal.
+Luego los usuarios la comparan por llamada telefónica, presencialmente o escaneando el QR del otro dispositivo. Solo entonces el cliente persiste el estado de "verificado" junto con un _pin_ de la llave pública, que habilita la alerta de RF8.
 
 ### 5.4 Tecnologías
 
@@ -204,7 +278,7 @@ Luego los usuarios la comparan por llamada telefónica, presencialmente o escane
 
 ### 5.5 Fases de ejecución
 
-1. **Núcleo criptográfico aislado:** Implementar el cifrado/descrifrado y la derivación de claves.
+1. **Núcleo criptográfico aislado:** Implementar el *handshake* autenticado, la derivación de claves y el cifrado/descifrado, con pruebas de los caminos de rechazo (firma, confirmación de clave y etiqueta GCM inválidas, *replay*).
 
 2. **Almacén local de identidad:** Generación de llaves, cifrado con contraseña maestra, exportación e importación.
 
@@ -216,7 +290,14 @@ Luego los usuarios la comparan por llamada telefónica, presencialmente o escane
 
 ### 5.6 Limitaciones reconocidas
 
-El sistema protege el contenido, no el patrón de comunicación que se realiza a través de la API de **Discord**.
+El sistema protege el contenido, no el patrón de comunicación que se realiza a través de la API de **Discord**. Además:
+
+* Las conversaciones son entre dos personas; no hay mensajes de grupo. Los participantes de un mismo canal pueden ver quién se comunica con quién y cuándo (metadatos).
+* El *handshake* es interactivo: ambos usuarios deben estar conectados para establecer una sesión. Mientras tanto los mensajes esperan en una cola local cifrada (RF14) y no se pierden si el usuario cierra la aplicación. Los reintentos solo se ejecutan con la aplicación abierta y se retoman con un *handshake* nuevo al reabrirla, porque la llave efímera del intento pendiente nunca se guarda en disco, a fin de no comprometer la PFS.
+* La PFS implica que Discord guarda mensajes que las claves de sesión ya no pueden descifrar; por eso el historial se conserva descifrado en un almacén local cifrado.
+* Un primer contacto no verificado depende de la confianza en el directorio (TOFU); la ceremonia OOB lo corrige.
+* No hay seguridad posterior al compromiso dentro de una sesión (*post-compromise security*) ni *ratchet* por mensaje; la rotación periódica limita el daño.
+* No se firma cada mensaje, por lo que no hay no repudio.
  
 ---
 
@@ -229,5 +310,21 @@ El sistema protege el contenido, no el patrón de comunicación que se realiza a
 * Alatawi, M., & Saxena, N. (2023). SoK: An analysis of end-to-end encryption and authentication ceremonies in secure messaging systems. En Proceedings of the 16th ACM Conference on Security and Privacy in Wireless and Mobile Networks (pp. 187–201). ACM. https://doi.org/10.1145/3558482.3581773 
 
 * Naor, M., Rotem, L., & Segev, G. (2018). The security of lazy users in out-of-band authentication (IACR Cryptology ePrint 2018/823). IACR. https://eprint.iacr.org/2018/823
+
+* Abadi, M., & Needham, R. (1996). Prudent engineering practice for cryptographic protocols. IEEE Transactions on Software Engineering, 22(1), 6–15. https://doi.org/10.1109/32.481513
+
+* Davis, D. (2001). Defective sign & encrypt in S/MIME, PKCS#7, MOSS, PEM, PGP, and XML. En Proceedings of the USENIX Annual Technical Conference.
+
+* Krawczyk, H. (2003). SIGMA: The "SIGn-and-MAc" approach to authenticated Diffie-Hellman and its use in the IKE protocols. En CRYPTO 2003 (LNCS 2729, pp. 400–425). Springer.
+
+* Rescorla, E. (2018). The Transport Layer Security (TLS) Protocol Version 1.3 (RFC 8446). IETF. https://www.rfc-editor.org/rfc/rfc8446
+
+* Ylonen, T., & Lonvick, C. (2006). The Secure Shell (SSH) Transport Layer Protocol (RFC 4253). IETF. https://www.rfc-editor.org/rfc/rfc4253
+
+* Krawczyk, H., & Eronen, P. (2010). HMAC-based Extract-and-Expand Key Derivation Function (HKDF) (RFC 5869). IETF. https://www.rfc-editor.org/rfc/rfc5869
+
+* Langley, A., Hamburg, M., & Turner, S. (2016). Elliptic Curves for Security (RFC 7748). IETF. https://www.rfc-editor.org/rfc/rfc7748
+
+* Josefsson, S., & Liusvaara, I. (2017). Edwards-Curve Digital Signature Algorithm (EdDSA) (RFC 8032). IETF. https://www.rfc-editor.org/rfc/rfc8032
 
 * Dolev, D., & Yao, A. C. (1983). On the security of public key protocols. IEEE Transactions on Information Theory, 29(2), 198–208. https://doi.org/10.1109/TIT.1983.1056650

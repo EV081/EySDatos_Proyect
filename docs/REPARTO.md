@@ -58,7 +58,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 |---|---|---|
 | F1 | **Directorio de llaves** FastAPI + PostgreSQL. **Authn**: publicar/rotar una llave exige **prueba de posesión** (challenge-response con nonce, firmando `[ctx ‖ nonce]`) y vincular el `discord_id` vía OAuth2 (scope `identify`). **Authz**: solo el dueño modifica su registro; los demás solo leen. Consultas parametrizadas (SQLAlchemy), rate-limit anti-enumeración, errores genéricos con correlation id. **Roles de BD con GRANT/REVOKE mínimo** (app no es owner) | S06 (authn≠authz, confused deputy), S07-BD (SQLi, GRANT/REVOKE, RBAC), S07-Vuln (A01, A05, A10), S09 (challenge-response, separación de dominio) |
 | F2 | **TLS 1.3 + certificados**: CA raíz propia + certificado del directorio (openssl/mkcert), el cliente valida contra esa CA y **no permite continuar** si falla (RS6). Documentar la cadena de confianza, expiración y revocación (cómo se invalida un cert comprometido) | S05 (PKI, revocación), S09 (TLS 1.3, CA raíz, HSTS) |
-| F3 | **Adaptador Discord** (`discord.py`): enviar/recibir texto cifrado con prefijo `E2EE1:`, cola de mensajes pendientes hasta completar handshake, token en `.env` (RS10), OAuth2/bot (RF10). Trabajar contra stub de crypto hasta que llegue E2 | S07-Vuln (A02/A07 secretos, A03 cadena de suministro) |
+| F3 | **Adaptador Discord** (`discord.py`): crear el servidor privado y el canal de demo (`#e2ee-relay`) y un bot por persona; publicar/leer en el canal mensajes `E2EE1:`, **ignorando el autor de Discord** (siempre es un bot) y filtrando por el campo `to`; cola de mensajes pendientes hasta completar handshake, token en `.env` (RS10), OAuth2/bot (RF10). Trabajar contra stub de crypto hasta que llegue E2 | S07-Vuln (A02/A07 secretos, A03 cadena de suministro) |
 | F4 | **Backups y recuperación**: `pg_dump` programado y **cifrado** (AES-GCM, llave fuera del repo y del servidor), **copia fuera del dominio de falla** (no en el mismo host/red), script de restauración **probado**, documentar RPO/RTO y plazo de retención del backup (cuenta para el derecho de cancelación) | S02-L1 ("el backup en la misma red que el ransomware"), S07-BD (cifrado en BD y gestión de llaves), L11 |
 | F5 | **Logs de auditoría y alertas**: eventos de publicar/rotar/cambiar llave, fallos de firma, intentos de enumeración; **sin texto plano, sin llaves, ids seudonimizados** (RS3). Alertas básicas (p.ej. N fallos seguidos, cambio de llave masivo) | S07-Vuln (A09 Logging & Alerting), S02-L1 (MTTD/MTTR), L11 (logs sin datos personales) |
 | F6 | **Herramientas de análisis**: SAST (**Bandit**/Semgrep), SCA (**pip-audit**/Trivy) + **SBOM**, escaneo de secretos (gitleaks) y **tests de "acceso ajeno"** por endpoint. Ejecutar en CI (GitHub Actions), guardar reportes antes/después, corregir hallazgos y mapear a OWASP Top 10:2025 (checklist A01–A10) | S07-Vuln, S02-L1 |
@@ -169,7 +169,9 @@ frontend -> client -> crypto
 ## 6. Checklist de la demo en vivo (local)
 
 - [ ] Dos usuarios (dos perfiles de navegador) con identidad generada localmente y protegida por contraseña maestra.
-- [ ] Mensaje real por Discord: Discord muestra solo `E2EE1:…`; el front muestra el texto plano.
+- [ ] **Escenario principal:** Elmer y Farid, cada uno en su laptop con su cliente y su bot, en el canal `#e2ee-relay`. Pantalla dividida: Discord (se ven `hs1/hs2/hs3` y luego solo `E2EE1:…` ilegible) frente a la app (texto plano).
+- [ ] Elmer envía un mensaje, Farid lo ve descifrado en su app y responde; en Discord ambos son ciphertext publicado por bots.
+- [ ] Mostrar que un tercero con acceso al canal (o el propio Discord) no puede leerlo.
 - [ ] Mensaje alterado o firma inválida → "no descifrable"; replay del mismo mensaje → rechazado.
 - [ ] Handshake con MITM simulado (directorio devuelve otra llave) → la huella no coincide / alerta de cambio.
 - [ ] Verificación de huella fuera de banda + insignia; cambio de llave → revocación automática.

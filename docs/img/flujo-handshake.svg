@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="860" viewBox="0 0 1180 860" font-family="DejaVu Sans, Arial, sans-serif">
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker><marker id="as" markerWidth="10" markerHeight="10" refX="1" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="1180" height="860" fill="#ffffff"/>
+<rect x="105" y="14" width="260" height="56" rx="12" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="235" y="38" font-size="16" text-anchor="middle" fill="#1d4ed8" font-weight="bold">ALICE (cliente A)</text>
+<text x="235" y="58" font-size="12" text-anchor="middle" fill="#374151" font-weight="normal">inicia la sesión</text>
+<line x1="235" y1="70" x2="235" y2="740" stroke="#1d4ed8" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="460" y="14" width="260" height="56" rx="12" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+<text x="590" y="38" font-size="16" text-anchor="middle" fill="#6d28d9" font-weight="bold">DISCORD</text>
+<text x="590" y="58" font-size="12" text-anchor="middle" fill="#374151" font-weight="normal">solo transporta y persiste bytes</text>
+<line x1="590" y1="70" x2="590" y2="740" stroke="#6d28d9" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="815" y="14" width="260" height="56" rx="12" fill="#d1fae5" stroke="#047857" stroke-width="2"/>
+<text x="945" y="38" font-size="16" text-anchor="middle" fill="#047857" font-weight="bold">BOB (cliente B)</text>
+<text x="945" y="58" font-size="12" text-anchor="middle" fill="#374151" font-weight="normal">responde</text>
+<line x1="945" y1="70" x2="945" y2="740" stroke="#047857" stroke-width="1.5" stroke-dasharray="6 6"/>
+<rect x="60" y="90" width="350" height="56" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.6"/>
+<text x="235.0" y="112" font-size="13" text-anchor="middle" fill="#1f2937" font-weight="normal">0. Obtiene pk_B del directorio (TLS 1.3)</text>
+<text x="235.0" y="131" font-size="13" text-anchor="middle" fill="#1f2937" font-weight="normal">y la compara con el pin guardado</text>
+<rect x="770" y="90" width="350" height="56" rx="10" fill="#f8fafc" stroke="#64748b" stroke-width="1.6"/>
+<text x="945.0" y="112" font-size="13" text-anchor="middle" fill="#1f2937" font-weight="normal">0. Obtiene pk_A del directorio (TLS 1.3)</text>
+<text x="945.0" y="131" font-size="13" text-anchor="middle" fill="#1f2937" font-weight="normal">y la compara con el pin guardado</text>
+<line x1="235" y1="192" x2="945" y2="192" stroke="#1d4ed8" stroke-width="2.2" marker-end="url(#a)" />
+<text x="590.0" y="182" font-size="13" text-anchor="middle" fill="#1d4ed8" font-weight="bold">1. hs1:  ids, sid, R_A, epk_A = g^a</text>
+<rect x="740" y="208" width="410" height="104" rx="10" fill="#ecfdf5" stroke="#047857" stroke-width="1.6"/>
+<text x="945.0" y="230" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Bob genera b efímero y R_B</text>
+<text x="945.0" y="248" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión</text>
+<text x="945.0" y="266" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">PRK = HKDF(g^ab, sal = SHA-256(T)) → K_AB, K_BA, K_conf</text>
+<text x="945.0" y="284" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">σ_B = Sign_B(ctx_resp ‖ T);  tag_B = HMAC(K_conf, "B" ‖ H(T))</text>
+<line x1="945" y1="354" x2="235" y2="354" stroke="#047857" stroke-width="2.2" marker-end="url(#a)" />
+<text x="590.0" y="344" font-size="13" text-anchor="middle" fill="#047857" font-weight="bold">2. hs2:  R_B, epk_B = g^b, σ_B, tag_B</text>
+<rect x="30" y="372" width="410" height="122" rx="10" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.6"/>
+<text x="235.0" y="394" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Alice verifica σ_B con pk_B  → si falla: ABORTA</text>
+<text x="235.0" y="412" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Deriva las mismas claves (g^ab = (g^b)^a)</text>
+<text x="235.0" y="430" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Verifica tag_B (confirmación de clave)</text>
+<text x="235.0" y="448" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">σ_A = Sign_A(ctx_ini ‖ T);  tag_A = HMAC(K_conf, "A" ‖ H(T))</text>
+<text x="235.0" y="466" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Destruye a (efímero): sin él, el pasado no se recupera</text>
+<line x1="235" y1="536" x2="945" y2="536" stroke="#1d4ed8" stroke-width="2.2" marker-end="url(#a)" />
+<text x="590.0" y="526" font-size="13" text-anchor="middle" fill="#1d4ed8" font-weight="bold">3. hs3:  σ_A, tag_A</text>
+<rect x="740" y="552" width="410" height="78" rx="10" fill="#ecfdf5" stroke="#047857" stroke-width="1.6"/>
+<text x="945.0" y="574" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Bob verifica σ_A con pk_A y tag_A → si falla: ABORTA</text>
+<text x="945.0" y="592" font-size="12" text-anchor="middle" fill="#1f2937" font-weight="normal">Destruye b (efímero)  →  SESIÓN ACTIVA (PFS en ambos lados)</text>
+<line x1="235" y1="672" x2="945" y2="672" stroke="#b45309" stroke-width="2.2" marker-end="url(#a)" />
+<text x="590.0" y="662" font-size="13" text-anchor="middle" fill="#b45309" font-weight="bold">4. msg:  sid, ctr, nonce, AES-256-GCM(K_AB, m; AAD)</text>
+<line x1="945" y1="712" x2="235" y2="712" stroke="#b45309" stroke-width="2.2" marker-end="url(#a)" />
+<text x="590.0" y="702" font-size="13" text-anchor="middle" fill="#b45309" font-weight="bold">4'. msg:  sid, ctr, nonce, AES-256-GCM(K_BA, m; AAD)</text>
+<rect x="20" y="758" width="1140" height="84" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+<text x="590.0" y="782" font-size="12.5" text-anchor="middle" fill="#1f2937" font-weight="normal">ctx_ini ≠ ctx_resp (separación de dominio y roles asimétricos: evita reflexión y oráculo de firma).  Las firmas cubren ids, nonces y ambas llaves efímeras.</text>
+<text x="590.0" y="804" font-size="12.5" text-anchor="middle" fill="#1f2937" font-weight="normal">Claves distintas por dirección (K_AB, K_BA) y contador ctr por dirección: un mensaje no puede reflejarse ni repetirse.  AAD = sid ‖ emisor ‖ receptor ‖ ctr.</text>
+<text x="590.0" y="826" font-size="12.5" text-anchor="middle" fill="#b91c1c" font-weight="bold">Tras 3 y 4, el robo de la llave de identidad no descifra el tráfico grabado: las llaves efímeras a, b ya no existen (PFS).</text>
+</svg>

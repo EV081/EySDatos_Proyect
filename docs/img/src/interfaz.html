@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1063px;height:721px;font-family:Inter,"DejaVu Sans",Arial,sans-serif;background:#fff;color:#1f2937;font-size:14px;overflow:hidden}
+.win{width:1063px;height:721px;border:1px solid #d1d5db;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:#fff}
+.title{height:40px;background:#f3f4f6;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;position:relative;color:#4b5563;font-size:13px}
+.dots{position:absolute;left:16px;display:flex;gap:8px}.dots i{width:12px;height:12px;border-radius:50%;display:block}
+.main{flex:1;display:flex;min-height:0}
+.side{width:302px;background:#f3f4f6;border-right:1px solid #e5e7eb;padding:20px 14px;display:flex;flex-direction:column}
+.side h6{font-size:11px;letter-spacing:.08em;color:#6b7280;margin:0 8px 14px}
+.c{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;margin-bottom:10px;border:1px solid transparent;position:relative}
+.c.sel{background:#e0e7ff;border-color:#a5b4fc}.c.bad{background:#fee2e2;border-color:#fca5a5}
+.av{width:36px;height:36px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:600;color:#4b5563;flex:none}
+.bad .av{background:#fecaca}
+.nm{font-weight:600}.bad .nm,.bad .sb{color:#dc2626}.sb{font-size:12.5px;color:#4b5563;margin-top:2px}
+.pill{position:absolute;right:12px;top:10px;font-size:11px;padding:1px 8px;border-radius:10px}
+.ok{background:#d1fae5;color:#047857;border:1px solid #6ee7b7}.warn{background:#fecaca;color:#b91c1c;border:1px solid #fca5a5}.wait{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.ident{margin-top:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;font-weight:600;font-size:13.5px}
+.ident span{font-weight:400;color:#6b7280;font-size:12px}
+.chat{flex:1;display:flex;flex-direction:column;min-width:0}
+.head{padding:14px 24px;border-bottom:1px solid #e5e7eb;background:#f9fafb}
+.head b{font-size:17px}.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:8px;margin-left:8px;font-weight:600}
+.b1{background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc}
+.fp{font-family:"DejaVu Sans Mono",monospace;font-size:11px;color:#6b7280;margin-top:5px}.fp b{font-size:11px;color:#047857}
+.msgs{flex:1;padding:16px 24px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.alert{background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;color:#92400e;line-height:1.45;display:flex;gap:14px}
+.m{max-width:62%;padding:12px 18px;border-radius:14px;line-height:1.4}
+.me{align-self:flex-end;background:#6366f1;color:#fff}.th{background:#f3f4f6;align-self:flex-start}
+.meta{font-size:11px;color:#6b7280}.meta.r{align-self:flex-end}
+.err{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;color:#991b1b;max-width:68%;display:flex;gap:12px;line-height:1.4}
+.in{padding:18px 24px;border-top:1px solid #e5e7eb}.box{border:1px solid #d1d5db;border-radius:12px;padding:8px 8px 8px 16px;display:flex;justify-content:space-between;align-items:center;color:#9ca3af}
+.btn{background:#6366f1;color:#fff;border-radius:8px;padding:9px 18px;font-weight:600}
+</style></head><body><div class="win">
+<div class="title"><div class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>Cliente de Mensajería Cifrada E2EE</div>
+<div class="main"><div class="side"><h6>CONTACTOS</h6>
+<div class="c sel"><div class="av">A</div><div><div class="nm">@alice 🔒</div><div class="sb">Perfecto, nos vemos entonces.</div></div><span class="pill ok">✓ Verificado</span></div>
+<div class="c"><div class="av">B</div><div><div class="nm">@bob 🔒</div><div class="sb">Cifrado activo</div></div></div>
+<div class="c"><div class="av">C</div><div><div class="nm">@carla</div><div class="sb">Estableciendo sesión… (2 en cola)</div></div><span class="pill wait">⏳ Handshake</span></div>
+<div class="c bad"><div class="av">⚠️</div><div><div class="nm">usuarioX</div><div class="sb">Verificación revocada</div></div><span class="pill warn">Llave cambió</span></div>
+<div class="ident"><div>⚙️ Gestión de Identidad</div><span>Ed25519</span></div></div>
+<div class="chat"><div class="head"><b>@alice</b><span class="badge b1">🔒 Cifrado E2EE</span><span class="badge ok">✓ Verificado</span><div class="fp">Huella de seguridad: <b>48291 37502 68304 75261 19543 84739</b></div></div>
+<div class="msgs">
+<div class="alert"><div>⚠️</div><div><b>Alerta de seguridad:</b> La llave pública del contacto ha cambiado recientemente. El estado de verificación previa ha sido revocado automáticamente para prevenir ataques de intermediario.</div></div>
+<div class="m me">¿Coordinamos la entrega para las 3 pm? 🔒</div><div class="meta r">14:32 · Cifrado AES-256-GCM</div>
+<div class="m th">¡Confirmado! Ya tengo listos los documentos de la reunión. 🔒</div><div class="meta">14:33 · Verificado</div>
+<div class="err"><div>⛔</div><div><b>Mensaje no descifrable:</b> Fallo en la verificación de autenticidad (etiqueta GCM inválida). El contenido fue descartado.</div></div><div class="meta">14:34 · Error de integridad</div>
+<div class="m me">De acuerdo, te veo en la sala principal. 🔒</div><div class="meta r">14:35 · Cifrado AES-256-GCM</div>
+</div>
+<div class="in"><div class="box"><span>Escribe un mensaje cifrado de extremo a extremo...</span><span class="btn">Enviar 🔒</span></div></div></div></div></div></body></html>
