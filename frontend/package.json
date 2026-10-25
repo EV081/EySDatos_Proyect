@@ -1,0 +1,26 @@
+{
+  "name": "e2ee-discord-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Interfaz web del cliente de mensajería cifrada sobre Discord",
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 5173",
+    "build": "next build",
+    "start": "node scripts/serve.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test",
+    "e2e": "node e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}
