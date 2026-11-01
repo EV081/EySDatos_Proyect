@@ -1,0 +1,18 @@
+# gitleaks (F6): reglas por defecto. En el modo "árbol" se excluye lo que git ya ignora y nunca se publica
+# (el .env real, el venv, dependencias, llaves locales de la CA y registros).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Material local que no se versiona"
+paths = [
+  '''(^|/)\.env$''',
+  '''(^|/)\.venv/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)\.git/''',
+  '''(^|/)ops/certs/private/''',
+  '''(^|/)ops/reports/''',
+  '''(^|/)logs/''',
+  '''(^|/)data/''',
+]

@@ -1,0 +1,126 @@
+# F6: pruebas y análisis de seguridad en cada push y pull request. Cualquier hallazgo nuevo rompe el build.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  GITLEAKS_IMAGE: zricethezav/gitleaks:v8.30.1
+  SEMGREP_IMAGE: semgrep/semgrep:1.182.1
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-postgres
+          POSTGRES_DB: directory
+        ports: ["55432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # Solo para la base efímera de CI
+      DATABASE_ADMIN_URL: postgresql://postgres:ci-postgres@127.0.0.1:55432/directory
+      DIRECTORY_APP_PASSWORD: ci-app
+      DIRECTORY_BACKUP_PASSWORD: ci-backup
+      PG_BIN: /usr/lib/postgresql/17/bin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Cliente de PostgreSQL 17 (pg_dump/pg_restore para F4)
+        run: |
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+      - name: Dependencias
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r client/requirements-dev.txt -r directory/requirements-dev.txt \
+            -r discord_adapter/requirements-dev.txt
+      - name: crypto
+        run: cd crypto && ../.venv/bin/python -m pytest -q
+      - name: client
+        run: cd client && ../.venv/bin/python -m pytest -q
+      - name: directory (incluye acceso ajeno por endpoint, TLS y auditoría)
+        run: cd directory && ../.venv/bin/python -m pytest -q
+      - name: discord_adapter
+        run: cd discord_adapter && ../.venv/bin/python -m pytest -q
+      - name: ops (copias de seguridad)
+        run: cd ops && ../.venv/bin/python -m pytest -q
+      - name: Trazabilidad requerimiento ↔ prueba (F8)
+        run: .venv/bin/python -m ops.trazabilidad --check
+
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  sast:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Bandit (falla con severidad baja o mayor)
+        run: |
+          pip install bandit==1.9.4
+          bandit -r crypto client directory discord_adapter ops -x '*/tests/*' -l
+      - name: Semgrep
+        run: >
+          docker run --rm -v "$PWD:/src" -w /src $SEMGREP_IMAGE semgrep scan --metrics=off --error
+          --config p/python --config p/secrets --config p/typescript --config p/react
+
+  dependencias:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: pip-audit con SBOM CycloneDX por componente
+        run: |
+          pip install pip-audit==2.10.1
+          mkdir -p sbom
+          for c in crypto client directory discord_adapter; do
+            pip-audit -r $c/requirements.txt --progress-spinner off
+            pip-audit -r $c/requirements.txt --progress-spinner off -f cyclonedx-json -o sbom/$c.cdx.json
+          done
+      - name: npm audit y SBOM del frontend
+        working-directory: frontend
+        run: |
+          npm audit --audit-level=low
+          npm sbom --sbom-format cyclonedx --package-lock-only > ../sbom/frontend.cdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+
+  secretos:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # todo el historial
+      - name: gitleaks (historial y árbol)
+        run: |
+          docker run --rm -v "$PWD:/src" $GITLEAKS_IMAGE git /src --config /src/.gitleaks.toml --redact --no-banner
+          docker run --rm -v "$PWD:/src" $GITLEAKS_IMAGE dir /src --config /src/.gitleaks.toml --redact --no-banner

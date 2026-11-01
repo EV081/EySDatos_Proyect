@@ -1,0 +1,71 @@
+Run started:2026-10-31 22:59:56.525630+00:00
+
+Test results:
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'dev-token'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: client\dev.py:18:8
+17	
+18	TOKEN = "dev-token"
+19	
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'https://discord.com/api/oauth2/token'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: directory\app\oauth.py:11:12
+10	AUTHORIZE_URL = "https://discord.com/oauth2/authorize"
+11	TOKEN_URL = "https://discord.com/api/oauth2/token"
+12	REVOKE_URL = "https://discord.com/api/oauth2/token/revoke"
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'access_token'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: directory\app\oauth.py:50:82
+49	                try:  # no lo necesitamos más: mejor que no quede vigente
+50	                    self._http.post(REVOKE_URL, auth=auth, data={"token": access, "token_type_hint": "access_token"})
+51	                except httpx.HTTPError:
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: ops\backup\backup.py:24:0
+23	import shutil
+24	import subprocess
+25	import sys
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: ops\scan.py:17:0
+16	import shutil
+17	import subprocess
+18	import sys
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 2892
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 3
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 5
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 3
+		High: 2
+Files skipped (0):
