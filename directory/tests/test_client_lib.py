@@ -75,3 +75,12 @@ def test_solo_https_salvo_en_localhost():
         DirectoryClient("http://directorio.example.com")
     with pytest.raises(ValueError):
         DirectoryClient("https://directorio.example.com")  # sin la CA del proyecto
+
+
+def test_login_rechaza_un_token_pegado_varias_veces():
+    from directory.client_lib.login import clean_token
+    token = "A" * 43
+    assert clean_token(f"  {token}\n") == token
+    for bad in (token * 3, token[:-1], "hola", token + "!"):
+        with pytest.raises(SystemExit):
+            clean_token(bad)

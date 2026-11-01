@@ -1,0 +1,27 @@
+# Ensayo del login OAuth2 con Discord real — 2026-11-01
+# Directorio sobre TLS 1.3 (python -m directory.serve); token obtenido con python -m directory.client_lib.login.
+# Cada fase usa un login distinto, porque el token de registro es de un solo uso.
+
+## Fase 1: registro
+[OK]    el token emitido tras el login con Discord es válido y está ligado a un ID real
+[OK]    un token propio no puede publicar la llave de otro ID (401 genérico)
+[OK]    ese intento no consume el token
+[OK]    registra una llave para tu ID real y se consulta igual
+[OK]    guarda solo lo mínimo: ['consent_at', 'consent_version', 'key_changed_at', 'public_key', 'registered_at']
+[OK]    el token quedó usado (un solo uso)
+[OK]    reusar el token se rechaza
+[OK]    el ID real no aparece en claro en el registro de auditoría
+
+## Fase 2: cancelación
+[OK]    el token emitido tras el login con Discord es válido y está ligado a un ID real
+[OK]    la llave registrada en la fase anterior sigue publicada
+[OK]    la cancelación borra el registro en el acto
+[OK]    no queda la fila en la base
+[OK]    el ID real no aparece en claro en el registro de auditoría
+
+## Registro de auditoría (IDs seudonimizados con HMAC)
+login         id=ccec9efba7c6e10d
+acceso_ajeno  id=ccec9efba7c6e10d objetivo=76f5675b497710e5  -> alerta "intento de modificar el registro de otra persona"
+registro      id=ccec9efba7c6e10d
+login         id=ccec9efba7c6e10d
+cancelacion   id=ccec9efba7c6e10d
