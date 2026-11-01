@@ -16,26 +16,27 @@ env:
 jobs:
   pruebas:
     runs-on: ubuntu-24.04
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_PASSWORD: ci-postgres
-          POSTGRES_DB: directory
-        ports: ["55432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 3s --health-retries 10
     env:
-      # Solo para la base efímera de CI
-      DATABASE_ADMIN_URL: postgresql://postgres:ci-postgres@127.0.0.1:55432/directory
-      DIRECTORY_APP_PASSWORD: ci-app
-      DIRECTORY_BACKUP_PASSWORD: ci-backup
       PG_BIN: /usr/lib/postgresql/17/bin
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+      # Ninguna contraseña en el repositorio: se generan en cada ejecución, se enmascaran en los registros y
+      # mueren con el runner. Por eso Postgres se levanta en un paso y no como `services` (que arranca antes).
+      - name: PostgreSQL 17 efímero con contraseñas aleatorias
+        run: |
+          for v in POSTGRES_PASSWORD DIRECTORY_APP_PASSWORD DIRECTORY_BACKUP_PASSWORD; do
+            pw="$(openssl rand -hex 24)"
+            echo "::add-mask::$pw"
+            echo "$v=$pw" >> "$GITHUB_ENV"
+            export "$v=$pw"
+          done
+          echo "DATABASE_ADMIN_URL=postgresql://postgres:${POSTGRES_PASSWORD}@127.0.0.1:55432/directory" >> "$GITHUB_ENV"
+          docker run -d --name db -e POSTGRES_PASSWORD -e POSTGRES_DB=directory -p 127.0.0.1:55432:5432 postgres:17
+          for _ in $(seq 1 30); do docker exec db pg_isready -U postgres -h 127.0.0.1 && exit 0; sleep 2; done
+          exit 1
       - name: Cliente de PostgreSQL 17 (pg_dump/pg_restore para F4)
         run: |
           sudo apt-get install -y postgresql-common

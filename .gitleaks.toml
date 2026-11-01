@@ -3,6 +3,20 @@
 [extend]
 useDefault = true
 
+# Las reglas por defecto no detectan contraseñas cortas y de baja entropía (como las que GitGuardian marcó en
+# ci.yml el 2026-11-01): cualquier *PASSWORD con un valor literal en un archivo de configuración es un hallazgo.
+[[rules]]
+id = "password-en-configuracion"
+description = "Contraseña con valor literal en un archivo de configuración"
+regex = '''(?i)(?:^|[\s"',])[a-z_]*password["']?[ \t]*[:=][ \t]*["']?([^\s"'$<{}?]{4,})'''
+secretGroup = 1
+path = '''(\.ya?ml|\.toml|\.ini|\.cfg|\.env[^/]*)$'''
+keywords = ["password"]
+
+[[rules.allowlists]]
+description = "Contraseñas desechables de la CI hasta 8c686ff, ya reemplazadas por aleatorias en cada ejecución"
+regexes = ['''^ci-(postgres|app|backup)$''']
+
 [allowlist]
 description = "Material local que no se versiona"
 paths = [
