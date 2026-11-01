@@ -91,7 +91,7 @@ Son valores propuestos y se revisan si cambia la finalidad.
 ### 2.3 Contexto
 
 * **Relación con las personas:** directa y voluntaria; el equipo no tiene ningún vínculo de autoridad sobre ellas.
-* **Control que tienen:** crean y bloquean su identidad, exportan su identidad cifrada, verifican contactos, deciden con quién hablan. El borrado del registro en el directorio requiere el endpoint de cancelación (○ C-11).
+* **Control que tienen:** crean y bloquean su identidad, exportan su identidad cifrada, verifican contactos, deciden con quién hablan. Pueden borrar su registro del directorio con el endpoint de cancelación (C-11).
 * **Expectativas:** quien usa una herramienta "cifrada" espera que nadie lea sus mensajes; no necesariamente que los **metadatos** queden visibles (ver R1). Por eso el aviso lo dice explícitamente.
 * **Menores y grupos vulnerables:** Discord admite usuarios desde los 13 años y la aplicación no verifica la edad (ver R12).
 * **Inquietudes previas:** el debate público sobre el acceso excepcional frente al E2EE; el proyecto adopta una posición explícita: **no existe ninguna llave de custodia ni puerta trasera**.
@@ -134,7 +134,7 @@ Son valores propuestos y se revisan si cambia la finalidad.
 |---|---|---|
 | Acceso | La persona consulta su propio registro (ID, llave, fechas) | ○ Pendiente (F1) |
 | Rectificación | Cambiar de llave: la anterior autoriza la nueva (`sign_key_change`) | ◐ Firma implementada en `crypto/`; falta el endpoint |
-| Cancelación | Borrar el registro del directorio, firmado con su llave; los respaldos y registros caducan en 30 y 90 días | ○ Pendiente (C-11) |
+| Cancelación | Borrar el registro del directorio, firmado con su llave; los respaldos y registros caducan en 30 y 90 días | ✔ (C-11): borrado inmediato en el directorio y en las copias en ≤ 30 días |
 | Oposición | No registrarse, o cancelar; no hay otro tratamiento al que oponerse | ✔ por diseño |
 | Portabilidad | Exportar la identidad cifrada a otro dispositivo (RF12) | ✔ `test_RF12_exportar_e_importar_en_otro_dispositivo` |
 | Borrado local de datos | Hoy se borra eliminando los archivos; falta un botón en la aplicación | ○ Pendiente (Elmer) |
@@ -186,25 +186,25 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 | **C-02** | La llave privada, la `store_key` y el historial solo existen en disco cifrados con AES-256-GCM; las llaves de sesión y efímeras nunca se escriben | `test_RS1_RS2_nada_secreto_en_claro_en_disco`; `test_RS12_ninguna_llave_efimera_sobrevive_al_handshake` | E | ✔ |
 | **C-03** | Argon2id con al menos t=3, m=64 MiB, p=4 y *salt* único; los parámetros están autenticados y acotados | `KdfParams` por defecto; `test_RS2_los_parametros_de_kdf_estan_autenticados`; `test_RS2_parametros_fuera_de_rango…` | E | ✔ |
 | **C-04** | Tras 5 contraseñas incorrectas, el desbloqueo se bloquea 30 s; al bloquear se destruyen las sesiones | `test_RS2_contrasena_incorrecta_y_bloqueo_temporal`; `test_al_bloquear_se_destruyen_las_sesiones` | E | ✔ |
-| **C-05** | El directorio guarda solo `discord_id`, llave pública, fechas y versión del aviso. No registra nombre de usuario, correo, avatar ni direcciones IP | Revisión del esquema de la base de datos (migración) y una prueba que lista las columnas | F (F1) | ○ |
-| **C-06** | Publicar o cambiar una llave exige prueba de posesión firmada y el vínculo OAuth2 con el mismo ID | `verify_registration` ya existe (✔); falta la prueba del endpoint y OAuth2 | F (F1) | ◐ |
-| **C-07** | El directorio solo se sirve por TLS 1.3 con una CA propia y el cliente rechaza un certificado inválido sin ofrecer continuar | Prueba de conexión con certificado vencido o ajeno; revisión de la configuración | F (F2) | ○ |
-| **C-08** | La aplicación usa un rol de base de datos sin permisos de DDL ni de propietario y solo consultas parametrizadas; *rate-limit* anti-enumeración | Revisión de `GRANT/REVOKE`; prueba de inyección y de acceso ajeno por endpoint | F (F1) | ○ |
-| **C-09** | Los registros de auditoría no contienen texto, llaves, tokens ni IDs en claro (los IDs se seudonimizan con HMAC y una clave que se rota cada 90 días) | `crypto/pseudonym.py` con sus pruebas (✔); falta una prueba automática que busque esos patrones en los registros reales y la configuración del servicio | F (F5) | ◐ |
-| **C-10** | Retención: registros 90 días; llaves reemplazadas 90 días; copias de seguridad 30 días con rotación; registro del directorio hasta su cancelación | Tarea programada de borrado y su prueba; documento de retención | F (F4, F5) | ○ |
-| **C-11** | Existe un endpoint que cancela el registro de una persona (firmado con su llave) y la borra en el directorio de inmediato y de las copias en ≤ 30 días | Prueba de extremo a extremo del borrado y de la rotación de copias | F (F1, F4) | ○ |
-| **C-12** | Las copias de seguridad están cifradas, fuera del servidor del directorio, con restauración probada | Script de restauración con su prueba; documentación de RPO/RTO | F (F4) | ○ |
-| **C-13** | Los secretos (token del bot, credenciales OAuth) están en variables de entorno; el repositorio no contiene secretos; el token de la API local solo se envía a `127.0.0.1`/`localhost` | Escaneo con gitleaks en CI sin hallazgos (○); `test/conn.test.ts` del frontend, que solo admite `127.0.0.1`/`localhost` (✔) | F (F6) / E | ◐ |
-| **C-14** | Antes de publicar una llave, la persona acepta el aviso de privacidad vigente (casilla desmarcada, finalidad única); se registra la versión y la fecha y el directorio las conserva | Pruebas de `client/` (✔); la columna del directorio y su prueba (○) | E / F (F1) | ◐ |
+| **C-05** | El directorio guarda solo `discord_id`, llave pública, fechas y versión del aviso. No registra nombre de usuario, correo, avatar ni direcciones IP | `directory/migrations/001_init.sql`; `test_C05_columnas_del_esquema` | F (F1) | ✔ |
+| **C-06** | Publicar o cambiar una llave exige prueba de posesión firmada y el vínculo OAuth2 con el mismo ID | `test_C06_*` en `directory/tests/` (prueba de posesión, nonce y token de un solo uso, acceso ajeno) y `test_oauth.py` | F (F1) | ✔ |
+| **C-07** | El directorio solo se sirve por TLS 1.3 con una CA propia y el cliente rechaza un certificado inválido sin ofrecer continuar | `directory/tests/test_tls.py` (otra CA, vencido, otro nombre, revocado, TLS 1.2); `ops/certs/README.md` | F (F2) | ✔ |
+| **C-08** | La aplicación usa un rol de base de datos sin permisos de DDL ni de propietario y solo consultas parametrizadas; *rate-limit* anti-enumeración | `directory/migrations/apply.py`; `test_C08_*` (rol sin DDL, inyección) y `test_acceso_ajeno.py` | F (F1) | ✔ |
+| **C-09** | Los registros de auditoría no contienen texto, llaves, tokens ni IDs en claro (los IDs se seudonimizan con HMAC y una clave que se rota cada 90 días) | `crypto/pseudonym.py`; `test_C09_registros_reales_sin_datos_personales_ni_secretos` (recorre los flujos y revisa el archivo real) y `test_C09_filtro_de_redaccion_como_segunda_barrera` | F (F5) | ✔ |
+| **C-10** | Retención: registros 90 días; llaves reemplazadas 90 días; copias de seguridad 30 días con rotación; registro del directorio hasta su cancelación | `python -m ops.scheduled daily`; `test_C10_*` (registros, llaves reemplazadas y copias) | F (F4, F5) | ✔ |
+| **C-11** | Existe un endpoint que cancela el registro de una persona (firmado con su llave) y la borra en el directorio de inmediato y de las copias en ≤ 30 días | `test_C11_*` en `directory/tests/` (borrado inmediato); `test_C10_rotacion_de_30_dias` (copias) | F (F1, F4) | ✔ |
+| **C-12** | Las copias de seguridad están cifradas, fuera del servidor del directorio, con restauración probada | `ops/backup/backup.py`; `test_C12_*` (cifrado, restauración probada); RPO 24 h / RTO 30 min en `ops/backup/README.md` | F (F4) | ✔ |
+| **C-13** | Los secretos (token del bot, credenciales OAuth) están en variables de entorno; el repositorio no contiene secretos; el token de la API local solo se envía a `127.0.0.1`/`localhost` | gitleaks (historial y árbol) en CI sin hallazgos (✔, `ops/reports/despues/`); `test/conn.test.ts` del frontend, que solo admite `127.0.0.1`/`localhost` (✔) | F (F6) / E | ✔ |
+| **C-14** | Antes de publicar una llave, la persona acepta el aviso de privacidad vigente (casilla desmarcada, finalidad única); se registra la versión y la fecha y el directorio las conserva | Pruebas de `client/` (✔); `test_C14_guarda_version_y_fecha_del_aviso` en `directory/tests/` (✔) | E / F (F1) | ✔ |
 | **C-15** | El aviso de privacidad completo cumple los elementos de la Ley 29733 y se muestra antes de aceptar; sube de versión si cambia | `frontend/test/notice.test.ts` (secciones exigidas, versión igual en documento, frontend y cliente, coherencia de plazos con esta DPIA); la prueba e2e comprueba que se publica en la aplicación | E (E6) | ✔ |
 | **C-16** | Ante un cambio de llave de un contacto verificado: se revoca la verificación, se aborta el handshake y no se ofrece "continuar" | `test_RF8_*` del cliente; prueba unitaria del frontend | E | ✔ |
 | **C-17** | Nada de lo que llega de Discord se interpreta como HTML ni se ejecuta | Prueba e2e con `<img onerror=…>`; el código no usa `dangerouslySetInnerHTML` | E | ✔ |
 | **C-18** | La API local solo escucha en `127.0.0.1`, exige token, restringe CORS al origen del frontend y valida el `Host` | `test_sin_token_o_con_token_incorrecto…`, `test_host_ajeno…`, `test_cors_solo…` | E | ✔ |
-| **C-19** | Existe un plan de respuesta a incidentes con notificación a la ANPD en 48 horas desde que se conoce la brecha, y la rotación y revocación de llaves | Documento revisado por ambos; simulacro en papel | F (F7) | ○ |
-| **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos están corregidos | Reportes antes y después en `ops/security/` | F (F6) | ○ |
+| **C-19** | Existe un plan de respuesta a incidentes con notificación a la ANPD en 48 horas desde que se conoce la brecha, y la rotación y revocación de llaves | [Plan de respuesta a incidentes](../politicas/respuesta-incidentes.md) (✔); falta la revisión de Elmer y el simulacro en papel (anexo B) | F (F7) | ◐ |
+| **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos están corregidos | `.github/workflows/ci.yml`; reportes antes y después en `ops/reports/` (0 hallazgos tras la clasificación) | F (F6) | ✔ |
 | **C-21** | Existe un botón para borrar localmente la bóveda y el almacén cifrado | Prueba del cliente y del frontend | E | ○ |
 | **C-22** | El protocolo está documentado, con tabla de ataques considerados y pruebas negativas por cada defensa; se deja constancia de que no hubo auditoría externa | `docs/README.md` (4.2.7); las pruebas negativas de `crypto/` y `client/`, que se comprobó a mano que detectan defectos introducidos a propósito | E | ✔ |
-| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | Revisión de la configuración del servidor antes de la demostración | F (F3) | ○ |
+| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | `python -m discord_adapter.check` (✔ la herramienta y su prueba `test_C23_*`); falta ejecutarlo sobre el servidor real antes de la demostración | F (F3) | ◐ |
 | **C-24** | Antes de ofrecer el servicio fuera del ámbito académico: inscribir el banco de datos ante la ANPD si corresponde, exigir una edad mínima y firmar contrato con el proveedor de alojamiento | Lista de verificación previa al lanzamiento | Ambos | ○ |
 
 ### 6.2 Medidas por riesgo
@@ -266,18 +266,16 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 
 ### Decisión
 
-> **Se puede lanzar con condiciones.** Para la demostración local basta lo ya implementado (C-01 a C-04, C-15 a C-18, C-22 y la parte del cliente de C-14). **No debe usarse con datos reales de terceros** hasta que se cumplan las restricciones pendientes, en especial C-05 a C-12 (directorio, TLS, registros, retención, cancelación y respaldos), C-19 (plan de incidentes), C-20 (análisis de código) y C-24 (requisitos previos al uso real).
+> **Se puede lanzar con condiciones.** Para la demostración local basta lo ya implementado (C-01 a C-04, C-15 a C-18, C-22 y la parte del cliente de C-14). **No debe usarse con datos reales de terceros** hasta que se cumplan las restricciones pendientes: C-19 (revisión y simulacro del plan de incidentes), C-21 (borrado local), C-23 (revisión del canal real) y C-24 (requisitos previos al uso real).
 
 ### Plan de acciones pendientes
 
 | Acción | Responsable | Restricción | Para cuándo |
 |---|---|---|---|
-| Directorio: esquema mínimo, prueba de posesión con OAuth2, roles de base de datos, cancelación | Farid | C-05, C-06, C-08, C-11 | Antes de la entrega |
-| TLS 1.3 con CA propia | Farid | C-07 | Antes de la entrega |
-| Registros sin datos personales, retención y alertas | Farid | C-09, C-10 | Antes de la entrega |
-| Copias cifradas y restauración | Farid | C-12 | Antes de la entrega |
-| Escaneo de secretos, SAST y dependencias en CI | Farid | C-13, C-20 | Antes de la entrega |
-| Plan de incidentes (48 h) | Farid | C-19 | Antes de la entrega |
+| ~~Directorio, TLS, registros, retención, copias y análisis de código~~ (hecho) | Farid | C-05 a C-13, C-20 | ✔ |
+| Revisión del plan de incidentes y simulacro en papel | Ambos | C-19 | Antes de la entrega |
+| Revisión del canal real con `discord_adapter.check` | Farid | C-23 | Antes de la demostración |
+| Firma de cancelación con contexto propio en `crypto/` | Elmer | C-11 | Antes de la entrega |
 | Botón de borrado local | Elmer | C-21 | Antes de la entrega |
 | Sesión de prueba con personas usuarias | Ambos | Paso 3 | Durante la demostración |
 | Requisitos previos a un uso real | Ambos | C-24 | Fuera del alcance de la entrega |

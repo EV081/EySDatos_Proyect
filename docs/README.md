@@ -122,6 +122,22 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 * **RS15:** Cada llave debe tener un único propósito: la llave de identidad solo firma; las llaves de sesión se derivan de forma independiente por dirección (emisor→receptor y receptor→emisor).
 
+### 3.3. Requerimientos agregados durante la implementación
+
+Al construir el directorio y las operaciones aparecieron requerimientos que la versión inicial dejaba implícitos. Salen del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12); cada uno está trazado a sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
+
+* **RF15:** La persona debe poder cancelar su registro en el directorio desde su cliente, con su llave vigente y una sesión OAuth2; el registro se borra en el acto y desaparece de las copias en 30 días como máximo.
+
+* **RS16:** Publicar, cambiar o cancelar una llave debe exigir a la vez la prueba de posesión de la llave privada (firma sobre un nonce de un solo uso, con propósito y caducidad) y el vínculo OAuth2 con el mismo ID de Discord; solo el dueño de un ID puede modificar su registro.
+
+* **RS17:** El directorio debe operar con un rol de base de datos sin permisos de DDL ni de superusuario, usar solo consultas parametrizadas, limitar las solicitudes por origen y responder con errores genéricos que no permitan enumerar usuarios.
+
+* **RS18:** El cliente debe confiar únicamente en la CA propia del proyecto para conectarse al directorio, rechazar certificados vencidos, revocados o de otro nombre, y no ofrecer ninguna opción para continuar ante un certificado inválido.
+
+* **RS19:** Los registros de auditoría no deben contener texto de mensajes, llaves, tokens, IPs ni IDs en claro (los IDs se seudonimizan con HMAC); deben alimentar alertas ante abusos y conservarse 90 días.
+
+* **RS20:** El directorio debe respaldarse a diario con copias cifradas, guardadas fuera de su servidor, con restauración probada y rotación de 30 días.
+
 ## 4. Diseño
 
 El diseño se aborda desde dos aristas complementarias. El **diseño funcional** define la interfaz y la experiencia de usuario que materializa los requerimientos funcionales; el **diseño de seguridad** especifica los algoritmos y los protocolos que hacen cumplibles los requerimientos de seguridad.
@@ -299,6 +315,43 @@ El sistema protege el contenido, no el patrón de comunicación que se realiza a
 * No hay seguridad posterior al compromiso dentro de una sesión (*post-compromise security*) ni *ratchet* por mensaje; la rotación periódica limita el daño.
 * No se firma cada mensaje, por lo que no hay no repudio.
  
+### 5.7 Implementación lograda
+
+Todos los componentes de la sección 5.1 están implementados. El cliente local y el frontend (Elmer) ya existían; esta entrega agrega el directorio, el transporte por Discord y las operaciones (Farid).
+
+| Componente | Qué hace | Pruebas automáticas |
+|---|---|---|
+| `crypto/` | Identidad, bóveda, *handshake* con PFS, sesión, huella y seudonimización | 126 |
+| `client/` | API local: orquesta las sesiones, la cola de salida, la rotación y las alertas | 55 |
+| `frontend/` | Interfaz en Next.js | Pruebas unitarias y prueba e2e (los módulos `lib/` deben versionarse; ver la nota) |
+| `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, cancelación, TLS 1.3, auditoría y alertas | 67 |
+| `discord_adapter/` | Un bot por persona sobre `discord.py`; solo publica mensajes `E2EE1:` | 13, incluida una conversación cifrada completa entre dos clientes reales |
+| `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
+
+**Cómo se cumplió lo propuesto, y dónde hubo que decidir:**
+
+* **Vínculo con la cuenta de Discord (RS16).** El contrato del cliente con el directorio no lleva credenciales, así que el **directorio** hace el flujo OAuth2 (código de autorización con `state` y PKCE, alcance `identify`). Lee el ID, revoca enseguida el token de Discord y entrega un token de registro propio de 10 minutos, de un solo uso y ligado a ese ID. Así el token de Discord nunca llega al cliente, y el cliente no tuvo que cambiar.
+* **Cambio y cancelación de llaves.** Un cambio con OAuth2 guarda la llave anterior 90 días y dispara la alerta de RF8 en los contactos; si además viene la firma de la llave anterior (`sign_key_change`), se exige que valga. La cancelación se firma, de forma provisoria, como un "cambio hacia la llave nula" con un nonce reservado para cancelar. Lo recomendable es que la librería tenga una firma propia con su contexto, y está pendiente.
+* **TLS 1.3 (RS6, RS18).** Una CA propia (ECDSA P-256), un certificado de servidor de 90 días y una CRL. El cliente no usa las CA del sistema: así, ninguna CA pública puede emitir un certificado para el directorio.
+* **Transporte.** Los mensajes se entregan al cliente desde un hilo propio, porque el cliente responde con `send()` mientras procesa un mensaje y entregarlos desde el bucle de `discord.py` produciría un bloqueo mutuo. El adaptador se niega a publicar cualquier texto que no sea del protocolo.
+* **Entorno.** El desarrollo local usó Python 3.13 (la máquina no tenía 3.12); la CI corre en 3.12, la versión fijada del proyecto.
+
+**Resultados verificables:** 271 pruebas de Python en verde contra un PostgreSQL 17 real y servidores TLS reales; análisis de código sin hallazgos tras la clasificación ([ops/reports](../ops/reports/README.md)); y la tabla de trazabilidad, en la que todos los requerimientos y restricciones tienen evidencia ([trazabilidad.md](trazabilidad.md)), generada y comprobada en CI.
+
+**Pendiente:** ensayar con la API real de Discord, para lo que hay que crear los bots y la aplicación OAuth2 en el portal (el adaptador y el flujo OAuth2 se probaron contra simulaciones con el mismo contrato, no contra Discord). Además, los módulos `frontend/lib/` deben versionarse: una regla del `.gitignore` los excluía, y sin ellos el frontend no compila desde un clon limpio.
+
+### 5.8 Operaciones, políticas e incidentes
+
+| Área | Qué se implementó | Dónde |
+|---|---|---|
+| Certificados | CA de 5 años con la llave cifrada; certificado de 90 días (se renueva a los 60); CRL de 30 días; revocación | [ops/certs](../ops/certs/README.md) |
+| Copias de seguridad | `pg_dump` con un rol de solo lectura, AES-256-GCM sin texto plano en disco, fuera del repositorio, rotación de 30 días y restauración probada. RPO 24 h, RTO 30 min | [ops/backup](../ops/backup/README.md) |
+| Registros y alertas | JSON con IDs seudonimizados, filtro de redacción, 90 días; alertas por acceso ajeno, firmas inválidas, enumeración y cambios de llave | [directory/README.md](../directory/README.md) |
+| Tarea diaria | Copia, purga de la base y retención de registros en un solo comando programable | `python -m ops.scheduled daily` |
+| Análisis de código | Bandit, Semgrep, pip-audit y npm audit con SBOM CycloneDX, y gitleaks, en CI; reportes antes y después | [ops/reports](../ops/reports/README.md) |
+| Políticas | Uso seguro para personas y operadores, con calendario de rotación de secretos | [politicas/uso-seguro.md](politicas/uso-seguro.md) |
+| Incidentes | Plan según NIST SP 800-61 rev. 3, con guías por escenario y notificación a la ANPD en 48 h | [politicas/respuesta-incidentes.md](politicas/respuesta-incidentes.md) |
+
 ## 6. Privacidad y ética
 
 ### 6.1 Evaluación de impacto en la protección de datos (DPIA)
@@ -353,8 +406,8 @@ El sistema se construye en Perú y trata datos personales de personas identifica
 | Obligación | Situación |
 |---|---|
 | Aviso de privacidad con lo que la ley exige informar (responsable y domicilio, finalidad, destinatarios, carácter obligatorio u opcional, transferencias, plazos, banco de datos, derechos) | Hecho: [aviso de privacidad](privacidad/aviso-de-privacidad.md) v1.0, publicado también dentro de la aplicación. El domicilio postal y un correo del equipo se completarán antes de un uso real |
-| Medidas de seguridad proporcionales al riesgo (cifrado, control de acceso por roles, registros de auditoría, plan de respuesta a incidentes) | En curso; ver las restricciones C-01 a C-20 de la DPIA |
-| Notificar una brecha a la ANPD dentro de las 48 horas desde que se conoce, y a las personas afectadas si el impacto es alto | Plan de incidentes pendiente (restricción C-19) |
+| Medidas de seguridad proporcionales al riesgo (cifrado, control de acceso por roles, registros de auditoría, plan de respuesta a incidentes) | Implementadas (restricciones C-01 a C-20 de la DPIA y sección 5.8); queda pendiente C-21 (borrado local) |
+| Notificar una brecha a la ANPD dentro de las 48 horas desde que se conoce, y a las personas afectadas si el impacto es alto | Hecho: [plan de respuesta a incidentes](politicas/respuesta-incidentes.md) (C-19); falta el primer simulacro |
 | Inscribir el banco de datos en el Registro Nacional de Protección de Datos Personales | Pendiente: la demostración es académica; se evaluará antes de un uso real (C-24) |
 | Oficial de datos personales | Obligatorio para entidades públicas y para quien trata datos sensibles o a gran escala. El responsable no puede leer los mensajes y el volumen es pequeño, por lo que no se prevé; se designa una persona de contacto y se revisará si el uso crece |
 | Evaluación de impacto | Hecha de forma voluntaria (sección 6.1); además de ser buena práctica, es un atenuante si llegara una sanción |
@@ -452,14 +505,14 @@ La idea de fondo del diseño es que ninguna brecha de un servicio expone el **co
 | # | Escenario | Qué queda expuesto | Entidades afectadas | Impacto | Defensas y estado |
 |---|---|---|---|---|---|
 | S1 | **Brecha en los servidores de Discord** o intercepción en la red | Texto cifrado, mensajes del *handshake* y metadatos (quién, a quién, cuándo, tamaño). **No el contenido**: las claves de sesión se destruyen | Personas usuarias y sus contactos; Discord | Confidencialidad de los metadatos (R1) | Cifrado de extremo a extremo con *forward secrecy* ✔. Los metadatos son un límite aceptado |
-| S2 | **Brecha en la base de datos del directorio** | IDs de Discord, llaves públicas, fechas y versión del aviso: se sabe **quién usa la herramienta** y desde cuándo | Personas usuarias; equipo responsable | Confidencialidad de datos personales (R5) | Esquema mínimo, rol sin permisos de DDL, TLS, copias cifradas (pendientes de F1, F2 y F4) |
+| S2 | **Brecha en la base de datos del directorio** | IDs de Discord, llaves públicas, fechas y versión del aviso: se sabe **quién usa la herramienta** y desde cuándo | Personas usuarias; equipo responsable | Confidencialidad de datos personales (R5) | Esquema mínimo, rol sin permisos de DDL, TLS 1.3 con CA propia y copias cifradas ✔ (5.7, 5.8) |
 | S3 | **Directorio comprometido de forma activa**: entrega la llave del atacante | Una conversación completa con quien aún no verificó al contacto | Personas que hablan por primera vez con alguien sin verificar y sus contactos | Confidencialidad e integridad (R2) | Firmas, verificación fuera de banda, *pin* y alerta de cambio de llave ✔. Un primer contacto sin verificar sigue expuesto |
 | S4 | **Robo o infección del dispositivo** | Con la aplicación desbloqueada: historial, contactos, llaves de sesión. Con la aplicación bloqueada: solo una bóveda y un almacén cifrados | La persona, sus contactos y los terceros que se mencionan en las conversaciones | Confidencialidad (R3) | Argon2id, AES-256-GCM, bloqueo tras 5 intentos y destrucción de sesiones al bloquear ✔. Un dispositivo ya comprometido queda fuera de alcance |
-| S5 | **Robo de la llave de identidad** | Permite firmar *handshakes* futuros y suplantar a la persona. No descifra lo ya grabado | La persona y sus contactos (engañados) | Integridad y autenticidad (R11) | *Forward secrecy* ✔; alerta de cambio de llave a los contactos ✔. La firma que autoriza un cambio de llave existe en la librería; falta el punto de entrada del directorio (F1) |
-| S6 | **Fuga del token del bot** | Lectura del canal (texto cifrado y metadatos) y publicación de mensajes falsos: el protocolo los rechaza, pero pueden llenar la conversación de avisos de "mensaje no descifrable" | Dueño del bot; Discord (puede revocar el bot); personas del canal | Confidencialidad de metadatos y disponibilidad (R10) | Token en variables de entorno, sin repositorio; escaneo de secretos (pendiente de F6) |
-| S7 | **Compromiso de la cadena de suministro**: una dependencia maliciosa en el cliente, el frontend o el servidor | Todo lo que ve la aplicación, **incluido el texto plano** | Todas las personas usuarias | Confidencialidad total | Pocas dependencias, con versión fija ✔; escaneo de dependencias y SBOM (pendientes de F6). Es el riesgo más difícil de cerrar |
+| S5 | **Robo de la llave de identidad** | Permite firmar *handshakes* futuros y suplantar a la persona. No descifra lo ya grabado | La persona y sus contactos (engañados) | Integridad y autenticidad (R11) | *Forward secrecy* ✔; alerta de cambio de llave a los contactos ✔. Cambio de llave con OAuth2 y, opcionalmente, con la firma de la llave anterior; cancelación del registro ✔ |
+| S6 | **Fuga del token del bot** | Lectura del canal (texto cifrado y metadatos) y publicación de mensajes falsos: el protocolo los rechaza, pero pueden llenar la conversación de avisos de "mensaje no descifrable" | Dueño del bot; Discord (puede revocar el bot); personas del canal | Confidencialidad de metadatos y disponibilidad (R10) | Token en variables de entorno, sin repositorio; gitleaks en CI ✔; permisos mínimos del bot (`discord_adapter.check`) |
+| S7 | **Compromiso de la cadena de suministro**: una dependencia maliciosa en el cliente, el frontend o el servidor | Todo lo que ve la aplicación, **incluido el texto plano** | Todas las personas usuarias | Confidencialidad total | Pocas dependencias, con versión fija ✔; pip-audit, npm audit y SBOM en CI ✔. Es el riesgo más difícil de cerrar |
 | S8 | **Defecto en el protocolo o su implementación** | Contenido o suplantación, según el defecto | Todas las personas usuarias | Confidencialidad e integridad (R13) | Componentes estándar, pruebas automáticas de los caminos de rechazo (126 en la librería y 55 en el cliente local) y tabla de ataques considerados ✔. Sin auditoría externa |
-| S9 | **Fuga de copias de seguridad o de registros** | Lo mismo que S2; los registros llevan IDs seudonimizados | Personas usuarias; equipo | Confidencialidad (R5, R8) | Cifrado de copias, seudonimización con HMAC ✔ (herramienta), retención limitada (aplicación pendiente de F4 y F5) |
+| S9 | **Fuga de copias de seguridad o de registros** | Lo mismo que S2; los registros llevan IDs seudonimizados | Personas usuarias; equipo | Confidencialidad (R5, R8) | Copias cifradas fuera del servidor, registros con IDs seudonimizados y retención de 30 y 90 días ✔ |
 | S10 | **Uso indebido por un integrante del equipo o suplantación del equipo (*phishing*)** | Lo que el servidor del directorio contiene; podría intentar sustituir una llave | Personas usuarias; equipo | Confidencialidad e integridad | Permisos mínimos, registros de auditoría, ceremonia de verificación; el operador no tiene acceso al contenido |
 | S11 | **Página web maliciosa contra la API local** (otro sitio abierto en el navegador) | Con la aplicación desbloqueada, la lectura de conversaciones y el envío de mensajes | La persona y sus contactos | Confidencialidad e integridad | Token por ejecución, CORS restringido y validación del `Host` ✔ |
 | S12 | **Caída de Discord, del directorio o revocación del bot** | Nada se expone; no se pueden enviar ni recibir mensajes nuevos | Todas las personas | Disponibilidad (fuera del modelo de amenaza) | La cola de salida local conserva los mensajes y los reintentos son automáticos ✔ |
@@ -498,7 +551,7 @@ Estas medidas **no se implementan ahora**, pero se recomiendan. Para cada una se
 | **Autenticación reforzada para desbloquear** (llaves de acceso WebAuthn o un segundo factor) y **llave protegida por hardware** (módulo TPM, Secure Enclave) | R3, R4, R11, S4 | Hoy los datos restringidos dependen de una sola contraseña; con hardware, robar el archivo de la bóveda ya no basta para probar contraseñas | Depende del soporte del navegador y del dispositivo, y complica la exportación a otro equipo |
 | **Bloqueo automático por inactividad** y mensajes con tiempo de vida en el historial local | R3, R6 | Reduce la ventana en que un dispositivo desbloqueado queda expuesto y la cantidad de datos que hay que proteger | Es sencillo pero afecta la usabilidad; conviene decidirlo con la opinión de las personas usuarias |
 | **Gestión de secretos del servidor con un almacén de claves** (la clave de seudonimización, la CA privada fuera de línea) | R5, R8, R10 | Una clave en una variable de entorno es tan segura como el servidor que la contiene | Un servicio de claves tiene un costo y no aporta en una demostración local |
-| **Cadena de suministro endurecida**: dependencias con *hashes* verificados, SBOM publicado, actualizaciones automáticas revisadas y artefactos firmados | S7 | Es el riesgo con mayor impacto y más difícil de cerrar; no lo detecta ninguna prueba funcional | Parte está en curso (escaneo y SBOM por Farid); lo demás exige infraestructura de publicación |
+| **Cadena de suministro endurecida**: dependencias con *hashes* verificados, SBOM publicado, actualizaciones automáticas revisadas y artefactos firmados | S7 | Es el riesgo con mayor impacto y más difícil de cerrar; no lo detecta ninguna prueba funcional | El escaneo y el SBOM ya corren en CI; los *hashes* verificados y la firma de artefactos exigen infraestructura de publicación |
 | **Política de divulgación responsable de vulnerabilidades** y pruebas de intrusión periódicas | S8, S10 | Quien encuentre un fallo necesita saber cómo avisar; un equipo propio no basta para probar su sistema | No tiene sentido sin usuarios reales |
 | **Cumplimiento previo al uso real**: inscripción del banco de datos, contrato con el proveedor, edad mínima, correo de contacto y domicilio, revisión del GDPR si hay personas en la Unión Europea | R9, R12 | Son obligaciones legales del uso real, no mejoras opcionales | Fuera del alcance de una demostración académica |
 
