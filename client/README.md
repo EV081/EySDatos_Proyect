@@ -8,8 +8,9 @@ Une `crypto/`, el directorio y Discord, y expone una API HTTP **solo en 127.0.0.
 # Desarrollo (sin Discord ni directorio reales): Alice en :8001, Bob en :8002, token "dev-token"
 .venv/bin/python -m client.dev
 
-# Real (necesita directory/ y discord_adapter/ de Farid)
-export DIRECTORY_URL=https://localhost:8443 DIRECTORY_CA_FILE=ops/certs/ca.pem
+# Real (necesita directory/ y discord_adapter/ de Farid). Antes de crear o importar la identidad:
+# python -m directory.client_lib.login   (ver directory/README.md)
+export DIRECTORY_URL=https://localhost:8443 DIRECTORY_CA_FILE=ops/certs/ca.pem DIRECTORY_AUTH_TOKEN_FILE=./data/directory-token
 export DISCORD_TOKEN=... DISCORD_CHANNEL_ID=... CLIENT_API_TOKEN=... CLIENT_DATA_DIR=./data
 .venv/bin/uvicorn client.main:app --host 127.0.0.1 --port 8001
 ```
