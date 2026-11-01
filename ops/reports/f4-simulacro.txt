@@ -1,0 +1,19 @@
+# Simulacro de copias de seguridad (F4) — 2026-11-01
+# Base de desarrollo (PostgreSQL 17) con 3 llaves y 1 llave reemplazada de IDs ficticios; se borraron al final.
+[OK]    el rol directory_backup solo lee: DELETE rechazado
+[OK]    python -m ops.backup.backup create -> copia creada: directory-20261101T233634Z.dump.enc (8600 bytes); rotadas: 0
+[OK]    la copia queda fuera del repositorio (D:\e2ee-backups)
+[OK]    el archivo está cifrado (no hay cabecera PGDMP de pg_dump)
+[OK]    no aparecen en claro ni los IDs ni las llaves públicas
+[OK]    no queda ningún volcado en texto plano en el destino
+[OK]    detecta un byte alterado
+[OK]    detecta renombrar la copia (nombre en los datos autenticados)
+[OK]    con otra clave no se puede abrir
+[OK]    la base restaurada coincide fila por fila con el origen (3 llaves, 1 reemplazada)
+[OK]    los tokens y nonces efímeros no se copian
+[OK]    los permisos del rol de la app se restauran (DML sí, DDL no)
+[OK]    tiempo de restauración: 0.1 s (RTO objetivo: 30 min)
+[OK]    python -m ops.backup.backup verify -> restauración de directory-20261101T233634Z.dump.enc correcta: {'keys': 3, 'replaced_keys': 1}
+[OK]    la rotación borra solo la copia de más de 30 días
+[OK]    rechaza guardar copias dentro del repositorio
+16/16 comprobaciones OK

@@ -1,0 +1,26 @@
+# Simulacro de auditoría, alertas y tarea diaria (F5) — 2026-11-01
+# Directorio real sobre TLS 1.3; el webhook de alertas apuntó a un receptor local para ver qué se envía.
+
+## Alertas en vivo (36 consultas a IDs inexistentes desde la misma IP: 30x 404, 6x 429)
+[OK]    el límite de consultas corta la enumeración con 429
+[OK]    alerta por enumeración de IDs inexistentes
+[OK]    alerta por superar el límite de solicitudes
+[OK]    el webhook recibió 2 alertas:
+          [directorio] muchas consultas de IDs no registrados: posible enumeración (20)
+          [directorio] límite de solicitudes alcanzado varias veces: posible enumeración (3)
+[OK]    ni registros ni webhook contienen IDs de Discord
+[OK]    ni registros ni webhook contienen IPs
+[OK]    ni registros ni webhook contienen tokens
+[OK]    la consola del servidor tampoco registra solicitudes, IPs ni IDs
+
+## Tarea diaria (python -m ops.scheduled daily --env .env, en un entorno limpio como el Programador de tareas)
+Sembrado antes: un registro de 100 días, una llave reemplazada de 91 días y otra de 10, y un nonce vencido.
+resumen: {'event': 'mantenimiento', 'copia': 'directory-20261101T233731Z.dump.enc', 'copias_rotadas': '0',
+          'purga_replaced_keys': '1', 'purga_oauth_states': '0', 'purga_auth_tokens': '2', 'purga_challenges': '3',
+          'registros_borrados': '1'}
+[OK]    python -m ops.scheduled daily en un entorno limpio termina bien (código 0)
+[OK]    borró el registro de más de 90 días
+[OK]    purgó la llave reemplazada de 91 días y conservó la de 10 días
+[OK]    purgó los nonces vencidos
+[OK]    hizo la copia cifrada del día
+13/13 comprobaciones OK
