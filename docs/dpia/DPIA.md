@@ -204,7 +204,7 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 | **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos están corregidos | `.github/workflows/ci.yml`; reportes antes y después en `ops/reports/` (0 hallazgos tras la clasificación) | F (F6) | ✔ |
 | **C-21** | Existe un botón para borrar localmente la bóveda y el almacén cifrado | Prueba del cliente y del frontend | E | ○ |
 | **C-22** | El protocolo está documentado, con tabla de ataques considerados y pruebas negativas por cada defensa; se deja constancia de que no hubo auditoría externa | `docs/README.md` (4.2.7); las pruebas negativas de `crypto/` y `client/`, que se comprobó a mano que detectan defectos introducidos a propósito | E | ✔ |
-| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | `python -m discord_adapter.check` (✔ la herramienta y su prueba `test_C23_*`); falta ejecutarlo sobre el servidor real antes de la demostración | F (F3) | ◐ |
+| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | `python -m discord_adapter.check` sobre el servidor real: `@everyone` no ve el canal, solo el rol `e2ee`, y el bot sin permisos de más ([ops/reports/discord-check.txt](../../ops/reports/discord-check.txt)); repetirlo antes de la demostración | F (F3) | ✔ |
 | **C-24** | Antes de ofrecer el servicio fuera del ámbito académico: inscribir el banco de datos ante la ANPD si corresponde, exigir una edad mínima y firmar contrato con el proveedor de alojamiento | Lista de verificación previa al lanzamiento | Ambos | ○ |
 
 ### 6.2 Medidas por riesgo
@@ -266,7 +266,7 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 
 ### Decisión
 
-> **Se puede lanzar con condiciones.** Para la demostración local basta lo ya implementado (C-01 a C-04, C-15 a C-18, C-22 y la parte del cliente de C-14). **No debe usarse con datos reales de terceros** hasta que se cumplan las restricciones pendientes: C-19 (revisión y simulacro del plan de incidentes), C-21 (borrado local), C-23 (revisión del canal real) y C-24 (requisitos previos al uso real).
+> **Se puede lanzar con condiciones.** Para la demostración local basta lo ya implementado (C-01 a C-04, C-15 a C-18, C-22 y la parte del cliente de C-14). **No debe usarse con datos reales de terceros** hasta que se cumplan las restricciones pendientes: C-19 (revisión y simulacro del plan de incidentes) y C-21 (borrado local), además de C-24 (requisitos previos al uso real).
 
 ### Plan de acciones pendientes
 
@@ -274,7 +274,6 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 |---|---|---|---|
 | ~~Directorio, TLS, registros, retención, copias y análisis de código~~ (hecho) | Farid | C-05 a C-13, C-20 | ✔ |
 | Revisión del plan de incidentes y simulacro en papel | Ambos | C-19 | Antes de la entrega |
-| Revisión del canal real con `discord_adapter.check` | Farid | C-23 | Antes de la demostración |
 | Firma de cancelación con contexto propio en `crypto/` | Elmer | C-11 | Antes de la entrega |
 | Botón de borrado local | Elmer | C-21 | Antes de la entrega |
 | Sesión de prueba con personas usuarias | Ambos | Paso 3 | Durante la demostración |

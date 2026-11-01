@@ -61,7 +61,7 @@ Generado por `python -m ops.trazabilidad` a partir de los nombres de las pruebas
 | **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos est… | 0 | CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../ops/reports/README.md) |
 | **C-21** | Existe un botón para borrar localmente la bóveda y el almacén cifrado | 0 | Pendiente (Elmer): botón de borrado local |
 | **C-22** | El protocolo está documentado, con tabla de ataques considerados y pruebas negativas por cada defensa; se d… | 0 | Informe 4.2.7 y pruebas negativas de `crypto/` y `client/` |
-| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | 1 | `discord_adapter/tests/test_adapter.py::test_C23_revision_del_canal` |
+| **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | 1 | `discord_adapter/tests/test_adapter.py::test_C23_revision_del_canal`<br>`ops/reports/discord-check.txt` (revisión del canal real) y `ops/reports/discord-smoke.txt` (ensayo con la API) |
 | **C-24** | Antes de ofrecer el servicio fuera del ámbito académico: inscribir el banco de datos ante la ANPD si corres… | 0 | Fuera del alcance de la entrega (requisitos previos a un uso real) |
 
 **Resumen:** 59 requerimientos y restricciones; 59 con evidencia; 118 referencias desde pruebas automáticas.

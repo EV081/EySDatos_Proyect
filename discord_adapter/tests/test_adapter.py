@@ -141,6 +141,17 @@ def test_al_conectar_entrega_lo_publicado_mientras_no_estaba(guild):
     assert wait_for(lambda: got == [WIRE + "A"])
 
 
+def test_lo_que_llega_antes_de_registrar_el_receptor_no_se_pierde(guild):
+    # client.main crea el adaptador (que ya conecta) y el orquestador registra el receptor después
+    guild.post(CHANNEL, WIRE + "A")
+    adapter = DiscordAdapter(channel_id=CHANNEL, backend=FakeBackend(guild))
+    assert wait_for(adapter._ready.is_set)
+    time.sleep(0.1)
+    got = []
+    adapter.set_receiver(got.append)
+    assert wait_for(lambda: got == [WIRE + "A"])
+
+
 def test_al_reconectar_entrega_lo_perdido_sin_repetir(guild):
     a, got = make(guild)
     guild.post(CHANNEL, WIRE + "1")

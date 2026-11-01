@@ -39,6 +39,7 @@ MANUAL = {
     "C-20": "CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../ops/reports/README.md)",
     "C-21": "Pendiente (Elmer): botón de borrado local",
     "C-22": "Informe 4.2.7 y pruebas negativas de `crypto/` y `client/`",
+    "C-23": "`ops/reports/discord-check.txt` (revisión del canal real) y `ops/reports/discord-smoke.txt` (ensayo con la API)",
     "C-24": "Fuera del alcance de la entrega (requisitos previos a un uso real)",
 }
 

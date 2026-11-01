@@ -48,6 +48,7 @@ class DiscordAdapter:
         self.channel_id, self._backend = channel_id, backend
         self._backlog, self._send_timeout = backlog, send_timeout
         self._receiver: Callable[[str], None] | None = None
+        self._has_receiver = threading.Event()
         self._seen: OrderedDict[int, None] = OrderedDict()
         self._last_id: int | None = None
         self._lock = threading.Lock()
@@ -73,6 +74,7 @@ class DiscordAdapter:
 
     def set_receiver(self, callback: Callable[[str], None]) -> None:
         self._receiver = callback
+        self._has_receiver.set()
 
     # --- ciclo de vida ----------------------------------------------------------------
 
@@ -127,9 +129,9 @@ class DiscordAdapter:
 
     def _deliver(self) -> None:
         while (text := self._inbox.get()) is not None:
+            # Lo que llega antes de que el cliente registre su receptor espera; no se descarta.
+            self._has_receiver.wait()
             receiver = self._receiver
-            if receiver is None:
-                continue
             try:
                 receiver(text)
             except Exception as exc:  # un mensaje malo no debe detener la entrega de los demás
