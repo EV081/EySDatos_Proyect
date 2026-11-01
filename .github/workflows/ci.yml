@@ -86,7 +86,7 @@ jobs:
           bandit -r crypto client directory discord_adapter ops -x '*/tests/*' -l
       - name: Semgrep
         run: >
-          docker run --rm -v "$PWD:/src" -w /src $SEMGREP_IMAGE semgrep scan --metrics=off --error
+          docker run --rm -v "$PWD:/src" -w /src "$SEMGREP_IMAGE" semgrep scan --metrics=off --error
           --config p/python --config p/secrets --config p/typescript --config p/react
 
   dependencias:
@@ -101,8 +101,8 @@ jobs:
           pip install pip-audit==2.10.1
           mkdir -p sbom
           for c in crypto client directory discord_adapter; do
-            pip-audit -r $c/requirements.txt --progress-spinner off
-            pip-audit -r $c/requirements.txt --progress-spinner off -f cyclonedx-json -o sbom/$c.cdx.json
+            pip-audit -r "$c/requirements.txt" --progress-spinner off
+            pip-audit -r "$c/requirements.txt" --progress-spinner off -f cyclonedx-json -o "sbom/$c.cdx.json"
           done
       - name: npm audit y SBOM del frontend
         working-directory: frontend
@@ -122,5 +122,5 @@ jobs:
           fetch-depth: 0  # todo el historial
       - name: gitleaks (historial y árbol)
         run: |
-          docker run --rm -v "$PWD:/src" $GITLEAKS_IMAGE git /src --config /src/.gitleaks.toml --redact --no-banner
-          docker run --rm -v "$PWD:/src" $GITLEAKS_IMAGE dir /src --config /src/.gitleaks.toml --redact --no-banner
+          docker run --rm -v "$PWD:/src" "$GITLEAKS_IMAGE" git /src --config /src/.gitleaks.toml --redact --no-banner
+          docker run --rm -v "$PWD:/src" "$GITLEAKS_IMAGE" dir /src --config /src/.gitleaks.toml --redact --no-banner
