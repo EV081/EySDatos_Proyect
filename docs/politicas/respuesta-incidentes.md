@@ -1,6 +1,6 @@
 # Plan de respuesta a incidentes
 
-**Versión 1.0, 31 de octubre de 2026.** Cumple la restricción C-19 de la DPIA. Sigue la estructura de NIST SP 800-61 rev. 3 (2025), que integra la respuesta a incidentes en las funciones del CSF 2.0: **Gobernar, Identificar y Proteger** (preparación), **Detectar**, **Responder** y **Recuperar**, con mejora continua. Se ajusta a la Ley N.° 29733 y su reglamento (DS 016-2024-JUS): **notificar a la ANPD dentro de las 48 horas desde que se conoce la brecha** y avisar a las personas afectadas cuando el impacto es alto. Lo que sigue no es asesoría legal: el texto vigente se verifica antes de un uso real.
+**Versión 1.1, 1 de noviembre de 2026** (1.0: 31 de octubre; la 1.1 agrega lo aprendido en INC-2026-01, anexo C). Cumple la restricción C-19 de la DPIA. Sigue la estructura de NIST SP 800-61 rev. 3 (2025), que integra la respuesta a incidentes en las funciones del CSF 2.0: **Gobernar, Identificar y Proteger** (preparación), **Detectar**, **Responder** y **Recuperar**, con mejora continua. Se ajusta a la Ley N.° 29733 y su reglamento (DS 016-2024-JUS): **notificar a la ANPD dentro de las 48 horas desde que se conoce la brecha** y avisar a las personas afectadas cuando el impacto es alto. Lo que sigue no es asesoría legal: el texto vigente se verifica antes de un uso real.
 
 ## 1. Gobernar: roles y contactos
 
@@ -24,13 +24,13 @@ Lo que ya existe y que este plan usa:
 | Copias cifradas, fuera del servidor, con restauración probada | `python -m ops.backup.backup` (F4) |
 | Revocación del certificado del directorio | `python -m ops.certs.pki revoke` (F2) |
 | Cancelación y cambio de llave en el directorio | `DELETE /v1/keys/{id}`, `PUT` con `old_signature` (F1) |
-| Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6) |
+| Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6); GitGuardian revisa el repositorio público en GitHub |
 | Alerta de cambio de llave a los contactos | Cliente (RF8) |
 | Inventario de datos y riesgos | DPIA y secciones 6.4 y 7 del informe |
 
 ## 3. Detectar: fuentes y clasificación
 
-**Fuentes:** alertas del directorio (`acceso_ajeno`, firmas inválidas repetidas, enumeración, cambios de llave), fallos de la CI (gitleaks, pip-audit), avisos de una persona usuaria (por ejemplo, "me salió una alerta de cambio de llave que yo no hice"), avisos de Discord y de terceros, y la revisión diaria de alertas.
+**Fuentes:** alertas del directorio (`acceso_ajeno`, firmas inválidas repetidas, enumeración, cambios de llave), fallos de la CI (gitleaks, pip-audit), alertas de GitGuardian sobre el repositorio, avisos de una persona usuaria (por ejemplo, "me salió una alerta de cambio de llave que yo no hice"), avisos de Discord y de terceros, y la revisión diaria de alertas.
 
 **Severidad:**
 
@@ -63,6 +63,7 @@ Lo que ya existe y que este plan usa:
 | **S3: el directorio sustituye llaves** (alertas de `cambio_de_llave` no reconocidos o reportes de personas) | Detener el directorio; avisar por el canal del proyecto (fuera del directorio) que **nadie inicie conversaciones con contactos sin verificar** | Comparar las llaves con la última copia previa al incidente; restaurar las legítimas; pedir a las personas afectadas que repitan la verificación | **Sí**, si se confirma una sustitución |
 | **Fuga de `server.key` o de la llave de la CA** | Certificado: `pki revoke <serial>` + `pki issue`, y distribuir `crl.pem`. CA: detener el directorio | CA: crear una nueva (`pki init` en otra carpeta), distribuir el nuevo `ca.pem` por un canal confiable y revisar si hubo emisiones no autorizadas | Solo si se usó para interceptar datos |
 | **S6: fuga del token de un bot** | Developer Portal → *Reset Token*; quitar el bot del servidor si hay abuso | Actualizar `DISCORD_TOKEN`; revisar el canal por mensajes inyectados (el protocolo los rechaza) | En general no: solo hay texto cifrado y metadatos. Evaluar si se descargaron metadatos de muchas personas |
+| **Secreto publicado en el repositorio** (alerta de GitGuardian o de gitleaks) | Determinar qué protege el secreto y si se usa en otro lado; si protege algo real, rotarlo **antes** de tocar el repositorio | Sacar el secreto del código (variables de entorno, `secrets` de GitHub o generación por ejecución); agregar una regla de gitleaks si no lo detectó; no reescribir el historial publicado salvo que el secreto siga vigente y no se pueda rotar | No, salvo que el secreto diera acceso a datos personales. Ejemplo real: INC-2026-01 (anexo C) |
 | **Fuga del `.env`** (secretos del servidor) | Rotar **todo** lo del calendario de la política de uso seguro | Revisar el historial de git (gitleaks), los registros y los accesos a la base | Si hay indicios de acceso a la base, tratar como S2 |
 | **S5 / S4: la llave o el dispositivo de una persona** | La persona cancela su registro o publica una llave nueva desde otro dispositivo; sus contactos reciben la alerta | La persona crea una identidad nueva y repite las verificaciones | El dispositivo es de la persona: el equipo la asiste. Notificar si el origen fue una falla del sistema |
 | **S7 / S8: dependencia maliciosa o defecto del protocolo** | Retirar la versión afectada; avisar a las personas que bloqueen la aplicación hasta actualizar | Corregir, agregar una prueba que reproduzca el defecto, publicar una versión nueva y pedir rotar las sesiones (las sesiones viejas se descartan al rotar) | **Sí**, si pudo exponer contenido o llaves |
@@ -87,7 +88,7 @@ Si a las 48 h todavía faltan datos, **se notifica igual** con lo que se sabe y 
 ## 6. Recuperar
 
 * Restaurar el servicio desde un estado limpio: copia verificada (`backup verify`), secretos rotados y certificado nuevo.
-* Confirmar que el servicio funciona: la CI en verde, `discord_adapter.check` sin problemas y una consulta de llave por HTTPS con la CA nueva.
+* Confirmar que el servicio funciona: la CI en verde, `discord_adapter.check` y `discord_adapter.smoke` sin problemas, y una consulta de llave por HTTPS con la CA nueva.
 * Vigilar con más atención (revisar las alertas cada hora) durante 7 días.
 * La cancelación que pidió una persona afectada se aplica también a las copias, a más tardar en 30 días (rotación).
 
@@ -128,3 +129,35 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 | Fecha | Escenario | Participantes | Tiempo hasta la decisión de notificar | Hallazgos y acciones |
 |---|---|---|---|---|
 | (pendiente: primer simulacro antes de la demostración) | | | | |
+
+## Anexo C: incidentes registrados
+
+### INC-2026-01: contraseñas de la CI publicadas en GitHub
+
+| Campo | Valor |
+|---|---|
+| T0 (se conoce el incidente) | 2026-11-01 18:48 (UTC-5), minutos después del primer push de la rama |
+| Detectado por / fuente | GitGuardian (dos alertas *Generic Password*, severidad alta, etiqueta *Publicly exposed*) |
+| Escenario y severidad inicial | Secreto publicado en el repositorio. **Alta** por la regla de la sección 3 (se filtra un secreto) |
+| Qué se expuso | `ci-postgres`, `ci-app` y `ci-backup` en `.github/workflows/ci.yml` (commits `c5d3f62` a `8c686ff`): contraseñas de la base PostgreSQL efímera de la CI |
+| Evaluación del impacto | Protegían una base que solo existe dentro del runner de GitHub durante la ejecución y se destruye al terminar; no se usan en `.env` ni en ningún otro sistema (verificado). Severidad reclasificada a **baja**: sin acceso posible a datos |
+| ¿Brecha de datos personales? | **No.** La base de la CI solo tiene datos sintéticos de las pruebas |
+| Contención y erradicación | 18:54, commit `f91eb27`: la CI genera tres contraseñas aleatorias por ejecución (`openssl rand`), las enmascara en los registros (`::add-mask::`) y levanta Postgres en un paso en lugar de como servicio |
+| Notificación a la ANPD | No corresponde (sin datos personales) |
+| Recuperación confirmada | Run 41364404833 de la CI: las pruebas pasan con las contraseñas aleatorias; gitleaks sin hallazgos |
+| Cierre en GitGuardian | *Resolve → Secret revoked* |
+
+**Revisión posterior.**
+
+* **Por qué pasó:** en una CI se ven como inofensivas las contraseñas de bases efímeras, y se escribieron en el workflow. La política 2.2 ("ningún secreto se versiona") no hacía excepciones, y aun así se incumplió.
+* **Por qué no lo detectamos antes:** las reglas por defecto de gitleaks ignoran contraseñas cortas y de baja entropía. La CI pasaba en verde con el secreto adentro.
+* **Qué funcionó:** la detección externa (GitGuardian) llegó a los minutos; el impacto se acotó rápido gracias a que la base era efímera y las contraseñas no se reutilizaban.
+* **Acciones:**
+
+| Acción | Responsable | Estado |
+|---|---|---|
+| Contraseñas aleatorias por ejecución en la CI | Farid | ✔ `f91eb27` |
+| Regla `password-en-configuracion` en `.gitleaks.toml`, probada con un canario (detecta valores fijos; ignora vacíos, `${{ secrets.* }}` y `${VAR}`) | Farid | ✔ `f91eb27` |
+| Registrar el hallazgo en la clasificación de `ops/reports/README.md` | Farid | ✔ |
+| Política 2.2: ni siquiera las credenciales de prueba o de CI se escriben en archivos versionados | Farid | ✔ versión 1.1 |
+| No reescribir el historial: el valor ya no protege nada y la rama es compartida | Ambos | Decidido |

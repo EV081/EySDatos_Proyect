@@ -324,7 +324,7 @@ Todos los componentes de la sección 5.1 están implementados. El cliente local 
 | `crypto/` | Identidad, bóveda, *handshake* con PFS, sesión, huella y seudonimización | 126 |
 | `client/` | API local: orquesta las sesiones, la cola de salida, la rotación y las alertas | 55 |
 | `frontend/` | Interfaz en Next.js | Pruebas unitarias y prueba e2e (los módulos `lib/` deben versionarse; ver la nota) |
-| `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, cancelación, TLS 1.3, auditoría y alertas | 67 |
+| `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, cancelación, TLS 1.3, auditoría y alertas | 68 |
 | `discord_adapter/` | Un bot por persona sobre `discord.py`; solo publica mensajes `E2EE1:` | 14, incluida una conversación cifrada completa entre dos clientes reales; ensayo con la API real (`discord_adapter.smoke`) |
 | `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
 
@@ -350,7 +350,7 @@ Todos los componentes de la sección 5.1 están implementados. El cliente local 
 | Tarea diaria | Copia, purga de la base y retención de registros en un solo comando programable | `python -m ops.scheduled daily` |
 | Análisis de código | Bandit, Semgrep, pip-audit y npm audit con SBOM CycloneDX, y gitleaks, en CI; reportes antes y después | [ops/reports](../ops/reports/README.md) |
 | Políticas | Uso seguro para personas y operadores, con calendario de rotación de secretos | [politicas/uso-seguro.md](politicas/uso-seguro.md) |
-| Incidentes | Plan según NIST SP 800-61 rev. 3, con guías por escenario y notificación a la ANPD en 48 h | [politicas/respuesta-incidentes.md](politicas/respuesta-incidentes.md) |
+| Incidentes | Plan según NIST SP 800-61 rev. 3, con guías por escenario y notificación a la ANPD en 48 h. Ya se aplicó a un caso real: contraseñas de la CI publicadas en GitHub y detectadas por GitGuardian (INC-2026-01, sin datos personales), que dejó una regla nueva de gitleaks | [politicas/respuesta-incidentes.md](politicas/respuesta-incidentes.md) |
 
 ## 6. Privacidad y ética
 

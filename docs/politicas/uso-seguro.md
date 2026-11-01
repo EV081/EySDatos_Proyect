@@ -1,6 +1,6 @@
 # Políticas de uso seguro
 
-**Versión 1.0, 31 de octubre de 2026.** Se aplica a las personas que usan la aplicación y al equipo que opera el directorio de llaves y el servidor de Discord del proyecto. Se revisa junto con la DPIA ante cualquier cambio de datos, finalidad, tecnología o proveedor. Lo que pasa cuando algo sale mal está en el [plan de respuesta a incidentes](respuesta-incidentes.md).
+**Versión 1.1, 1 de noviembre de 2026** (cambios: secretos de prueba y de CI en 2.2, ramas reales en 2.4). Se aplica a las personas que usan la aplicación y al equipo que opera el directorio de llaves y el servidor de Discord del proyecto. Se revisa junto con la DPIA ante cualquier cambio de datos, finalidad, tecnología o proveedor. Lo que pasa cuando algo sale mal está en el [plan de respuesta a incidentes](respuesta-incidentes.md).
 
 ## 1. Para las personas usuarias
 
@@ -26,7 +26,8 @@
 
 ### 2.2 Secretos
 
-* Ningún secreto se versiona. Todos van en `.env` (ignorado por git) o en variables de entorno. gitleaks revisa el historial y el árbol en cada push.
+* Ningún secreto se versiona. Todos van en `.env` (ignorado por git) o en variables de entorno. gitleaks revisa el historial y el árbol en cada push, y GitGuardian revisa el repositorio en GitHub.
+* **Tampoco las credenciales de prueba o de CI**, aunque protejan algo efímero: la CI genera las suyas en cada ejecución. Lo aprendimos en INC-2026-01 (anexo C del plan de incidentes).
 * El `.env` real vive solo en el equipo del responsable, con permisos de lectura para su usuario.
 * Nunca se pegan secretos en Discord, en issues, en chats ni en capturas de pantalla.
 
@@ -52,7 +53,7 @@
 
 ### 2.4 Cambios y despliegue
 
-* Todo cambio entra por una rama (`farid/<tarea>`, `elmer/<tarea>`) y un *pull request* revisado por la otra persona.
+* Todo cambio entra por una rama de tarea (por ejemplo, `1-directorio-de-llaves`) y llega a `main` por un *pull request* revisado por la otra persona.
 * No se integra nada con la CI en rojo: pruebas de los cinco componentes, Bandit, Semgrep, pip-audit, npm audit y gitleaks.
 * Las dependencias van con versión fija. Una dependencia nueva se justifica en el PR y pasa pip-audit o npm audit.
 * Un `# nosec` o `// nosemgrep` solo se acepta para una línea y una regla, con su justificación, y se registra en `ops/reports/README.md`.

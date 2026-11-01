@@ -40,7 +40,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | ✔ (10 pruebas; [ops/backup/README.md](../ops/backup/README.md)) |
 | F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | ✔ (10 pruebas; tarea diaria `ops.scheduled`) |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | ✔ ([ops/reports/README.md](../ops/reports/README.md)) |
-| F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ✔ ([politicas/](politicas/)); falta tu revisión y el simulacro |
+| F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ✔ ([politicas/](politicas/), versión 1.1; primer incidente real registrado, INC-2026-01); falta tu revisión y el simulacro |
 | F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ✔ (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad.md), generada y comprobada en CI) |
 | F9 | Lecciones aprendidas y retrospectiva (parte de Farid) | ○ |
 
