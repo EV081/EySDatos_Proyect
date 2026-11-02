@@ -59,8 +59,8 @@ try {
   start('node', [join(root, 'frontend/scripts/serve.mjs')], { cwd: join(root, 'frontend') });
   const debugPort = 9333;
   start('chromium', ['--headless=new', '--no-sandbox', '--disable-gpu', `--remote-debugging-port=${debugPort}`, `--user-data-dir=${mkdtempSync(join(tmpdir(), 'e2ee-chrome-'))}`, '--window-size=1200,800', 'about:blank']);
-  await until(async () => (await fetch('http://127.0.0.1:8001/health')).ok && (await fetch('http://127.0.0.1:8002/health')).ok && (await fetch('http://127.0.0.1:5173/')).ok, 'servicios', 15000);
-  await until(async () => (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).ok, 'Chromium', 15000);
+  await until(async () => (await fetch('http://127.0.0.1:8001/health')).ok && (await fetch('http://127.0.0.1:8002/health')).ok && (await fetch('http://127.0.0.1:5173/')).ok, 'servicios', 15000); // nosemgrep: react-insecure-request -- servicios locales en 127.0.0.1
+  await until(async () => (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).ok, 'Chromium', 15000); // nosemgrep: react-insecure-request -- Chromium local
 
   const open = async (name, api) => {
     const tgt = await (await fetch(`http://127.0.0.1:${debugPort}/json/new?${encodeURIComponent(`http://127.0.0.1:5173/?api=http://127.0.0.1:${api}&token=dev-token`)}`, { method: 'PUT' })).json();

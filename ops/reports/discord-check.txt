@@ -1,0 +1,12 @@
+# python -m discord_adapter.check — 2026-11-01
+{
+  "guild": "Ética y Seguridad de Datos 2.0",
+  "channel": "e2ee-relay",
+  "everyone_can_view": false,
+  "roles_with_access": [
+    "e2ee"
+  ],
+  "bot_is_admin": false,
+  "bot_extra_permissions": []
+}
+OK: el canal es privado y el bot tiene permisos mínimos

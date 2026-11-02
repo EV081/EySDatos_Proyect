@@ -1,0 +1,2 @@
+-r ../client/requirements.txt
+discord.py==2.7.1

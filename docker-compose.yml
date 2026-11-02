@@ -1,0 +1,21 @@
+# Postgres del directorio de llaves (F1). El directorio corre con uvicorn en el host; ver directory/README.md.
+# El puerto se publica solo en 127.0.0.1 y en 55432 para no chocar con un Postgres local.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: directory
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - directory-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d directory"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  directory-db:

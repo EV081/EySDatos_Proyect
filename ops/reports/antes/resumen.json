@@ -1,0 +1,48 @@
+[
+  {
+    "herramienta": "Bandit",
+    "hallazgos": 5,
+    "detalle": {
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 5
+    }
+  },
+  {
+    "herramienta": "Semgrep",
+    "hallazgos": 4,
+    "detalle": {
+      "ERROR": 4
+    }
+  },
+  {
+    "herramienta": "pip-audit (SBOM CycloneDX)",
+    "hallazgos": 0,
+    "detalle": {
+      "crypto": 0,
+      "client": 0,
+      "directory": 0,
+      "discord_adapter": 0
+    }
+  },
+  {
+    "herramienta": "npm audit (SBOM CycloneDX)",
+    "hallazgos": 0,
+    "detalle": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    }
+  },
+  {
+    "herramienta": "gitleaks",
+    "hallazgos": 2,
+    "detalle": {
+      "historial": 0,
+      "arbol": 2
+    }
+  }
+]

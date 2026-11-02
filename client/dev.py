@@ -15,7 +15,8 @@ from .api import create_app
 from .fakes import FakeChannel, FakeDirectory, FakeDiscord
 from .orchestrator import Orchestrator
 
-TOKEN = "dev-token"
+# Token fijo solo del entorno de desarrollo, que escucha en 127.0.0.1 (Bandit B105 aceptado).
+TOKEN = "dev-token"  # nosec B105
 
 
 def main() -> None:

@@ -1,0 +1,13 @@
+# python -m discord_adapter.smoke — 2026-11-01
+[OK]    publica un mensaje E2EE1 y lo recibe por el gateway
+[OK]    se niega a publicar texto plano
+[OK]    se niega a publicar más de 2000 caracteres
+[OK]    ignora un mensaje normal publicado en el canal
+[OK]    reconecta y entrega lo publicado mientras estaba desconectado
+[OK]    sin repetidos (2 mensajes de esta corrida)
+[OK]    un adaptador nuevo recibe lo atrasado (7 días)
+[OK]    lo atrasado no incluye el mensaje normal
+[OK]    replay_backlog() vuelve a entregar lo atrasado
+
+9/9 comprobaciones OK
+exit: 0

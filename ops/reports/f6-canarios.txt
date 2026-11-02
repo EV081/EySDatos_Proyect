@@ -1,0 +1,23 @@
+# Prueba de detección de las herramientas de F6 — 2026-11-01
+# Un 0 solo vale si la herramienta detecta. Se plantaron fallas conocidas en un repositorio aparte (fuera de este),
+# con las mismas versiones y reglas que la CI, y se comprobó que cada herramienta las encuentra.
+
+## Bandit 1.9.4 (vulnerable.py): 6 de 6
+B404 import de subprocess | B105 contraseña en el código | B608 SQL armado con f-string
+B602 subprocess con shell=True | B307 eval() | B324 hash MD5
+
+## Semgrep 1.182.1 (p/python, p/secrets): 3
+subprocess-shell-true | insecure-hash-algorithm-md5 | detected-aws-access-key-id-value
+(eval y la inyección SQL los marca Bandit: por eso se usan las dos herramientas)
+
+## pip-audit 2.10.1 (requests==2.19.1, jinja2==2.10): 49 vulnerabilidades
+requests 2.19.1: 10 | jinja2 2.10: 12 | idna 2.7: 4 | urllib3 1.23: 23 (dependencias transitivas incluidas)
+
+## gitleaks v8.30.1 (historial, con .gitleaks.toml del proyecto): 4 de 4 secretos falsos
+generic-api-key (token con formato de bot de Discord) | aws-access-token | github-pat | discord-client-secret
+
+## Workflow de CI
+actionlint 1.7.7: sin errores (se corrigieron 3 avisos SC2086 de variables sin comillas).
+
+## Análisis del repositorio (ops/reports/despues/, regenerado tras F1-F5 verificados)
+Bandit 0 | Semgrep 0 | pip-audit 0 | npm audit 0 | gitleaks historial 0, árbol 0

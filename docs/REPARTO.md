@@ -34,14 +34,14 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 
 | ID | Tarea | Estado |
 |---|---|---|
-| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`); solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Guarda solo ID, llave pública, fechas y **la versión del aviso aceptado**. Endpoint de cancelación | ○ |
-| F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | ○ |
-| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | ○ |
-| F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | ○ |
-| F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | ○ |
-| F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | ○ |
-| F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ○ |
-| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ○ |
+| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`); solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Guarda solo ID, llave pública, fechas y **la versión del aviso aceptado**. Endpoint de cancelación | ✔ (48 pruebas contra Postgres; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
+| F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | ✔ (10 pruebas; [ops/certs/README.md](../ops/certs/README.md)) |
+| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | ✔ (14 pruebas con Discord simulado; ensayo con la API real y un bot en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); falta el bot de Elmer) |
+| F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | ✔ (10 pruebas; [ops/backup/README.md](../ops/backup/README.md)) |
+| F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | ✔ (10 pruebas; tarea diaria `ops.scheduled`) |
+| F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | ✔ ([ops/reports/README.md](../ops/reports/README.md)) |
+| F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ✔ ([politicas/](politicas/), versión 1.1; primer incidente real registrado, INC-2026-01); falta tu revisión y el simulacro |
+| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ✔ (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad.md), generada y comprobada en CI) |
 | F9 | Lecciones aprendidas y retrospectiva (parte de Farid) | ○ |
 
 ### Compartido (al final)
@@ -59,7 +59,7 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | Interfaz de la librería | [`crypto/API.md`](../crypto/API.md) | `client/`; el directorio solo usa `verify_registration`, `verify_key_change`, `Pseudonymizer` y `mask_id` |
 | Puertos del directorio y de Discord | [`client/ports.py`](../client/ports.py) y [`client/README.md`](../client/README.md) | Farid los implementa; `client/fakes.py` es la referencia de comportamiento |
 | API local cliente ↔ frontend | [`api/client.openapi.json`](api/client.openapi.json) | `frontend/` |
-| API del directorio | `api/directory.yaml` (○ a definir por Farid) | `client/`, directorio |
+| API del directorio | [`api/directory.yaml`](api/directory.yaml) | `client/`, directorio |
 
 Puntos que el directorio debe cumplir y que el cliente ya asume:
 
