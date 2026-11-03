@@ -131,14 +131,21 @@ class Pki:
         self.crl.write_bytes(builder.sign(ca_key, hashes.SHA256()).public_bytes(serialization.Encoding.PEM))
 
 
+def server_hosts() -> tuple[str, ...]:
+    """`localhost`, `127.0.0.1` y los nombres o IP extra de `DIRECTORY_EXTRA_HOSTS` (separados por comas),
+    p. ej. la IP pública del servidor donde se despliegue el directorio. El cliente verifica el nombre."""
+    extra = tuple(h.strip() for h in os.environ.get("DIRECTORY_EXTRA_HOSTS", "").split(",") if h.strip())
+    return DEFAULT_HOSTS + tuple(h for h in extra if h not in DEFAULT_HOSTS)
+
+
 def main(argv: list[str]) -> None:
     pki = Pki()
     command = argv[0] if argv else ""
     if command == "init":
         pki.init_ca()
-        cert = pki.issue_server()
+        cert = pki.issue_server(server_hosts())
     elif command == "issue":
-        cert = pki.issue_server()
+        cert = pki.issue_server(server_hosts())
         pki.write_crl()
     elif command == "revoke" and len(argv) == 2:
         pki.revoke(int(argv[1], 16))

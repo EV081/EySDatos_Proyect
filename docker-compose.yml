@@ -1,4 +1,5 @@
-# Postgres del directorio de llaves (F1). El directorio corre con uvicorn en el host; ver directory/README.md.
+# Postgres del directorio de llaves (F1). En local el directorio corre con `make directory` en el host; ver directory/README.md.
+# Para un servidor: `docker compose --profile deploy up -d` agrega el servicio `directory` (docs/despliegue-directorio.md).
 # El puerto se publica solo en 127.0.0.1 y en 55432 para no chocar con un Postgres local.
 services:
   db:
@@ -17,5 +18,30 @@ services:
       timeout: 3s
       retries: 10
 
+  # Solo con `--profile deploy`. El certificado y la CA se montan (nunca van en la imagen); los secretos salen del .env.
+  directory:
+    profiles: ["deploy"]
+    build:
+      context: .
+      dockerfile: directory/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://directory_app:${DIRECTORY_APP_PASSWORD:?define DIRECTORY_APP_PASSWORD en .env}@db:5432/directory
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?define DISCORD_CLIENT_ID en .env}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?define DISCORD_CLIENT_SECRET en .env}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?define DISCORD_REDIRECT_URI en .env}
+      PSEUDONYM_KEY: ${PSEUDONYM_KEY:?define PSEUDONYM_KEY en .env}
+      AUDIT_LOG_DIR: /var/log/directory
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./ops/certs:/app/ops/certs:ro
+      - directory-logs:/var/log/directory
+    restart: unless-stopped
+
 volumes:
   directory-db:
+  directory-logs:

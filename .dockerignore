@@ -1,0 +1,15 @@
+# El contexto de construcción es la raíz del repositorio: nada de secretos, llaves ni dependencias locales.
+.git
+.env
+.env.*
+!.env.example
+.venv
+node_modules
+frontend
+data
+logs
+ops/certs/private
+ops/certs/*.pem
+ops/certs/revoked.json
+**/__pycache__
+**/.pytest_cache

@@ -71,6 +71,10 @@ class FakeDiscord:
     def set_receiver(self, callback) -> None:
         self.receiver = callback
 
+    def replay_backlog(self) -> None:
+        """Como `DiscordAdapter.replay_backlog()`: el canal vuelve a entregar lo publicado (se entrega con `flush()`)."""
+        self.reconnect_with_backlog()
+
     def reconnect_with_backlog(self) -> None:
         """Como al reabrir la app: el canal reentrega lo publicado mientras no estaba."""
         self.online = True

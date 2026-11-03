@@ -148,6 +148,7 @@ class Orchestrator:
             self._vault_file.save(discord_id, identity.to_vault(password, self._kdf))
             self._open(identity, discord_id)
             self._publish_or_rollback()
+            self._replay_backlog()
             return self.status()
 
     def unlock(self, password: str) -> dict:
@@ -168,6 +169,7 @@ class Orchestrator:
                 raise BadPassword("contraseña incorrecta") from None
             self._failures = 0
             self._open(identity, discord_id)
+            self._replay_backlog()
             return self.status()
 
     def lock(self) -> None:
@@ -200,6 +202,14 @@ class Orchestrator:
         self._peers = {}
         for cid, state in self._doc["retry"].items():
             self._peer(cid).attempts, self._peer(cid).next_attempt_at = state["attempts"], state["next"]
+
+    def _replay_backlog(self) -> None:
+        """Con la identidad bloqueada lo que llega de Discord se descarta; al abrirla se pide al canal que
+        vuelva a entregar lo reciente. El adaptador real lo hace en un hilo aparte (no bloquea ni reentra);
+        los repetidos y los handshakes vencidos los descarta este orquestador. Es opcional en el puerto."""
+        replay = getattr(self._discord, "replay_backlog", None)
+        if replay is not None:
+            replay()
 
     def _publish_or_rollback(self) -> None:
         """Una identidad no publicada no sirve: si el directorio falla, se deshace todo para poder reintentar."""

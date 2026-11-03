@@ -285,3 +285,14 @@ def test_al_bloquear_se_destruyen_las_sesiones(pair):
     alice.lock()
     assert sesion.destroyed
     alice.on_discord_message(world.channel.log[-1])  # no hace nada y no explota
+
+
+def test_al_desbloquear_se_vuelve_a_pedir_lo_que_llego_con_la_identidad_bloqueada(pair):
+    world, alice, bob = pair
+    bob.lock()  # la app de Bob está cerrada: lo que llega del canal se descarta
+    alice.send_text(BOB, "te escribí mientras estabas fuera")
+    world.flush()
+    assert alice.contact(BOB)["session"] == "handshaking"
+    bob.unlock(PASSWORD)  # al abrir, el adaptador vuelve a entregar lo reciente (replay_backlog)
+    world.flush()
+    assert textos(bob, ALICE) == [("in", "te escribí mientras estabas fuera", "received")]

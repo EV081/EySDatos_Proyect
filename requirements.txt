@@ -1,0 +1,7 @@
+# Instala las dependencias de todos los componentes en el .venv:
+#   uv pip install --python .venv/bin/python -r requirements.txt
+# Las versiones fijas viven en el requirements.txt de cada carpeta.
+-r crypto/requirements.txt
+-r client/requirements.txt
+-r directory/requirements.txt
+-r discord_adapter/requirements.txt

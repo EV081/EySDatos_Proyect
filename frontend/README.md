@@ -21,6 +21,21 @@ Abre dos pestañas, una por usuario (el token y la dirección se pasan una sola 
 
 Con el backend real (Farid), el `api` es el puerto del cliente de cada persona y el `token` es `CLIENT_API_TOKEN`. Si se abre sin parámetros, pide la dirección y el token.
 
+### Contra Discord y el directorio reales
+
+Cada persona corre **su propio** `client/` en su laptop (nunca en un servidor: tiene las llaves privadas y el texto plano) y abre el frontend contra él:
+
+```bash
+# .env propio: DISCORD_TOKEN (de SU bot), DISCORD_CHANNEL_ID, DIRECTORY_URL, DIRECTORY_CA_FILE, CLIENT_API_TOKEN
+make directory                                   # solo si el directorio corre en esta laptop (otra terminal)
+python -m directory.client_lib.login             # una vez: token de registro con OAuth2 de Discord
+make client                                      # API local en 127.0.0.1:8001 (CLIENT_PORT=8002 para otra)
+make frontend                                    # http://127.0.0.1:5173
+# abrir: http://127.0.0.1:5173/?api=http://127.0.0.1:8001&token=<CLIENT_API_TOKEN>
+```
+
+El frontend no cambia con Discord: sigue mostrando el texto plano que le entrega el cliente. En `#e2ee-relay` solo se ven `hs1`, `hs2`, `hs3` (llaves públicas y firmas) y luego `E2EE1:…` ilegible (AES-256-GCM en base64url). La dirección del cliente solo puede ser `127.0.0.1`/`localhost` (ver `lib/conn.ts`), aunque el directorio esté desplegado en otro servidor ([despliegue](../docs/despliegue-directorio.md)).
+
 ## Pruebas
 
 ```bash

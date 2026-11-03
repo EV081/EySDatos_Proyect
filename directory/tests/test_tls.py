@@ -16,7 +16,7 @@ from fastapi import FastAPI
 
 from directory.client_lib import DirectoryClient, DirectoryError, tls_context
 from directory.serve import build_config
-from ops.certs.pki import Pki
+from ops.certs.pki import Pki, server_hosts
 
 ALICE = "111111111111111111"
 PASSWORD = b"contrasena-de-la-ca-de-prueba"
@@ -160,3 +160,19 @@ def test_certificado_del_servidor_es_de_90_dias_y_solo_servidor(pki):
     assert not cert.extensions.get_extension_for_class(x509.BasicConstraints).value.ca
     eku = cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
     assert list(eku) == [x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]
+
+
+def test_RS6_el_certificado_puede_incluir_la_ip_publica_del_servidor(pki, monkeypatch):
+    """Para desplegar el directorio: `DIRECTORY_EXTRA_HOSTS` agrega nombres o IP al certificado (SAN)."""
+    monkeypatch.setenv("DIRECTORY_EXTRA_HOSTS", "203.0.113.10, directorio.example.org")
+    hosts = server_hosts()
+    assert hosts == ("localhost", "127.0.0.1", "203.0.113.10", "directorio.example.org")
+    cert = pki.issue_server(hosts)
+    san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+    assert [str(ip) for ip in san.get_values_for_type(x509.IPAddress)] == ["127.0.0.1", "203.0.113.10"]
+    assert san.get_values_for_type(x509.DNSName) == ["localhost", "directorio.example.org"]
+
+
+def test_RS6_sin_hosts_extra_el_certificado_es_solo_local(monkeypatch):
+    monkeypatch.delenv("DIRECTORY_EXTRA_HOSTS", raising=False)
+    assert server_hosts() == ("localhost", "127.0.0.1")

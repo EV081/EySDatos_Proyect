@@ -1,4 +1,7 @@
-"""Arranque real: `uvicorn client.main:app --host 127.0.0.1`. Toda la configuración sale del entorno."""
+"""Arranque real: `make client` (o `uvicorn client.main:app --host 127.0.0.1`). Toda la configuración sale del entorno.
+
+`DIRECTORY_CRL_FILE` y `DIRECTORY_AUTH_TOKEN_FILE` los lee directamente `directory.client_lib`."""
+import atexit
 import os
 import secrets
 
@@ -20,7 +23,11 @@ def _build():
     if "CLIENT_API_TOKEN" not in os.environ:
         print(f"CLIENT_API_TOKEN (generado para esta ejecución): {token}")
     origin = os.environ.get("CLIENT_ALLOWED_ORIGIN", "http://127.0.0.1:5173")
-    return create_app(orchestrator, token, [origin]), discord
+    app = create_app(orchestrator, token, [origin])
+    atexit.register(discord.close)  # cierra la conexión con Discord al apagar
+    if hasattr(directory, "close"):
+        atexit.register(directory.close)
+    return app, discord
 
 
 app, _discord = _build()
