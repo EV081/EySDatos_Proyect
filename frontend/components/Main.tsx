@@ -108,7 +108,11 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
             onVerify={() => setVerifyOpen(true)}
           />
         ) : (
-          <div className="empty">Selecciona o agrega un contacto para comenzar.</div>
+          <div className="empty">
+            <div className="empty-ico">🔐</div>
+            <b>Tus mensajes, solo tuyos</b>
+            Selecciona o agrega un contacto para comenzar una conversación cifrada de extremo a extremo.
+          </div>
         )}
       </main>
       {conv && (

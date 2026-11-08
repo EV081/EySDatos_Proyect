@@ -22,10 +22,14 @@ const CSP = [
   "form-action 'none'",
 ].join('; ');
 
+// Aplica el tema guardado antes de pintar, para que no haya un destello del tema equivocado.
+const THEME_SCRIPT = "try{var t=localStorage.getItem('e2ee.theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}";
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         {process.env.NODE_ENV === 'production' && <meta httpEquiv="Content-Security-Policy" content={CSP} />}
       </head>
       <body>{children}</body>

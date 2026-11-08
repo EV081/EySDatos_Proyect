@@ -3,6 +3,7 @@
 Es síncrono y thread-safe (un RLock): Discord entrega los mensajes desde otro hilo y la API
 local lo llama desde el pool de FastAPI. El tiempo siempre viene de `clock`, para poder probarlo.
 """
+import hashlib
 import logging
 import threading
 import time
@@ -503,10 +504,10 @@ class Orchestrator:
         pk = self._peer_key(contact)
         self._contacts[hs1.sender] = contact
         peer = self._peer(hs1.sender)
-        if peer.initiator is not None:
-            if int(self._my_id) < int(hs1.sender):
-                return  # los dos iniciaron a la vez: gana el id menor
-            peer.initiator = None  # abandono el mío y respondo
+        if peer.initiator is not None and int(self._my_id) < int(hs1.sender):
+            return  # los dos iniciaron a la vez: gana el id menor
+        # Un hs1 no está autenticado: nunca se abandona el intento propio por él (un tercero del canal podría
+        # cancelar handshakes legítimos). Se responde sin tocar `peer.initiator`; al activarse una sesión se limpia.
         responder = Responder(self._identity, self._my_id, hs1.sender, pk, self._seen_sids, self._clock)
         hs2 = responder.respond(hs1)
         peer.responders[hs1.sid] = (responder, self._clock())
@@ -544,25 +545,27 @@ class Orchestrator:
 
     def _on_msg(self, msg: Msg) -> None:
         key = f"{msg.sid.hex()}:{msg.ctr}"
-        if msg.sender not in self._contacts or key in self._seen_set:
+        bad_key = "x:" + hashlib.sha256(msg.nonce + msg.ct + key.encode()).hexdigest()
+        if msg.sender not in self._contacts or key in self._seen_set or bad_key in self._seen_set:
             return  # ya procesado (p. ej. historial del canal reentregado)
         peer = self._peer(msg.sender)
         session = next((s for s in (peer.session, peer.previous[0] if peer.previous else None)
                         if s is not None and s.sid == msg.sid and not s.destroyed), None)
         if session is None:
-            return self._undecryptable(msg, key, "sesión desconocida o ya destruida")
+            return self._undecryptable(msg, bad_key, "sesión desconocida o ya destruida")
         try:
             plain = session.decrypt(msg)
         except ReplayError:
             return
         except (DecryptError, CryptoError):
-            return self._undecryptable(msg, key, "autenticación fallida")
+            return self._undecryptable(msg, bad_key, "autenticación fallida")
         self._mark_seen(key)
         self._add_history(msg.sender, "in", plain.decode("utf-8", errors="replace"), "received")
         self._save()
 
     def _undecryptable(self, msg: Msg, key: str, reason: str) -> None:
-        """RF11: marcador de mensaje no descifrable; el contenido se descarta."""
+        """RF11: marcador de mensaje no descifrable; el contenido se descarta. `key` identifica ESTE contenido
+        (hash), no el par sid:ctr: un mensaje falso no debe "gastar" el contador de uno legítimo."""
         self._mark_seen(key)
         entry = self._add_history(msg.sender, "in", None, "undecryptable")
         entry["reason"] = reason

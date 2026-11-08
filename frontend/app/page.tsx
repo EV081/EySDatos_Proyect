@@ -8,6 +8,7 @@ import { Banner } from '@/components/Banner';
 import { ConnectForm } from '@/components/ConnectForm';
 import { IdentityGate } from '@/components/IdentityGate';
 import { Main } from '@/components/Main';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const KEY = 'e2ee.conn';
 
@@ -79,6 +80,7 @@ export default function Page() {
 
   return (
     <div className="app">
+      {!(api && status?.unlocked) && <ThemeToggle className="theme-fab" />}
       <Banner text={error} />
       <Banner text={offline ? 'Sin conexión con el cliente local. Reintentando…' : null} info />
       {!api ? (

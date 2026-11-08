@@ -275,6 +275,43 @@ def test_los_dos_inician_a_la_vez_y_queda_una_sola_sesion_funcional(pair):
     assert alice._peers[BOB].session.sid == bob._peers[ALICE].session.sid
 
 
+def test_RS14_un_hs1_falso_no_cancela_mi_handshake_en_curso(pair):
+    """Un hs1 sin autenticar de un tercero (con el id de mi contacto) no debe abandonar mi intento."""
+    from crypto import encode
+    from crypto.wire import Hs1
+    import os
+    world, alice, bob = pair
+    # Bob tiene el id mayor: es el que antes abandonaba su intento ante un hs1 de Alice.
+    bob.send_text(ALICE, "hola")
+    iniciador = bob._peers[ALICE].initiator
+    assert iniciador is not None
+    falso = Hs1(ALICE, BOB, os.urandom(16), os.urandom(32), os.urandom(32), int(world.clock()))
+    bob.on_discord_message(encode(falso))
+    assert bob._peers[ALICE].initiator is iniciador
+    world.channel._pending.clear()  # la respuesta de Alice al hs1 real se entrega ahora
+    alice.on_discord_message(world.channel.log[0])
+    world.flush()
+    assert bob.contact(ALICE)["session"] == alice.contact(BOB)["session"] == "active"
+    assert ("in", "hola", "received") in textos(alice, BOB)
+
+
+def test_RS14_un_mensaje_falso_no_hace_perder_el_legitimo(pair):
+    from dataclasses import replace
+    from crypto import decode, encode
+    world, alice, bob = pair
+    alice.send_text(BOB, "uno")
+    world.flush()
+    alice.send_text(BOB, "dos")
+    real = world.channel.log[-1]
+    msg = decode(real)
+    falso = replace(msg, ct=bytes([msg.ct[0] ^ 1]) + msg.ct[1:])  # mismo sid y ctr, basura
+    bob.on_discord_message(encode(falso))
+    bob.on_discord_message(encode(falso))  # reentrega: no duplica el aviso
+    assert [e["status"] for e in bob.history(ALICE)].count("undecryptable") == 1
+    bob.on_discord_message(real)
+    assert ("in", "dos", "received") in textos(bob, ALICE)
+
+
 # --- bloqueo ---------------------------------------------------------------------------------------
 
 def test_al_bloquear_se_destruyen_las_sesiones(pair):

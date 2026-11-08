@@ -1,8 +1,12 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 import type { Api } from '@/lib/api';
 import { displayName, errorMessage, preview, sessionView } from '@/lib/format';
 import type { Conversation } from '@/lib/types';
+import { ThemeToggle } from './ThemeToggle';
+
+// Color estable por contacto, derivado de su id (solo decorativo).
+const hue = (id: string) => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 360, 7);
 
 interface Props {
   api: Api;
@@ -35,7 +39,12 @@ export function Sidebar({ api, convs, selected, onSelect, onAdded, onIdentity }:
 
   return (
     <aside className="side">
+      <div className="side-head">
+        <div className="brand"><span className="brand-mark">🔒</span>Mensajería E2EE</div>
+        <ThemeToggle />
+      </div>
       <h2 className="side-title">CONTACTOS</h2>
+      {convs.length === 0 && <p className="no-contacts">Aún no tienes contactos.<br />Agrega el ID de Discord de alguien registrado.</p>}
       <ul className="contacts">
         {convs.map((c) => {
           const view = sessionView(c);
@@ -46,7 +55,7 @@ export function Sidebar({ api, convs, selected, onSelect, onAdded, onIdentity }:
               className={`contact${selected === c.discord_id ? ' sel' : ''}${c.session === 'key_changed' ? ' alert-key' : ''}`}
               onClick={() => onSelect(c.discord_id)}
             >
-              <div className="avatar">{c.session === 'key_changed' ? '⚠️' : displayName(c)[0]?.toUpperCase()}</div>
+              <div className="avatar" style={{ '--hue': hue(c.discord_id) } as CSSProperties}>{c.session === 'key_changed' ? '⚠️' : displayName(c)[0]?.toUpperCase()}</div>
               <div className="contact-main">
                 <div className="contact-name">
                   {displayName(c)} {c.session === 'active' && <span title="Sesión cifrada activa">🔒</span>}
