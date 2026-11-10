@@ -8,7 +8,7 @@ import type { Message } from '../lib/types.ts';
 const msg = (over: Partial<Message>): Message => ({ seq: 1, id: 'x', dir: 'in', text: 'hola', status: 'received', ts: 0, ...over });
 
 test('RF9: cada estado de sesión tiene su candado y su aviso', () => {
-  assert.equal(sessionView({ session: 'active' }).lock.text, '🔒 Cifrado E2EE');
+  assert.equal(sessionView({ session: 'active' }).lock.text, 'Cifrado E2EE');
   assert.equal(sessionView({ session: 'active' }).notice, null);
   assert.match(sessionView({ session: 'handshaking' }).lock.text, /Estableciendo sesión/);
   assert.equal(sessionView({ session: 'none' }).lock.tone, 'off');

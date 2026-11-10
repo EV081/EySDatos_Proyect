@@ -469,8 +469,8 @@ class Orchestrator:
     def _send_protocol(self, obj) -> None:
         try:
             self._discord.send(encode(obj))
-        except Exception:
-            log.warning("Discord no aceptó un mensaje del protocolo")
+        except Exception as exc:  # el detalle no lleva contenido: solo el tipo y la causa que da el adaptador
+            log.warning("Discord no aceptó un mensaje del protocolo: %s: %s", type(exc).__name__, exc)
 
     # ------------------------------------------------------------------ recepción
 

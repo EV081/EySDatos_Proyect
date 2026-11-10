@@ -3,22 +3,41 @@ import { Fragment, useEffect, useRef, useState, type FormEvent, type KeyboardEve
 import type { Api } from '@/lib/api';
 import { displayName, errorMessage, groupDigits, messageMeta, sessionView } from '@/lib/format';
 import type { Conversation, FingerprintInfo, Message } from '@/lib/types';
+import { Decipher } from './Cipher';
+import { AlertIcon, BlockedIcon, CheckIcon, ExchangeIcon, LockIcon } from './Icons';
 
 interface Props {
   api: Api;
   conv: Conversation;
   messages: Message[];
   fp: FingerprintInfo | null;
+  /** El historial ya se cargó: lo que aparezca después es nuevo y se anima. */
+  loaded: boolean;
   onChanged: () => void;
   onVerify: () => void;
 }
 
-export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Props) {
+export function ChatPanel({ api, conv, messages, fp, loaded, onChanged, onVerify }: Props) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
   const view = sessionView(conv);
+
+  // Solo se anima lo que llega con el chat abierto, no el historial. La clave incluye el estado
+  // para que un mensaje en cola que pasa a enviado también cierre su candado.
+  const seenRef = useRef<Set<string> | null>(null);
+  const freshRef = useRef(new Set<string>());
+  const stamp = (m: Message) => `${m.id}:${m.status}`;
+  if (loaded) {
+    const first = seenRef.current === null;
+    const seen = (seenRef.current ??= new Set<string>());
+    for (const m of messages) {
+      if (seen.has(stamp(m))) continue;
+      seen.add(stamp(m));
+      if (!first) freshRef.current.add(stamp(m));
+    }
+  }
 
   useEffect(() => {
     const el = listRef.current;
@@ -63,8 +82,13 @@ export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Prop
       <header className="chat-head">
         <div className="head-row">
           <b>{name}</b>
-          <span className={`badge ${view.lock.tone}`}>{view.lock.text}</span>
-          {conv.verified ? <span className="badge ok">✓ Verificado</span> : <span className="badge off">Sin verificar</span>}
+          <span className={`badge ${view.lock.tone}`}>
+            {conv.session === 'active' && <LockIcon />}
+            {conv.session === 'handshaking' && <ExchangeIcon />}
+            {conv.session === 'key_changed' && <AlertIcon />}
+            {view.lock.text}
+          </span>
+          {conv.verified ? <span className="badge ok"><CheckIcon />Verificado</span> : <span className="badge off">Sin verificar</span>}
           <button className="ghost small" onClick={onVerify}>{conv.verified ? 'Ver huella' : 'Verificar'}</button>
         </div>
         {fp && <div className="fp">Huella de seguridad: {groupDigits(fp.fingerprint)}</div>}
@@ -91,7 +115,7 @@ export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Prop
           if (m.dir === 'sys') {
             return (
               <div key={m.id} className="sysbox warn">
-                ⚠️ <b>Alerta de seguridad:</b> la llave pública de {name} cambió. La verificación previa se revocó automáticamente
+                <AlertIcon /> <b>Alerta de seguridad:</b> la llave pública de {name} cambió. La verificación previa se revocó automáticamente
                 para prevenir ataques de intermediario.
               </div>
             );
@@ -100,16 +124,20 @@ export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Prop
             return (
               <Fragment key={m.id}>
                 <div className="sysbox bad">
-                  ⛔ <b>Mensaje no descifrable:</b> falló la verificación de autenticidad. El contenido fue descartado.
+                  <BlockedIcon /> <b>Mensaje no descifrable:</b> falló la verificación de autenticidad. El contenido fue descartado.
                 </div>
                 <div className="meta">{messageMeta(m, conv)}</div>
               </Fragment>
             );
           }
+          const fresh = freshRef.current.has(stamp(m));
           return (
             <Fragment key={m.id}>
-              <div className={`msg ${m.dir}`}>{m.text}{m.dir === 'out' && m.status !== 'queued' ? ' 🔒' : ''}</div>
-              <div className={`meta ${m.dir}`}>{messageMeta(m, conv)}</div>
+              <div className={`msg ${m.dir}`}>{fresh && m.dir === 'in' && m.text ? <Decipher text={m.text} /> : m.text}</div>
+              <div className={`meta ${m.dir}${fresh ? ' fresh' : ''}`}>
+                {m.dir === 'out' && m.status !== 'queued' && <LockIcon size={12} />}
+                {messageMeta(m, conv)}
+              </div>
             </Fragment>
           );
         })}
@@ -126,7 +154,7 @@ export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Prop
           onKeyDown={onKey}
           required
         />
-        <button className="primary">Enviar 🔒</button>
+        <button className="primary">Enviar</button>
       </form>
     </div>
   );

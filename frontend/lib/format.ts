@@ -34,9 +34,9 @@ export interface SessionView {
 export function sessionView(contact: Pick<Conversation, 'session'>): SessionView {
   switch (contact.session) {
     case 'active':
-      return { lock: { text: '🔒 Cifrado E2EE', tone: 'brand' }, pill: null, notice: null };
+      return { lock: { text: 'Cifrado E2EE', tone: 'brand' }, pill: null, notice: null };
     case 'handshaking':
-      return { lock: { text: '⏳ Estableciendo sesión…', tone: 'wait' }, pill: { text: '⏳ Handshake', tone: 'wait' }, notice: null };
+      return { lock: { text: 'Estableciendo sesión…', tone: 'wait' }, pill: { text: 'Handshake', tone: 'wait' }, notice: null };
     case 'waiting':
       return {
         lock: { text: 'Sin sesión', tone: 'off' }, pill: { text: 'Esperando', tone: 'wait' },
@@ -49,7 +49,7 @@ export function sessionView(contact: Pick<Conversation, 'session'>): SessionView
       };
     case 'key_changed':
       return {
-        lock: { text: '⚠️ Llave cambiada', tone: 'wait' }, pill: { text: 'Llave cambió', tone: 'bad' },
+        lock: { text: 'Llave cambiada', tone: 'wait' }, pill: { text: 'Llave cambió', tone: 'bad' },
         notice: { kind: 'key', text: 'La llave pública de este contacto cambió. La verificación fue revocada y no se enviará nada hasta que verifiques la nueva huella.' },
       };
     default:

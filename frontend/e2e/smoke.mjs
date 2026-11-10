@@ -24,7 +24,7 @@ function start(cmd, args, opts = {}) {
 function check(name, ok, extra = '') {
   if (!ok) throw new Error(`FALLÓ: ${name} ${extra}`);
   passed++;
-  console.log(`  ✔ ${name}`);
+  console.log(`  ok ${name}`);
 }
 async function until(fn, what, ms = 8000) {
   const t0 = Date.now();
@@ -85,9 +85,9 @@ try {
     await page.eval(`document.querySelectorAll('input[type=password]')[1].focus()`); await page.send('Input.insertText', { text: pass });
     await page.click('input[type=checkbox]');
     await page.clickText('Crear identidad');
-    await page.waitText('CONTACTOS');
+    await page.waitText('Contactos');
   }
-  check('Alice y Bob crean su identidad y llegan a la aplicación', await alice.has('CONTACTOS') && await bob.has('CONTACTOS'));
+  check('Alice y Bob crean su identidad y llegan a la aplicación', await alice.has('Contactos') && await bob.has('Contactos'));
   check('el token no quedó en la URL', !(await alice.eval('location.href')).includes('token'));
 
   console.log('Contactos');
@@ -135,10 +135,10 @@ try {
   await alice.type('dialog input', '00000 11111 22222');
   await alice.clickText('Confirmar', 'dialog button');
   await alice.waitText('no coincide');
-  check('una huella incorrecta se rechaza y no verifica', await alice.has('no coincide') && !(await alice.has('✓ Verificado')));
+  check('una huella incorrecta se rechaza y no verifica', await alice.has('no coincide') && !(await alice.has('Verificado')));
   await alice.type('dialog input', fpBob);
   await alice.clickText('Confirmar', 'dialog button');
-  await alice.waitText('✓ Verificado');
+  await alice.waitText('Verificado');
   check('con la huella correcta el contacto queda verificado', true);
   await alice.shot('alice-verificado');
 
@@ -154,7 +154,7 @@ try {
   check('una contraseña incorrecta no desbloquea', true);
   await alice.eval(`document.querySelector('input[type=password]').select()`); await alice.send('Input.insertText', { text: PASS_A });
   await alice.clickText('Desbloquear');
-  await alice.waitText('CONTACTOS');
+  await alice.waitText('Contactos');
   check('con la contraseña correcta vuelve a la aplicación', true);
 
   await bob.shot('bob-conversacion');
