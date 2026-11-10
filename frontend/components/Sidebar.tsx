@@ -3,6 +3,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react';
 import type { Api } from '@/lib/api';
 import { displayName, errorMessage, preview, sessionView } from '@/lib/format';
 import type { Conversation } from '@/lib/types';
+import { AlertIcon, CheckIcon, ExchangeIcon, KeyIcon, LockIcon } from './Icons';
 import { ThemeToggle } from './ThemeToggle';
 
 // Color estable por contacto, derivado de su id (solo decorativo).
@@ -48,21 +49,26 @@ export function Sidebar({ api, convs, selected, onSelect, onAdded, onIdentity }:
       <ul className="contacts">
         {convs.map((c) => {
           const view = sessionView(c);
-          const pill = c.verified ? { text: '✓ Verificado', tone: 'ok' } : view.pill;
+          const pill = c.verified ? { text: 'Verificado', tone: 'ok' } : view.pill;
           return (
             <li
               key={c.discord_id}
               className={`contact${selected === c.discord_id ? ' sel' : ''}${c.session === 'key_changed' ? ' alert-key' : ''}`}
               onClick={() => onSelect(c.discord_id)}
             >
-              <div className="avatar" style={{ '--hue': hue(c.discord_id) } as CSSProperties}>{c.session === 'key_changed' ? '⚠️' : displayName(c)[0]?.toUpperCase()}</div>
+              <div className="avatar" style={{ '--hue': hue(c.discord_id) } as CSSProperties}>{c.session === 'key_changed' ? <AlertIcon size={18} /> : displayName(c)[0]?.toUpperCase()}</div>
               <div className="contact-main">
                 <div className="contact-name">
-                  {displayName(c)} {c.session === 'active' && <span title="Sesión cifrada activa">🔒</span>}
+                  {displayName(c)} {c.session === 'active' && <span className="lock-mark" title="Sesión cifrada activa"><LockIcon size={13} /></span>}
                 </div>
                 <div className="contact-sub">{preview(c.last)}</div>
               </div>
-              {pill && <span className={`pill ${pill.tone}`}>{pill.text}</span>}
+              {pill && (
+                <span className={`pill ${pill.tone}`}>
+                  {c.verified ? <CheckIcon /> : c.session === 'handshaking' ? <ExchangeIcon /> : null}
+                  {pill.text}
+                </span>
+              )}
             </li>
           );
         })}
@@ -77,7 +83,7 @@ export function Sidebar({ api, convs, selected, onSelect, onAdded, onIdentity }:
       )}
       <button className="ghost" onClick={() => setAdding((v) => !v)}>+ Agregar contacto</button>
       <button className="identity" onClick={onIdentity}>
-        <span>⚙️ Gestión de identidad</span>
+        <span><KeyIcon /> Gestión de identidad</span>
         <small>Ed25519</small>
       </button>
     </aside>

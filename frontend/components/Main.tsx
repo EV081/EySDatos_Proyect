@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Api } from '@/lib/api';
 import type { Conversation, FingerprintInfo, Message, Status } from '@/lib/types';
 import { ChatPanel } from './ChatPanel';
+import { CipherStream } from './Cipher';
 import { IdentityDialog } from './IdentityDialog';
 import { Sidebar } from './Sidebar';
 import { VerifyDialog } from './VerifyDialog';
@@ -21,6 +22,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [fp, setFp] = useState<FingerprintInfo | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [identityOpen, setIdentityOpen] = useState(false);
   const sigRef = useRef('');
@@ -42,10 +44,12 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
           // El historial completo, no solo lo nuevo: un mensaje "en cola" pasa a "enviado" sin cambiar de seq.
           const hist = await api.messages(selected, 0);
           const sig = JSON.stringify(hist);
-          if (!stopped && sig !== sigRef.current) {
+          if (stopped) return;
+          if (sig !== sigRef.current) {
             sigRef.current = sig;
             setMessages(hist);
           }
+          setLoaded(true);
         }
         onOffline(false);
       } catch (err) {
@@ -82,6 +86,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
   const select = useCallback((id: string) => {
     sigRef.current = '';
     setMessages([]);
+    setLoaded(false);
     setFp(null);
     setSelected(id);
   }, []);
@@ -104,14 +109,16 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
             conv={conv}
             messages={messages}
             fp={fp}
+            loaded={loaded}
             onChanged={() => void refreshRef.current()}
             onVerify={() => setVerifyOpen(true)}
           />
         ) : (
           <div className="empty">
-            <div className="empty-ico" aria-hidden="true" />
-            <b>Tus mensajes, solo tuyos</b>
+            <b><span className="rd">Tus mensajes, solo tuyos</span></b>
             Selecciona o agrega un contacto para comenzar una conversación cifrada de extremo a extremo.
+            <CipherStream />
+            <span className="cipher-cap">Esto es lo único que Discord llega a ver.</span>
           </div>
         )}
       </main>

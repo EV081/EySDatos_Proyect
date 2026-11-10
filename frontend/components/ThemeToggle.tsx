@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { MoonIcon, SunIcon } from './Icons';
 
 const KEY = 'e2ee.theme';
 type Theme = 'light' | 'dark';
@@ -37,7 +38,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
       aria-label={dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
       title={dark ? 'Tema claro' : 'Tema oscuro'}
     >
-      {theme === null ? '' : dark ? '☀️' : '🌙'}
+      {theme === null ? null : dark ? <SunIcon /> : <MoonIcon />}
     </button>
   );
 }

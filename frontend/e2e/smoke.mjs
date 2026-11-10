@@ -24,7 +24,7 @@ function start(cmd, args, opts = {}) {
 function check(name, ok, extra = '') {
   if (!ok) throw new Error(`FALLÓ: ${name} ${extra}`);
   passed++;
-  console.log(`  ✔ ${name}`);
+  console.log(`  ok ${name}`);
 }
 async function until(fn, what, ms = 8000) {
   const t0 = Date.now();
@@ -135,10 +135,10 @@ try {
   await alice.type('dialog input', '00000 11111 22222');
   await alice.clickText('Confirmar', 'dialog button');
   await alice.waitText('no coincide');
-  check('una huella incorrecta se rechaza y no verifica', await alice.has('no coincide') && !(await alice.has('✓ Verificado')));
+  check('una huella incorrecta se rechaza y no verifica', await alice.has('no coincide') && !(await alice.has('Verificado')));
   await alice.type('dialog input', fpBob);
   await alice.clickText('Confirmar', 'dialog button');
-  await alice.waitText('✓ Verificado');
+  await alice.waitText('Verificado');
   check('con la huella correcta el contacto queda verificado', true);
   await alice.shot('alice-verificado');
 
