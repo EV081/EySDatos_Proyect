@@ -109,7 +109,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
           />
         ) : (
           <div className="empty">
-            <div className="empty-ico">🔐</div>
+            <div className="empty-ico" aria-hidden="true" />
             <b>Tus mensajes, solo tuyos</b>
             Selecciona o agrega un contacto para comenzar una conversación cifrada de extremo a extremo.
           </div>

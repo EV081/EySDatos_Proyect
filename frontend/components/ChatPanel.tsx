@@ -126,7 +126,7 @@ export function ChatPanel({ api, conv, messages, fp, onChanged, onVerify }: Prop
           onKeyDown={onKey}
           required
         />
-        <button className="primary">Enviar 🔒</button>
+        <button className="primary">Enviar</button>
       </form>
     </div>
   );

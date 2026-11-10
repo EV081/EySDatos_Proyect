@@ -40,10 +40,10 @@ export function Sidebar({ api, convs, selected, onSelect, onAdded, onIdentity }:
   return (
     <aside className="side">
       <div className="side-head">
-        <div className="brand"><span className="brand-mark">🔒</span>Mensajería E2EE</div>
+        <div className="brand"><span className="seal" aria-hidden="true" />Mensajería E2EE</div>
         <ThemeToggle />
       </div>
-      <h2 className="side-title">CONTACTOS</h2>
+      <h2 className="side-title">Contactos</h2>
       {convs.length === 0 && <p className="no-contacts">Aún no tienes contactos.<br />Agrega el ID de Discord de alguien registrado.</p>}
       <ul className="contacts">
         {convs.map((c) => {

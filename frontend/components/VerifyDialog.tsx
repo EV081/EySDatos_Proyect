@@ -51,7 +51,14 @@ export function VerifyDialog({ api, conv, open, onClose, onDone }: Props) {
         <p className="muted">
           Compara esta huella con la de tu contacto <b>fuera de Discord</b>: por llamada, en persona o por otro medio de confianza.
         </p>
-        <div className="fp-big" data-testid="verify-fp">{fp ? groupDigits(fp.fingerprint) : '…'}</div>
+        {/* Un bloque por grupo de 5 dígitos, en el mismo orden en que se dicta. */}
+        <div
+          className={`fp-big${fp ? '' : ' loading'}${fp?.verified && !fp.key_pending ? ' verified' : ''}`}
+          data-testid="verify-fp"
+          aria-label={fp ? `Huella: ${groupDigits(fp.fingerprint)}` : 'Cargando huella'}
+        >
+          {fp ? groupDigits(fp.fingerprint).split(' ').map((g, i) => <span key={i} className="fp-block">{g}</span>) : '…'}
+        </div>
         {fp?.key_pending && (
           <div className="alert bad">Esta es la huella de la llave <b>nueva</b>. Confírmala por otro medio antes de continuar.</div>
         )}

@@ -85,9 +85,9 @@ try {
     await page.eval(`document.querySelectorAll('input[type=password]')[1].focus()`); await page.send('Input.insertText', { text: pass });
     await page.click('input[type=checkbox]');
     await page.clickText('Crear identidad');
-    await page.waitText('CONTACTOS');
+    await page.waitText('Contactos');
   }
-  check('Alice y Bob crean su identidad y llegan a la aplicación', await alice.has('CONTACTOS') && await bob.has('CONTACTOS'));
+  check('Alice y Bob crean su identidad y llegan a la aplicación', await alice.has('Contactos') && await bob.has('Contactos'));
   check('el token no quedó en la URL', !(await alice.eval('location.href')).includes('token'));
 
   console.log('Contactos');
@@ -154,7 +154,7 @@ try {
   check('una contraseña incorrecta no desbloquea', true);
   await alice.eval(`document.querySelector('input[type=password]').select()`); await alice.send('Input.insertText', { text: PASS_A });
   await alice.clickText('Desbloquear');
-  await alice.waitText('CONTACTOS');
+  await alice.waitText('Contactos');
   check('con la contraseña correcta vuelve a la aplicación', true);
 
   await bob.shot('bob-conversacion');
