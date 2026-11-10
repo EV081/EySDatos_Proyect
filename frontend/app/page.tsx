@@ -1,10 +1,11 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Api } from '@/lib/api';
 import { isLocal } from '@/lib/conn';
 import { errorMessage } from '@/lib/format';
 import type { Status } from '@/lib/types';
 import { Banner } from '@/components/Banner';
+import { Decipher } from '@/components/Cipher';
 import { ConnectForm } from '@/components/ConnectForm';
 import { IdentityGate } from '@/components/IdentityGate';
 import { Main } from '@/components/Main';
@@ -40,6 +41,20 @@ export default function Page() {
   const [status, setStatus] = useState<Status | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
+  // Telón de entrada: solo cuando la identidad pasa de bloqueada a desbloqueada ante los ojos del usuario.
+  const [curtain, setCurtain] = useState(false);
+  const sawGate = useRef(false);
+  const unlocked = status?.unlocked;
+
+  useEffect(() => {
+    if (unlocked === false) sawGate.current = true;
+    if (!unlocked || !sawGate.current) return;
+    sawGate.current = false;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setCurtain(true);
+    const timer = setTimeout(() => setCurtain(false), 1400);
+    return () => clearTimeout(timer);
+  }, [unlocked]);
 
   useEffect(() => {
     setConn(loadConn());
@@ -80,6 +95,11 @@ export default function Page() {
 
   return (
     <div className="app">
+      {curtain && (
+        <div className="curtain" aria-hidden="true">
+          <span><Decipher text="Identidad desbloqueada" /></span>
+        </div>
+      )}
       {!(api && status?.unlocked) && <ThemeToggle className="theme-fab" />}
       <Banner text={error} />
       <Banner text={offline ? 'Sin conexión con el cliente local. Reintentando…' : null} info />

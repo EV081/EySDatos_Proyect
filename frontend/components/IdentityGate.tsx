@@ -11,6 +11,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
   const [mode, setMode] = useState<Mode>('create');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Cuenta los rechazos: cada uno vuelve a sacudir la tarjeta.
+  const [fails, setFails] = useState(0);
   const [id, setId] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
@@ -26,6 +28,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
       setPass2('');
     } catch (err) {
       setError(errorMessage(err));
+      setFails((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -81,8 +84,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
   };
 
   return (
-    <section className="card center">
-      <h1>Identidad</h1>
+    <section className={`card center${fails ? (fails % 2 ? ' shake-a' : ' shake-b') : ''}`}>
+      <h1><span className="rd">Identidad</span></h1>
       {status.vault_exists ? (
         <form onSubmit={unlock}>
           <p className="muted">Ingresa tu contraseña maestra para abrir tu identidad.</p>
@@ -90,7 +93,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
             Contraseña maestra
             <input type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} required autoFocus />
           </label>
-          <button className="primary" disabled={busy}>Desbloquear</button>
+          <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Desbloquear</button>
         </form>
       ) : mode === 'create' ? (
         <form onSubmit={create}>
@@ -111,7 +114,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
           </label>
           <p className="hint">Mínimo 10 caracteres. Si la olvidas no hay forma de recuperarla.</p>
           {consent}
-          <button className="primary" disabled={busy}>Crear identidad</button>
+          <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Crear identidad</button>
           <button type="button" className="link" onClick={() => { setMode('import'); setError(null); }}>
             Ya tengo una identidad exportada
           </button>
@@ -131,7 +134,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
             <input type="password" autoComplete="off" value={pass} onChange={(e) => setPass(e.target.value)} required />
           </label>
           {consent}
-          <button className="primary" disabled={busy}>Importar</button>
+          <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Importar</button>
           <button type="button" className="link" onClick={() => { setMode('create'); setError(null); }}>Volver</button>
         </form>
       )}

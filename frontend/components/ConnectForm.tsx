@@ -12,7 +12,7 @@ export function ConnectForm({ onConnect }: { onConnect: (base: string, token: st
 
   return (
     <section className="card center">
-      <h1>Conectar con el cliente local</h1>
+      <h1><span className="rd">Conectar con el cliente local</span></h1>
       <p className="muted">El cliente local corre en tu equipo (127.0.0.1). El token se muestra al iniciarlo.</p>
       <form onSubmit={submit}>
         <label>
