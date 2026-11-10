@@ -51,12 +51,23 @@ def tls_context(ca_file: str, crl_file: str | None = None) -> ssl.SSLContext:
     return ctx
 
 
+def public_ca_context() -> ssl.SSLContext:
+    """Para un directorio detrás de una plataforma (Render): confía en las CA del sistema, TLS 1.3 y nombre verificado.
+    Solo se usa si se pide a propósito (`public_ca=True` / `DIRECTORY_PUBLIC_CA=1`)."""
+    ctx = ssl.create_default_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+    return ctx
+
+
 class DirectoryClient:
     def __init__(self, base_url: str, ca_file: str | None = None, auth_token: str | None = None,
-                 timeout: float = 10.0, transport: httpx.BaseTransport | None = None, crl_file: str | None = None):
+                 timeout: float = 10.0, transport: httpx.BaseTransport | None = None, crl_file: str | None = None,
+                 public_ca: bool = False):
         parts = urlsplit(base_url)
         if transport is not None:
             verify = True
+        elif parts.scheme == "https" and public_ca and not ca_file:
+            verify = public_ca_context()
         elif parts.scheme == "https":
             if not ca_file:
                 raise ValueError("falta ca_file: el directorio solo se valida contra la CA del proyecto")

@@ -37,6 +37,10 @@ def apply(admin_url: str, app_password: str, backup_password: str | None = None)
         cur.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO directory_app, directory_backup")
                     .format(sql.Identifier(dbname)))
         cur.execute("REVOKE ALL ON SCHEMA public FROM PUBLIC")
+        # En bases administradas (Supabase) el usuario admin no es superusuario y no puede asumir el rol sin esto.
+        cur.execute(sql.SQL("GRANT directory_owner TO {}").format(sql.Identifier(conn.info.user)))
+        # Evita depender del parámetro de conexión `search_path`, que algunos poolers rechazan.
+        cur.execute("ALTER ROLE directory_app SET search_path = directory")
         cur.execute("CREATE SCHEMA IF NOT EXISTS directory AUTHORIZATION directory_owner")
         cur.execute("REVOKE ALL ON SCHEMA directory FROM PUBLIC")
     with psycopg.connect(admin_url) as conn, conn.cursor() as cur:

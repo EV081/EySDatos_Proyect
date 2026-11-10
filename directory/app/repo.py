@@ -13,8 +13,7 @@ def digest(secret: bytes) -> bytes:
 
 class Repo:
     def __init__(self, database_url: str, min_size: int = 1, max_size: int = 5):
-        self._pool = ConnectionPool(database_url, min_size=min_size, max_size=max_size, open=True,
-                                    kwargs={"options": "-c search_path=directory"})
+        self._pool = ConnectionPool(database_url, min_size=min_size, max_size=max_size, open=True)  # search_path: fijado en el rol (migrations/apply.py)
 
     def close(self) -> None:
         self._pool.close()

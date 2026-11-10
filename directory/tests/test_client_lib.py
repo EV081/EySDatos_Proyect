@@ -84,3 +84,11 @@ def test_login_rechaza_un_token_pegado_varias_veces():
     for bad in (token * 3, token[:-1], "hola", token + "!"):
         with pytest.raises(SystemExit):
             clean_token(bad)
+
+
+def test_ca_publica_solo_si_se_pide_a_proposito():
+    DirectoryClient("https://directorio.onrender.com", public_ca=True).close()
+    with pytest.raises(ValueError):
+        DirectoryClient("https://directorio.onrender.com", public_ca=False)
+    with pytest.raises(ValueError):
+        DirectoryClient("http://directorio.onrender.com", public_ca=True)  # http nunca

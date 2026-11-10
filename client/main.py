@@ -16,7 +16,10 @@ def _build():
     except ImportError as exc:
         raise SystemExit(f"Faltan los componentes de Farid ({exc.name}). Para desarrollar sin ellos: python -m client.dev")
 
-    directory = DirectoryClient(os.environ["DIRECTORY_URL"], ca_file=os.environ["DIRECTORY_CA_FILE"])
+    # DIRECTORY_PUBLIC_CA=1: el directorio está en Render (certificado público); si no, solo vale la CA del proyecto.
+    public_ca = os.environ.get("DIRECTORY_PUBLIC_CA") == "1"
+    directory = DirectoryClient(os.environ["DIRECTORY_URL"], public_ca=public_ca,
+                                ca_file=os.environ.get("DIRECTORY_CA_FILE") or None if not public_ca else None)
     discord = DiscordAdapter(token=os.environ["DISCORD_TOKEN"], channel_id=int(os.environ["DISCORD_CHANNEL_ID"]))
     orchestrator = Orchestrator(os.environ.get("CLIENT_DATA_DIR", "./data"), directory, discord)
     token = os.environ.get("CLIENT_API_TOKEN") or secrets.token_urlsafe(32)

@@ -1,0 +1,25 @@
+# Render Blueprint: solo el directorio de llaves; la base de datos está en Supabase. Ver docs/despliegue-render.md.
+# Render termina el TLS (certificado público) y entrega HTTP en $PORT; por eso DIRECTORY_BEHIND_PROXY=1.
+services:
+  - type: web
+    name: e2ee-directory
+    runtime: docker
+    dockerfilePath: ./directory/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /v1/keys/111111111111111111  # 404 = vivo
+    envVars:
+      - key: DIRECTORY_BEHIND_PROXY
+        value: "1"
+      - key: DATABASE_URL            # pooler de Supabase, rol directory_app.<ref>
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_REDIRECT_URI    # https://<servicio>.onrender.com/auth/callback
+        sync: false
+      - key: PSEUDONYM_KEY
+        sync: false
+      - key: AUDIT_LOG_DIR
+        value: /tmp/directory-logs   # disco efímero: el plan free no tiene disco persistente

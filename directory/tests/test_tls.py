@@ -176,3 +176,11 @@ def test_RS6_el_certificado_puede_incluir_la_ip_publica_del_servidor(pki, monkey
 def test_RS6_sin_hosts_extra_el_certificado_es_solo_local(monkeypatch):
     monkeypatch.delenv("DIRECTORY_EXTRA_HOSTS", raising=False)
     assert server_hosts() == ("localhost", "127.0.0.1")
+
+
+def test_detras_de_proxy_sirve_http_en_port_y_confia_en_x_forwarded_for(monkeypatch):
+    from directory.serve import build_proxy_config
+    monkeypatch.setenv("PORT", "10000")
+    config = build_proxy_config(app=FastAPI())
+    assert (config.host, config.port, config.ssl_certfile) == ("0.0.0.0", 10000, None)
+    assert config.proxy_headers and config.forwarded_allow_ips == "*"
