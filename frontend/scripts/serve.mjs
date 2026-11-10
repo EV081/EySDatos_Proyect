@@ -1,7 +1,7 @@
 // Servidor estático mínimo para el sitio exportado (out/). Solo escucha en 127.0.0.1.
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { extname, join, normalize, resolve } from 'node:path';
+import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('../out', import.meta.url)));
@@ -14,7 +14,7 @@ const isFile = async (path) => (await stat(path).catch(() => null))?.isFile() ??
 // /privacidad -> privacidad.html; /carpeta/ -> carpeta/index.html
 async function locate(pathname) {
   const base = resolve(join(root, normalize(decodeURIComponent(pathname))));
-  if (base !== root && !base.startsWith(root + '/')) return { status: 403 };
+  if (base !== root && !base.startsWith(root + sep)) return { status: 403 };
   for (const candidate of [base, `${base}.html`, join(base, 'index.html')]) {
     if (await isFile(candidate)) return { file: candidate };
   }
