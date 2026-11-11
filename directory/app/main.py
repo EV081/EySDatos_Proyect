@@ -89,6 +89,10 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
         except ValueError:
             raise ApiError(400) from None
 
+    @app.get("/health")
+    def health():
+        return Response(status_code=204, headers=NO_STORE)
+
     # --- OAuth2 -----------------------------------------------------------------------
 
     @app.get("/auth/login", dependencies=[limit("auth", settings.write_limit)])

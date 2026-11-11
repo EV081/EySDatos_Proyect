@@ -7,7 +7,7 @@ services:
     dockerfilePath: ./directory/Dockerfile
     dockerContext: .
     plan: free
-    healthCheckPath: /v1/keys/111111111111111111  # 404 = vivo
+    healthCheckPath: /health
     envVars:
       - key: DIRECTORY_BEHIND_PROXY
         value: "1"
