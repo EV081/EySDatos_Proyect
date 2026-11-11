@@ -32,6 +32,7 @@ KEY_LEN, SIG_LEN, NONCE_LEN, TOKEN_LEN = 32, 64, 32, 32
 # Pendiente: reemplazarlo por sign_cancellation/verify_cancellation con contexto propio en crypto/ (Elmer).
 CANCEL_MARKER = bytes(KEY_LEN)
 NO_STORE = {"Cache-Control": "no-store"}
+USER_AGENT = "DiscordBot (https://github.com/EV081/EySDatos_Proyect, 1.0) e2ee-directory"
 HTML_HEADERS = {**NO_STORE, "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
                 "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff"}
 
@@ -41,7 +42,8 @@ DiscordIdPath = Path(pattern=DISCORD_ID)
 def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client | None = None,
                limiter: RateLimiter | None = None, monitor: AlertMonitor | None = None) -> FastAPI:
     repo = repo or Repo(settings.database_url)
-    http = http or httpx.Client(timeout=10)
+    # User-Agent descriptivo: Discord lo exige y Cloudflare frena a los genéricos (p. ej. desde IPs de nube compartidas).
+    http = http or httpx.Client(timeout=10, headers={"User-Agent": USER_AGENT})
     limiter = limiter or RateLimiter()
     oauth = DiscordOAuth(settings.discord_client_id, settings.discord_client_secret,
                          settings.discord_redirect_uri, http)
