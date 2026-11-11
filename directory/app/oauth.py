@@ -3,9 +3,12 @@
 El access token de Discord no sale de esta función: se usa una vez para leer `/users/@me` y se revoca."""
 import base64
 import hashlib
+import logging
 from urllib.parse import urlencode
 
 import httpx
+
+log = logging.getLogger(__name__)
 
 AUTHORIZE_URL = "https://discord.com/oauth2/authorize"
 TOKEN_URL = "https://discord.com/api/oauth2/token"  # nosec B105
@@ -51,6 +54,10 @@ class DiscordOAuth:
                                     data={"token": access, "token_type_hint": "access_token"})  # nosec B105
                 except httpx.HTTPError:
                     pass
-        except (httpx.HTTPError, KeyError, ValueError, TypeError):
+        except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
+            detail = ""
+            if isinstance(exc, httpx.HTTPStatusError):
+                detail = f" status={exc.response.status_code} body={exc.response.text[:200]!r}"
+            log.warning("oauth exchange failed: %s%s", type(exc).__name__, detail)
             raise OAuthError("no se pudo completar OAuth2") from None
         return discord_id
