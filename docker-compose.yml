@@ -1,5 +1,6 @@
 # Postgres del directorio de llaves (F1). En local el directorio corre con `make directory` en el host; ver directory/README.md.
-# Para un servidor: `docker compose --profile deploy up -d` agrega el servicio `directory` (docs/despliegue-directorio.md).
+# Para un servidor: `docker compose --profile deploy up -d directory` levanta solo el directorio, con la base en Supabase
+# (docs/despliegue-ec2.md) o en el `db` de al lado (docs/despliegue-directorio.md).
 # El puerto se publica solo en 127.0.0.1 y en 55432 para no chocar con un Postgres local.
 services:
   db:
@@ -19,16 +20,14 @@ services:
       retries: 10
 
   # Solo con `--profile deploy`. El certificado y la CA se montan (nunca van en la imagen); los secretos salen del .env.
+  # No depende de `db`: DATABASE_URL apunta a Supabase o, si se usa el Postgres de al lado, a `db:5432`.
   directory:
     profiles: ["deploy"]
     build:
       context: .
       dockerfile: directory/Dockerfile
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://directory_app:${DIRECTORY_APP_PASSWORD:?define DIRECTORY_APP_PASSWORD en .env}@db:5432/directory
+      DATABASE_URL: ${DATABASE_URL:?define DATABASE_URL en .env}
       DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?define DISCORD_CLIENT_ID en .env}
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?define DISCORD_CLIENT_SECRET en .env}
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?define DISCORD_REDIRECT_URI en .env}
