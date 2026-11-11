@@ -105,10 +105,13 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
     def callback(code: str = Query(default="", max_length=512), state: str = Query(default="", max_length=128)):
         verifier = repo.pop_oauth_state(state.encode()) if state else None
         if not code or verifier is None:
+            logging.getLogger(__name__).warning("oauth callback rejected: missing code or state (state_present=%s code_present=%s)",
+                                                bool(state), bool(code))
             return _page("No se pudo iniciar sesión", "Vuelve a intentarlo desde el principio.", 400)
         try:
             discord_id = oauth.discord_id(code, verifier)
         except OAuthError:
+            logging.getLogger(__name__).warning("oauth callback failed: discord did not confirm account")
             return _page("No se pudo iniciar sesión", "Discord no confirmó la cuenta. Vuelve a intentarlo.", 400)
         token = secrets.token_bytes(TOKEN_LEN)
         repo.create_token(token, discord_id, settings.token_ttl)
