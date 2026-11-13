@@ -1,8 +1,8 @@
 'use client';
 import { Fragment, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { Api } from '@/lib/api';
-import { displayName, errorMessage, groupDigits, messageMeta, sessionView } from '@/lib/format';
-import type { Conversation, FingerprintInfo, Message } from '@/lib/types';
+import { displayName, errorMessage, messageMeta, sessionView } from '@/lib/format';
+import type { Conversation, Message } from '@/lib/types';
 import { Decipher } from './Cipher';
 import { AlertIcon, BlockedIcon, CheckIcon, ExchangeIcon, LockIcon } from './Icons';
 
@@ -10,14 +10,13 @@ interface Props {
   api: Api;
   conv: Conversation;
   messages: Message[];
-  fp: FingerprintInfo | null;
   /** El historial ya se cargó: lo que aparezca después es nuevo y se anima. */
   loaded: boolean;
   onChanged: () => void;
   onVerify: () => void;
 }
 
-export function ChatPanel({ api, conv, messages, fp, loaded, onChanged, onVerify }: Props) {
+export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify }: Props) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -91,7 +90,6 @@ export function ChatPanel({ api, conv, messages, fp, loaded, onChanged, onVerify
           {conv.verified ? <span className="badge ok"><CheckIcon />Verificado</span> : <span className="badge off">Sin verificar</span>}
           <button className="ghost small" onClick={onVerify}>{conv.verified ? 'Ver huella' : 'Verificar'}</button>
         </div>
-        {fp && <div className="fp">Huella de seguridad: {groupDigits(fp.fingerprint)}</div>}
       </header>
 
       {view.notice && (

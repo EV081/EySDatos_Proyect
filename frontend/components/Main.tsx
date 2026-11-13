@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Api } from '@/lib/api';
-import type { Conversation, FingerprintInfo, Message, Status } from '@/lib/types';
+import type { Conversation, Message, Status } from '@/lib/types';
 import { ChatPanel } from './ChatPanel';
 import { CipherStream } from './Cipher';
 import { IdentityDialog } from './IdentityDialog';
@@ -21,7 +21,6 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [fp, setFp] = useState<FingerprintInfo | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [identityOpen, setIdentityOpen] = useState(false);
@@ -69,25 +68,10 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
     };
   }, [api, selected, onLocked, onOffline]);
 
-  // La huella se vuelve a pedir cuando cambia lo que la afecta (verificación o llave nueva).
-  const fpKey = conv ? `${conv.discord_id}:${conv.verified}:${conv.session === 'key_changed'}` : '';
-  useEffect(() => {
-    if (!fpKey || !selected) {
-      setFp(null);
-      return;
-    }
-    let stale = false;
-    api.fingerprint(selected).then((f) => !stale && setFp(f)).catch(() => !stale && setFp(null));
-    return () => {
-      stale = true;
-    };
-  }, [api, selected, fpKey]);
-
   const select = useCallback((id: string) => {
     sigRef.current = '';
     setMessages([]);
     setLoaded(false);
-    setFp(null);
     setSelected(id);
   }, []);
 
@@ -108,7 +92,6 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
             api={api}
             conv={conv}
             messages={messages}
-            fp={fp}
             loaded={loaded}
             onChanged={() => void refreshRef.current()}
             onVerify={() => setVerifyOpen(true)}
