@@ -124,19 +124,33 @@ try {
   check('no se creó ningún elemento ni se ejecutó código', await bob.eval(`!document.querySelector('.messages img, .messages b') && window.__pwned === undefined`));
 
   console.log('Verificación fuera de banda');
+  // La huella se dicta desde la pestaña «Dictar» y se escribe en las 12 casillas de «Escuchar».
+  const tab = (page, name) => page.clickText(name, 'dialog [role=tab]');
+  const readFp = async (page) => { await tab(page, 'Dictar'); return until(async () => { const t = await page.eval(`document.querySelector('[data-testid=verify-fp]').innerText`); return /\d{5}/.test(t) ? t : null; }, `huella en ${page.name}`); };
+  const typeFp = async (page, fp) => {
+    await tab(page, 'Escuchar');
+    const groups = fp.replace(/\D/g, '').match(/\d{5}/g);
+    for (let i = 0; i < groups.length; i++) {
+      await page.eval(`document.querySelectorAll('dialog .fp-in input')[${i}].focus()`);
+      await page.send('Input.insertText', { text: groups[i] });
+    }
+  };
   await alice.clickText('Verificar', '.chat-head button');
-  await alice.waitText('Huella que te dicta tu contacto');
-  const readFp = (page) => until(async () => { const t = await page.eval(`document.querySelector('[data-testid=verify-fp]').innerText`); return /\d{5}/.test(t) ? t : null; }, `huella en ${page.name}`);
+  await alice.waitText('Código QR');
+  await until(() => alice.eval(`!!document.querySelector('dialog svg.qr path')`), 'QR de Alice');
+  check('el diálogo dibuja el código QR de la huella', true);
   const fpAlice = await readFp(alice);
   await bob.clickText('Verificar', '.chat-head button');
-  await bob.waitText('Huella que te dicta tu contacto');
+  await bob.waitText('Código QR');
   const fpBob = await readFp(bob);
   check('ambos ven la misma huella de 60 dígitos', fpAlice === fpBob && fpAlice.replace(/\D/g, '').length === 60, fpAlice);
-  await alice.type('dialog input', '00000 11111 22222');
+  check('la huella no se puede seleccionar para copiarla', await alice.eval(`getComputedStyle(document.querySelector('[data-testid=verify-fp]')).userSelect === 'none'`));
+  await typeFp(alice, '0'.repeat(60));
+  check('mientras se escribe lo dictado, la huella propia no está a la vista', await alice.eval(`!document.querySelector('[data-testid=verify-fp]') && document.querySelectorAll('dialog .fp-in input').length === 12`));
   await alice.clickText('Confirmar', 'dialog button');
   await alice.waitText('no coincide');
   check('una huella incorrecta se rechaza y no verifica', await alice.has('no coincide') && !(await alice.has('Verificado')));
-  await alice.type('dialog input', fpBob);
+  await typeFp(alice, fpBob);
   await alice.clickText('Confirmar', 'dialog button');
   await alice.waitText('Verificado');
   check('con la huella correcta el contacto queda verificado', true);
