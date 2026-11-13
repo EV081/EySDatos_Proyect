@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  displayName, errorMessage, formatTime, groupDigits, messageMeta, normalizeFingerprint, preview, sessionView,
+  displayName, errorMessage, fingerprintFromDigest, formatTime, groupDigits, messageMeta, normalizeFingerprint, parseQr,
+  preview, qrText, sessionView,
 } from '../lib/format.ts';
 import type { Message } from '../lib/types.ts';
 
@@ -42,6 +43,21 @@ test('la huella se normaliza y se agrupa de a 5 dígitos', () => {
   assert.equal(normalizeFingerprint('48291 37502-68304\n75261'), '48291375026830475261');
   assert.equal(groupDigits('4829137502683047526119543847390'), '48291 37502 68304 75261 19543 84739 0');
   assert.equal(groupDigits('48291 37502'), '48291 37502');
+});
+
+test('RF7: el QR lleva el digest y de él salen los mismos 60 dígitos que calcula el cliente', () => {
+  const digest = '21d9aef3a35c084ea514cf72245644cde50279e9b617e53d49062d5bb0dec432';
+  assert.equal(qrText(digest), `E2EE-HUELLA:${digest.toUpperCase()}`);
+  assert.equal(parseQr(qrText(digest)), digest);
+  assert.equal(fingerprintFromDigest(digest), '387503036660381026573973366135923539171358068314743498523698');
+  assert.equal(fingerprintFromDigest(`${'00'.repeat(31)}07`), '7'.padStart(60, '0'));
+});
+
+test('RF7: un QR ajeno o mal formado no se acepta como huella', () => {
+  assert.equal(parseQr('https://example.com'), null);
+  assert.equal(parseQr('E2EE-HUELLA:1234'), null);
+  assert.equal(parseQr(`E2EE-HUELLA:${'g'.repeat(64)}`), null);
+  assert.equal(parseQr(`OTRA-APP:${'a'.repeat(64)}`), null);
 });
 
 test('el nombre mostrado es el alias o, si no hay, el id', () => {

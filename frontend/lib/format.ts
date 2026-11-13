@@ -87,3 +87,25 @@ export const normalizeFingerprint = (text: string): string => String(text).repla
 export function groupDigits(digits: string): string {
   return normalizeFingerprint(digits).replace(/(\d{5})(?=\d)/g, '$1 ');
 }
+
+// La huella son 12 grupos de 5 dígitos: así se dicta y así se escribe, una casilla por grupo.
+export const FP_GROUPS = 12;
+export const FP_GROUP_LEN = 5;
+export const FP_DIGITS = FP_GROUPS * FP_GROUP_LEN;
+
+// El QR lleva el digest completo (SHA-256 de ambas llaves) con un prefijo propio, en mayúsculas para que
+// quepa en modo alfanumérico (menos módulos, más fácil de leer con una cámara web).
+const QR_PREFIX = 'E2EE-HUELLA:';
+
+export const qrText = (digestHex: string): string => QR_PREFIX + digestHex.toUpperCase();
+
+/** Devuelve el digest (64 hex en minúsculas) si el texto escaneado es un QR de huella; si no, null. */
+export function parseQr(text: string): string | null {
+  const m = /^E2EE-HUELLA:([0-9a-f]{64})$/i.exec(String(text).trim());
+  return m ? m[1].toLowerCase() : null;
+}
+
+/** Los 60 dígitos que corresponden a un digest: el mismo cálculo que `crypto/fingerprint.py`. */
+export function fingerprintFromDigest(digestHex: string): string {
+  return (BigInt(`0x${digestHex}`) % 10n ** BigInt(FP_DIGITS)).toString().padStart(FP_DIGITS, '0');
+}
