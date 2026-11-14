@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { Api } from '@/lib/api';
 import { errorMessage } from '@/lib/format';
+import { isStrongPassword, MIN_PASSWORD_LENGTH, WEAK_PASSWORD_MESSAGE } from '@/lib/password';
+import { PasswordRules } from './PasswordRules';
 import type { Status } from '@/lib/types';
 
 interface Props {
@@ -32,6 +34,7 @@ export function IdentityDialog({ api, status, open, onClose, onLocked }: Props) 
   const exportIdentity = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (!isStrongPassword(pass)) return setError(WEAK_PASSWORD_MESSAGE);
     try {
       const { vault } = await api.exportIdentity(pass);
       const file = new Blob([JSON.stringify({ discord_id: status.discord_id, vault }, null, 2)], { type: 'application/json' });
@@ -66,8 +69,9 @@ export function IdentityDialog({ api, status, open, onClose, onLocked }: Props) 
       <form onSubmit={exportIdentity}>
         <label>
           Contraseña para el archivo exportado
-          <input type="password" minLength={10} autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} required />
+          <input type="password" minLength={MIN_PASSWORD_LENGTH} autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} required />
         </label>
+        <PasswordRules password={pass} />
         <button className="ghost">Exportar identidad</button>
       </form>
       {error && <p className="error" role="alert">{error}</p>}
