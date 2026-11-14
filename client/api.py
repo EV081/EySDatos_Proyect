@@ -78,7 +78,7 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
 
     app = FastAPI(title="Cliente local E2EE", version="1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
     app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_credentials=False,
-                       allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"])
+                       allow_methods=["GET", "POST", "DELETE"], allow_headers=["Authorization", "Content-Type"])
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(allowed_hosts))
 
     def require_token(authorization: str | None = Header(default=None)) -> None:
@@ -155,6 +155,11 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
     @app.get("/contacts/{discord_id}", dependencies=[api])
     def contact(discord_id: str = PeerId):
         return orchestrator.contact(discord_id)
+
+    @app.delete("/contacts/{discord_id}", status_code=204, dependencies=[api])
+    def remove_contact(discord_id: str = PeerId):
+        """Quita el contacto de este dispositivo (sesiones, verificación, historial y cola)."""
+        orchestrator.remove_contact(discord_id)
 
     @app.get("/contacts/{discord_id}/fingerprint", dependencies=[api])
     def fingerprint(discord_id: str = PeerId):

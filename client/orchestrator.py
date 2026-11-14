@@ -361,6 +361,23 @@ class Orchestrator:
             self._need_identity()
             return self._contact_view(self._get_contact(discord_id))
 
+    def remove_contact(self, discord_id: str) -> None:
+        """Quita un contacto de este dispositivo: destruye sus sesiones y borra su llave fijada, su verificación,
+        su historial y lo que tenía en cola. No toca el directorio. Si vuelve a escribir (hs1), reaparece como
+        contacto nuevo sin verificar."""
+        with self._lock:
+            self._need_identity()
+            self._get_contact(discord_id)
+            peer = self._peers.pop(discord_id, None)
+            if peer is not None:
+                for s in (peer.session, peer.previous[0] if peer.previous else None):
+                    if s is not None:
+                        s.destroy()
+            del self._contacts[discord_id]
+            for key in ("history", "outbox", "retry"):
+                self._doc[key].pop(discord_id, None)
+            self._save()
+
     def _get_contact(self, discord_id: str) -> Contact:
         contact = self._contacts.get(discord_id)
         if contact is None:

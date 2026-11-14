@@ -469,6 +469,54 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Remove Contact",
+        "description": "Quita el contacto de este dispositivo (sesiones, verificación, historial y cola).",
+        "operationId": "remove_contact_contacts__discord_id__delete",
+        "parameters": [
+          {
+            "name": "discord_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{1,25}$",
+              "title": "Discord Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/contacts/{discord_id}/fingerprint": {
