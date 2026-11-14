@@ -13,7 +13,7 @@ from pathlib import Path
 
 from crypto import (
     CryptoError, DecryptError, Identity, Initiator, KdfParams, ReplayError,
-    Responder, SidCache, VaultError, WireError, decode, encode, fingerprint, sign_registration,
+    Responder, SidCache, VaultError, WireError, decode, encode, fingerprint, sign_key_change, sign_registration,
 )
 from crypto.constants import HANDSHAKE_TTL, MAX_PLAINTEXT
 from crypto.encoding import b64d, b64e
@@ -21,7 +21,8 @@ from crypto.fingerprint import qr_payload
 from crypto.wire import Hs1, Hs2, Hs3, Msg
 
 from .errors import (
-    BadPassword, Conflict, KeyChanged, Locked, NotFound, PeerUnavailable, TooManyAttempts,
+    BadPassword, Conflict, DirectoryUnavailable, KeyChanged, Locked, LoginRequired, NotFound, PeerUnavailable,
+    TooManyAttempts,
 )
 from .ports import DirectoryPort, DiscordPort
 from .privacy import NOTICE_VERSION
@@ -158,17 +159,7 @@ class Orchestrator:
                 return self.status()
             if not self._vault_file.exists():
                 raise NotFound("no hay una identidad en este dispositivo")
-            if self._clock() < self._blocked_until:
-                raise TooManyAttempts("demasiados intentos; espera unos segundos")
-            discord_id, blob = self._vault_file.load()
-            try:
-                identity = Identity.from_vault(blob, password)
-            except VaultError:
-                self._failures += 1
-                if self._failures >= MAX_UNLOCK_FAILURES:
-                    self._failures, self._blocked_until = 0, self._clock() + UNLOCK_BLOCK_SECONDS
-                raise BadPassword("contraseña incorrecta") from None
-            self._failures = 0
+            discord_id, identity = self._check_password(password)
             self._open(identity, discord_id)
             self._replay_backlog()
             return self.status()
@@ -188,6 +179,108 @@ class Orchestrator:
     def export_identity(self, new_password: str) -> bytes:
         with self._lock:
             return self._need_identity().to_vault(new_password, self._kdf)
+
+    def _check_password(self, password: str) -> tuple[str, Identity]:
+        """Abre la bóveda con la contraseña maestra. Comparte el bloqueo temporal con `unlock` (RS2)."""
+        if self._clock() < self._blocked_until:
+            raise TooManyAttempts("demasiados intentos; espera unos segundos")
+        discord_id, blob = self._vault_file.load()
+        try:
+            identity = Identity.from_vault(blob, password)
+        except VaultError:
+            self._failures += 1
+            if self._failures >= MAX_UNLOCK_FAILURES:
+                self._failures, self._blocked_until = 0, self._clock() + UNLOCK_BLOCK_SECONDS
+            raise BadPassword("contraseña incorrecta") from None
+        self._failures = 0
+        return discord_id, identity
+
+    # ------------------------------------------------------------------ derechos ARCO
+
+    @staticmethod
+    def _directory_failure(exc: Exception) -> Exception:
+        if getattr(exc, "status", None) == 401:
+            return LoginRequired("inicia sesión con Discord (python -m directory.client_lib.login) y vuelve a "
+                                 "intentarlo dentro de 10 minutos")
+        log.warning("el directorio no completó la operación")
+        return DirectoryUnavailable("el directorio no respondió o rechazó la operación")
+
+    def my_data(self) -> dict:
+        """Acceso: lo que hay de la persona en este dispositivo y, si el directorio responde, lo que guarda él."""
+        with self._lock:
+            ident = self._need_identity()
+            local = {
+                "discord_id": self._my_id, "public_key": b64e(ident.public_key),
+                "consent": self._doc.get("consent"),
+                "contacts": [{"discord_id": c.discord_id, "alias": c.alias, "verified": c.verified}
+                             for c in self._contacts.values()],
+                "messages": sum(len(v) for v in self._doc["history"].values()),
+                "queued": sum(len(v) for v in self._doc["outbox"].values()),
+                "data_dir": str(self._dir.resolve()),
+            }
+            directory, error = None, None
+            try:
+                directory = self._directory.record(self._my_id)
+            except Exception as exc:
+                error = {401: "login_required", 404: "not_registered"}.get(getattr(exc, "status", None),
+                                                                          "unavailable")
+            return {"local": local, "directory": directory, "directory_error": error}
+
+    def rotate_key(self, password: str) -> dict:
+        """Rectificación: nueva llave de firma, autorizada por la anterior. El historial local se conserva
+        (misma llave de almacén). Los contactos verán el cambio de llave en el próximo handshake y deben
+        volver a verificar la huella (RF8)."""
+        with self._lock:
+            ident, my_id = self._need_identity(), self._my_id
+            self._check_password(password)
+            new = ident.rotate()
+            _, old_blob = self._vault_file.load()
+            self._vault_file.save(my_id, new.to_vault(password, self._kdf))  # primero en disco: no se pierde
+            try:
+                self._directory.register(my_id, new.public_key, lambda n: sign_registration(new, my_id, n),
+                                         NOTICE_VERSION,
+                                         sign_old=lambda n: sign_key_change(ident, my_id, new.public_key, n))
+            except Exception as exc:
+                self._vault_file.save(my_id, old_blob)  # el directorio no cambió: se vuelve a la llave anterior
+                raise self._directory_failure(exc) from None
+            self._identity = new
+            self._doc["consent"] = {"version": NOTICE_VERSION, "at": self._clock()}
+            self._save()
+            return self.status()
+
+    def cancel_registration(self, password: str, delete_local: bool) -> dict:
+        """Cancelación y oposición: borra el registro del directorio (firmado con la llave vigente) y, si se
+        pide, también los datos de este dispositivo. Retira el consentimiento."""
+        with self._lock:
+            ident, my_id = self._need_identity(), self._my_id
+            self._check_password(password)
+            try:
+                self._directory.cancel(my_id, lambda pk, n: sign_key_change(ident, my_id, pk, n))
+            except Exception as exc:
+                raise self._directory_failure(exc) from None
+            if delete_local:
+                self._wipe_local()
+            else:
+                self._doc["consent"] = {**(self._doc.get("consent") or {}), "withdrawn_at": self._clock()}
+                self._save()
+            return self.status()
+
+    def delete_local_data(self, password: str) -> dict:
+        """Borra la identidad, los contactos y el historial de este dispositivo. No toca el directorio."""
+        with self._lock:
+            if not self._vault_file.exists():
+                raise NotFound("no hay una identidad en este dispositivo")
+            self._check_password(password)
+            self._wipe_local()
+            return self.status()
+
+    def _wipe_local(self) -> None:
+        self.lock()
+        self._vault_file.path.unlink(missing_ok=True)
+        (self._dir / "store.enc").unlink(missing_ok=True)
+        for leftover in self._dir.glob("*.tmp"):  # restos de una escritura interrumpida
+            leftover.unlink(missing_ok=True)
+        self._failures, self._blocked_until = 0, 0.0
 
     def _open(self, identity: Identity, discord_id: str) -> None:
         self._identity, self._my_id = identity, discord_id

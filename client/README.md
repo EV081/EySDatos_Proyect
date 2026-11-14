@@ -35,10 +35,16 @@ Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 * **Estado de cada mensaje (`status`):** `queued`, `sent`, `received`, `undecryptable` (RF11, sin `text`) y, con `dir: "sys"`, `key_changed` (alerta dentro de la conversación).
 * **Verificar (RF7):** mostrar `GET /contacts/{id}/fingerprint`; el usuario compara fuera de Discord y escribe (o escanea) la huella que le dicta el otro; `POST /contacts/{id}/verify {fingerprint}` solo acepta si coincide (409 si no). Tras un cambio de llave, la huella que devuelve es la **nueva** (`key_pending: true`).
 * **Errores:** siempre `{"error": <código>, "detail": <texto>}`. `423 locked` = pedir la contraseña maestra.
+* **Derechos ARCO** (todas piden la contraseña maestra, salvo el acceso):
+  * **Acceso:** `GET /privacy/my-data` → `local` (lo de este dispositivo), `directory` (el registro completo del directorio) y `directory_error` (`login_required`, `not_registered` o `unavailable` si no se pudo leer).
+  * **Rectificación:** `POST /identity/rotate {password}` genera una llave nueva autorizada por la anterior; el historial se conserva. Los contactos verán la alerta de cambio de llave y deben volver a verificar.
+  * **Cancelación y oposición:** `POST /identity/cancel {password, delete_local}` borra el registro del directorio y, con `delete_local: true`, también la identidad y el historial locales.
+  * **Borrado local:** `POST /identity/delete-local {password}` borra `vault.json` y `store.enc` sin tocar el directorio (funciona con la identidad bloqueada).
+  * Lo que toca el directorio exige haber iniciado sesión con Discord en los últimos 10 minutos; si no, responde `403 login_required`.
 
 ## Puertos que implementa Farid ([`ports.py`](ports.py))
 
-* `DirectoryPort.register(discord_id, public_key, sign, consent_version)` (guardar la versión del aviso aceptado y la fecha) y `get_key(discord_id)`. Debe lanzar `DirectoryError` ante cualquier fallo.
+* `DirectoryPort.register(discord_id, public_key, sign, consent_version, sign_old=None)` (guardar la versión del aviso aceptado y la fecha; `sign_old` autoriza un cambio de llave), `get_key(discord_id)`, `record(discord_id)` (acceso) y `cancel(discord_id, sign_key_change)`. Debe lanzar `DirectoryError` ante cualquier fallo, con `status=401` si falta iniciar sesión con Discord.
 * `DiscordPort.send(text)` y `set_receiver(callback)`. Debe llamar al `callback` con cada texto nuevo del canal (el autor es siempre un bot y no se usa) y **no** reentregar el historial viejo salvo al reconectar. `client/fakes.py` es la implementación de referencia.
 
 ## Qué se guarda en disco (todo cifrado)
