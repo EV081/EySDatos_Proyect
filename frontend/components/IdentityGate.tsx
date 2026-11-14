@@ -43,6 +43,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
         <summary>Aviso de privacidad (versión {NOTICE_VERSION})</summary>
         <p>
           <a className="out" href="/privacidad" target="_blank" rel="noopener noreferrer">Leer el aviso completo</a>
+          {' · '}
+          <a className="out" href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad y derechos ARCO</a>
         </p>
         <ul>
           <li><b>Qué se publica:</b> tu ID de Discord y tu llave pública de firma, en un directorio. Es lo único que el directorio guarda de ti, junto con las fechas de registro.</li>

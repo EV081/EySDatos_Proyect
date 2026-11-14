@@ -1,0 +1,110 @@
+# Política de privacidad
+
+**Versión:** 1.0
+**Vigente desde:** 2026-11-13
+
+Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
+
+## Resumen en un minuto
+
+- Solo guardamos en el directorio tu **ID de Discord**, tu **llave pública** y algunas **fechas**. Nada más.
+- **No podemos leer tus mensajes.** Se cifran en tu dispositivo y solo la otra persona puede descifrarlos.
+- Tienes cuatro derechos principales, llamados **derechos ARCO**: **A**cceso, **R**ectificación, **C**ancelación y **O**posición.
+- Pedirlos es **gratis** y puedes hacerlo cuando quieras.
+- Si no te respondemos o no estás de acuerdo con la respuesta, puedes reclamar ante la **Autoridad Nacional de Protección de Datos Personales (ANPD)**.
+
+## Qué es la Ley 29733
+
+Es la ley peruana que protege tus datos personales: cualquier información que sirva para identificarte, como tu nombre, tu DNI o, en nuestro caso, tu ID de Discord. La ley dice que quien usa tus datos debe pedirte permiso, decirte para qué los usa, cuidarlos y dejarte controlarlos.
+
+## Quién es responsable de tus datos
+
+El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él.
+
+## Los principios que seguimos
+
+La ley establece reglas básicas, llamadas principios. Así las cumplimos:
+
+- **Legalidad:** usamos tus datos solo de formas permitidas por la ley. No compramos datos ni los obtenemos con engaños.
+- **Consentimiento:** solo publicamos tus datos si marcas la casilla de aceptación. La casilla viene desmarcada y puedes retirar tu permiso cuando quieras.
+- **Finalidad:** tus datos sirven solo para que otras personas te encuentren y puedan escribirte de forma cifrada. No los usamos para publicidad, perfiles ni estadísticas.
+- **Proporcionalidad:** pedimos lo mínimo. No te pedimos nombre, correo, teléfono, foto ni dirección.
+- **Calidad:** tus datos deben ser correctos. Si tu llave cambia, puedes actualizarla.
+- **Seguridad:** ciframos tus mensajes de extremo a extremo, tu llave privada queda protegida con tu contraseña maestra y el directorio usa conexiones protegidas y permisos mínimos.
+- **Disposición de recurso:** si crees que algo está mal, tienes un camino para reclamar, primero con nosotros y luego ante la ANPD.
+- **Nivel de protección adecuado:** si tus datos pasan por otro país, como los servidores de Discord en Estados Unidos, el contenido viaja cifrado y nadie allí puede leerlo.
+
+## Tus derechos ARCO, en simple
+
+### Acceso: saber qué tenemos de ti
+
+Puedes preguntarnos qué datos tuyos hay en el directorio, para qué los usamos, de dónde salieron y con quién los compartimos.
+
+**Ejemplo:** "Quiero saber qué datos míos tienen guardados." Te respondemos con tu ID de Discord, tu llave pública y las fechas de registro.
+
+### Rectificación: corregir lo que esté mal
+
+Si algún dato está equivocado o desactualizado, puedes pedir que lo corrijamos.
+
+**Ejemplo:** cambiaste de dispositivo y generaste una nueva identidad. Al publicarla, la llave nueva reemplaza a la anterior.
+
+### Cancelación: borrar tus datos
+
+Puedes pedir que eliminemos tu registro del directorio. Lo quitamos de inmediato y de las copias de seguridad en un máximo de 30 días. Después de eso, nadie podrá encontrar tu llave para escribirte.
+
+**Ejemplo:** "Ya no quiero usar la aplicación, borren mi registro."
+
+**Importante:** borrar tu registro no borra lo que está en tu dispositivo (conversaciones, contactos). Eso lo controlas tú y puedes eliminarlo cuando quieras.
+
+### Oposición: decir "no" a un uso de tus datos
+
+Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si tienes un motivo legítimo o si cambias de opinión. En la práctica, retirar tu consentimiento significa cancelar tu registro, porque sin tu llave publicada el servicio no puede funcionar.
+
+**Ejemplo:** "Ya no quiero que mi ID de Discord aparezca en el directorio."
+
+## Otros derechos que también tienes
+
+- **Información:** conocer, antes de dar tus datos, quién los usará, para qué y por cuánto tiempo. Por eso te mostramos el aviso de privacidad antes de crear tu identidad.
+- **Portabilidad:** llevar tu identidad a otro dispositivo. La aplicación te permite exportarla en un archivo cifrado con tu contraseña.
+- **Tutela:** reclamar ante la ANPD si no respetamos tus derechos.
+
+## Cómo pedir tus derechos
+
+1. Escríbenos por mensaje directo de Discord a cualquiera de los responsables, o abre una consulta en el repositorio del proyecto (https://github.com/EV081/EySDatos_Proyect) **sin poner datos personales** en ella; te contactaremos por un canal privado.
+2. Dinos **qué derecho** quieres ejercer y **qué pides** exactamente.
+3. Escríbenos **desde tu propia cuenta de Discord**. Así comprobamos que eres el dueño del ID, sin pedirte tu DNI ni otros documentos.
+4. Si actúas en nombre de otra persona, debes demostrar que te autorizó.
+
+**Es gratis.** No te cobraremos nada por ejercer tus derechos.
+
+## Cuánto tardamos en responder
+
+Respondemos dentro de los plazos máximos que fija el reglamento de la ley, contados en días hábiles desde que recibimos tu pedido:
+
+- **Información:** 8 días hábiles.
+- **Acceso:** 20 días hábiles.
+- **Rectificación, cancelación y oposición:** 10 días hábiles.
+
+Si tu pedido está incompleto, te avisaremos para que lo completes.
+
+## Lo que no podemos darte
+
+Hay datos que **no tenemos**, así que no podemos entregarlos, ni a ti ni a nadie, ni siquiera a una autoridad:
+
+- El **contenido de tus mensajes**: está cifrado y solo lo leen tú y la otra persona.
+- Tu **llave privada** y tu **contraseña maestra**: nunca salen de tu dispositivo.
+- Tus **contactos** y tu **historial**: viven solo en tu dispositivo.
+
+Por eso, si olvidas tu contraseña, no podemos recuperarla. Exporta tu identidad como respaldo.
+
+## Si no estás de acuerdo con nuestra respuesta
+
+Si no te respondemos a tiempo, o si nuestra respuesta no te convence, puedes presentar una reclamación (procedimiento de tutela) ante la **Autoridad Nacional de Protección de Datos Personales (ANPD)** del Ministerio de Justicia y Derechos Humanos. Es gratuito.
+
+## Menores de edad
+
+La aplicación está pensada para personas **mayores de edad**. Si eres menor, úsala solo con permiso de tus padres o tutores.
+
+## Cambios en esta política
+
+Si cambiamos esta política, subiremos el número de versión y la fecha de vigencia. Si el cambio afecta a cómo usamos tus datos, también actualizaremos el aviso de privacidad y te pediremos aceptarlo de nuevo.

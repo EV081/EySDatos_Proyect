@@ -75,6 +75,9 @@ export function IdentityDialog({ api, status, open, onClose, onLocked }: Props) 
         <button className="ghost">Exportar identidad</button>
       </form>
       {error && <p className="error" role="alert">{error}</p>}
+      <p className="hint">
+        <a className="out" href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad y tus derechos ARCO</a>
+      </p>
       <div className="row">
         <button className="ghost" onClick={lock}>Bloquear</button>
         <button className="primary" onClick={onClose}>Cerrar</button>

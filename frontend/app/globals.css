@@ -253,6 +253,7 @@ label.check input { width: auto; margin-top: 3px; accent-color: var(--ink); }
 .legal h1 { font-size: 46px; line-height: 1; font-weight: 850; font-stretch: 125%; }
 .legal h2 { font-size: 22px; margin-top: 34px; padding-top: 12px; border-top: 2px solid var(--ink); }
 .legal li { margin: 4px 0; }
+.legal h3 { font-size: 17px; margin: 22px 0 4px; }
 a.out { color: var(--blue); font-weight: 600; text-underline-offset: 3px; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
