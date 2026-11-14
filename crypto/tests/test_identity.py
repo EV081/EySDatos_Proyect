@@ -125,3 +125,12 @@ def test_una_firma_de_cambio_de_llave_no_sirve_para_registrar(alice, bob):
         verify_registration(alice.public_key, ALICE, nonce, sig)
     with pytest.raises(SignatureError):  # autoriza una llave concreta, no otra
         verify_key_change(alice.public_key, ALICE, Identity.create().public_key, nonce, sig)
+
+
+def test_rotar_cambia_la_llave_de_firma_y_conserva_el_almacen(alice):
+    nueva = alice.rotate()
+    assert nueva.public_key != alice.public_key
+    assert nueva.store_key == alice.store_key
+    nonce = b"\x01" * 32
+    verify_key_change(alice.public_key, ALICE, nueva.public_key, nonce,
+                      sign_key_change(alice, ALICE, nueva.public_key, nonce))
