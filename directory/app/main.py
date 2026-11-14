@@ -11,6 +11,7 @@ import contextlib
 import html
 import logging
 import secrets
+from datetime import timedelta
 
 import httpx
 from fastapi import Depends, FastAPI, Header, Path, Query, Request
@@ -24,7 +25,7 @@ from .config import Settings
 from .errors import ApiError
 from .oauth import DiscordOAuth, OAuthError
 from .ratelimit import RateLimiter
-from .repo import Repo
+from .repo import REPLACED_KEY_RETENTION_DAYS, Repo
 from .schemas import DISCORD_ID, CancelKey, ChallengeRequest, PublishKey, b64d, b64e
 
 KEY_LEN, SIG_LEN, NONCE_LEN, TOKEN_LEN = 32, 64, 32, 32
@@ -158,6 +159,27 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
             raise ApiError(404)
         return JSONResponse({"discord_id": discord_id, "public_key": b64e(public_key)}, headers=NO_STORE)
 
+    @app.get("/v1/me", dependencies=[limit("write", settings.write_limit)])
+    def my_record(token: bytes = Depends(bearer)):
+        """Derecho de acceso: la persona ve todo lo que el directorio guarda de ella. Basta el token de OAuth2
+        (no se consume: leer no cambia nada) y solo devuelve el registro del dueño del token."""
+        discord_id = repo.token_owner(token)
+        if discord_id is None:
+            raise ApiError(401)
+        record = repo.get_record(discord_id)
+        if record is None:
+            raise ApiError(404)
+        audit.event("acceso", ids={"id": discord_id})
+        retention = timedelta(days=REPLACED_KEY_RETENTION_DAYS)
+        return JSONResponse({
+            "discord_id": discord_id, "public_key": b64e(record["public_key"]),
+            "registered_at": _iso(record["registered_at"]), "key_changed_at": _iso(record["key_changed_at"]),
+            "consent_version": record["consent_version"], "consent_at": _iso(record["consent_at"]),
+            "replaced_keys": [{"public_key": b64e(k["public_key"]), "replaced_at": _iso(k["replaced_at"]),
+                               "delete_after": _iso(k["replaced_at"] + retention)}
+                              for k in repo.replaced_keys(discord_id)],
+        }, headers=NO_STORE)
+
     @app.delete("/v1/keys/{discord_id}", status_code=204, dependencies=[limit("write", settings.write_limit)])
     def cancel(body: CancelKey, discord_id: str = DiscordIdPath, token: bytes = Depends(bearer)):
         """Cancelación (C-11): la persona borra su registro con su llave vigente y una sesión OAuth2."""
@@ -179,6 +201,10 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
         return Response(status_code=204, headers=NO_STORE)
 
     return app
+
+
+def _iso(moment) -> str | None:
+    return moment.isoformat() if moment else None
 
 
 def _page(title: str, text: str, status: int, token: str | None = None) -> HTMLResponse:

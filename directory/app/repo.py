@@ -76,6 +76,13 @@ class Repo:
         return {"public_key": bytes(row[0]), "registered_at": row[1], "key_changed_at": row[2],
                 "consent_version": row[3], "consent_at": row[4]}
 
+    def replaced_keys(self, discord_id: str) -> list[dict]:
+        """Llaves anteriores que aún se conservan (máximo 90 días), de la más reciente a la más antigua."""
+        with self._pool.connection() as conn:
+            rows = conn.execute("SELECT public_key, replaced_at FROM replaced_keys WHERE discord_id = %s "
+                                "ORDER BY replaced_at DESC", (discord_id,)).fetchall()
+        return [{"public_key": bytes(r[0]), "replaced_at": r[1]} for r in rows]
+
     def publish_key(self, token: bytes, discord_id: str, public_key: bytes, consent_version: str) -> str | None:
         """Consume el token y publica la llave en una sola transacción.
 

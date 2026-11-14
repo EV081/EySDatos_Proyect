@@ -83,6 +83,38 @@ paths:
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {$ref: "#/components/responses/Rejected"}
         "429": {$ref: "#/components/responses/TooMany"}
+  /v1/me:
+    get:
+      summary: Derecho de acceso - todo lo que el directorio guarda del dueño del token
+      description: |
+        Exige el token de registro (OAuth2 con Discord) pero no lo consume. Solo devuelve el registro del ID
+        ligado al token; nunca el de otra persona.
+      security: [{registrationToken: []}]
+      responses:
+        "200":
+          description: Registro completo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discord_id: {$ref: "#/components/schemas/DiscordId"}
+                  public_key: {$ref: "#/components/schemas/B64"}
+                  registered_at: {type: string, format: date-time}
+                  key_changed_at: {type: string, format: date-time, nullable: true}
+                  consent_version: {type: string}
+                  consent_at: {type: string, format: date-time}
+                  replaced_keys:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        public_key: {$ref: "#/components/schemas/B64"}
+                        replaced_at: {type: string, format: date-time}
+                        delete_after: {type: string, format: date-time}
+        "401": {$ref: "#/components/responses/Rejected"}
+        "404": {description: El dueño del token no está registrado}
+        "429": {$ref: "#/components/responses/TooMany"}
   /v1/keys/{discord_id}:
     parameters:
       - $ref: "#/components/parameters/DiscordIdPath"

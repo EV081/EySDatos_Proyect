@@ -24,6 +24,10 @@ Pruebas (necesitan el Postgres de Compose; crean y borran la base `directory_tes
 
 Solo el dueño modifica su registro: el ID del token tiene que ser el de la ruta. Volver a publicar la misma llave es idempotente (reimportar en otro dispositivo). Una llave distinta reemplaza a la anterior, que se guarda 90 días en `replaced_keys`; si además viene `old_signature` (`sign_key_change` con la llave anterior), se exige que valga.
 
+**Acceso** (`GET /v1/me`, `DirectoryClient.record`): con el token de registro (sin consumirlo), la persona ve todo lo que el directorio guarda de ella: llave, fechas de registro y de cambio, versión y fecha del aviso aceptado, y las llaves reemplazadas con la fecha en que se borran. Solo el registro del dueño del token.
+
+**Rectificación** (cambio de llave): `DirectoryClient.register(..., sign_old=...)` envía `old_signature`, así la llave vigente autoriza a la nueva (`Identity.rotate()` conserva el almacén local).
+
 **Cancelación** (`DELETE /v1/keys/{id}`, `DirectoryClient.cancel`): token de registro, más un nonce con propósito `cancel`, más la firma `sign_key_change` de la llave vigente hacia la llave nula (32 bytes en cero, que nadie puede registrar). Borra el registro y sus llaves reemplazadas en el acto. Pendiente: cuando `crypto/` tenga `sign_cancellation` con un contexto propio, se reemplaza.
 
 ## Decisiones de seguridad
