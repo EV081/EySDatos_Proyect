@@ -39,3 +39,9 @@ test('las fechas aceptan segundos Unix y texto ISO, y lo vacío se muestra como 
   assert.equal(unix, iso);
   for (const empty of [null, undefined, '', 'no-es-fecha']) assert.equal(formatDate(empty), '—');
 });
+
+test('quitar contacto: DELETE a la ruta del contacto, sin cuerpo', async () => {
+  const { calls, api } = recorder();
+  await api.removeContact('222222222222222222');
+  assert.deepEqual(calls, [{ url: 'http://127.0.0.1:8001/contacts/222222222222222222', method: 'DELETE', body: undefined }]);
+});

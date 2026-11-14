@@ -173,6 +173,8 @@ label input { margin-top: 5px; font-weight: 400; font-size: 15px; }
 .head-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .head-row b { font-size: 24px; margin-right: 6px; }
 .head-row .small { margin-left: auto; }
+.head-row .small + .small { margin-left: 0; }
+.alert-actions { display: inline-flex; gap: 0; flex-wrap: wrap; }
 .badge { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--font-mono); padding: 3px 9px; border: 2px solid currentColor; }
 .badge.brand { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .badge.ok { color: var(--blue); }

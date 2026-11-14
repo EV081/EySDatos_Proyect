@@ -66,6 +66,7 @@ export class Api {
   conversations = () => this.request<Conversation[]>('GET', '/conversations');
   addContact = (discordId: string, alias?: string) =>
     this.request<Conversation>('POST', '/contacts', { discord_id: discordId, alias: alias || null });
+  removeContact = (id: string) => this.request<null>('DELETE', `/contacts/${encodeURIComponent(id)}`);
   fingerprint = (id: string) => this.request<FingerprintInfo>('GET', `/contacts/${encodeURIComponent(id)}/fingerprint`);
   verify = (id: string, fingerprint: string) =>
     this.request<Conversation>('POST', `/contacts/${encodeURIComponent(id)}/verify`, { fingerprint });

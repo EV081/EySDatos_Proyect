@@ -97,6 +97,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
             loaded={loaded}
             onChanged={() => void refreshRef.current()}
             onVerify={() => setVerifyOpen(true)}
+            onRemoved={() => { setVerifyOpen(false); setSelected(null); setMessages([]); void refreshRef.current(); }}
           />
         ) : (
           <div className="empty">

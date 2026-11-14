@@ -34,6 +34,7 @@ Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 
 * **Estado de cada mensaje (`status`):** `queued`, `sent`, `received`, `undecryptable` (RF11, sin `text`) y, con `dir: "sys"`, `key_changed` (alerta dentro de la conversación).
 * **Verificar (RF7):** mostrar `GET /contacts/{id}/fingerprint`; el usuario compara fuera de Discord y escribe (o escanea) la huella que le dicta el otro; `POST /contacts/{id}/verify {fingerprint}` solo acepta si coincide (409 si no). Tras un cambio de llave, la huella que devuelve es la **nueva** (`key_pending: true`).
+* **Quitar contacto:** `DELETE /contacts/{id}` (204) borra de este dispositivo sus sesiones, la llave fijada, la verificación, el historial y la cola; no toca el directorio. Lo que llegue por una sesión vieja se descarta; si el contacto abre una sesión nueva, reaparece **sin verificar**. Pedir confirmación en la interfaz: no se puede deshacer.
 * **Errores:** siempre `{"error": <código>, "detail": <texto>}`. `423 locked` = pedir la contraseña maestra.
 * **Derechos ARCO** (todas piden la contraseña maestra, salvo el acceso):
   * **Acceso:** `GET /privacy/my-data` → `local` (lo de este dispositivo), `directory` (el registro completo del directorio) y `directory_error` (`login_required`, `not_registered` o `unavailable` si no se pudo leer).

@@ -14,11 +14,14 @@ interface Props {
   loaded: boolean;
   onChanged: () => void;
   onVerify: () => void;
+  onRemoved: () => void;
 }
 
-export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify }: Props) {
+export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify, onRemoved }: Props) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
   const view = sessionView(conv);
@@ -74,6 +77,19 @@ export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify }: 
     }
   };
 
+  const remove = async () => {
+    setRemoving(true);
+    setError(null);
+    try {
+      await api.removeContact(conv.discord_id);
+      onRemoved();
+    } catch (err) {
+      setError(errorMessage(err));
+      setRemoving(false);
+      setConfirmRemove(false);
+    }
+  };
+
   const name = displayName(conv);
 
   return (
@@ -89,8 +105,20 @@ export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify }: 
           </span>
           {conv.verified ? <span className="badge ok"><CheckIcon />Verificado</span> : <span className="badge off">Sin verificar</span>}
           <button className="ghost small" onClick={onVerify}>{conv.verified ? 'Ver huella' : 'Verificar'}</button>
+          <button className="ghost small" onClick={() => setConfirmRemove(true)} disabled={confirmRemove}>Quitar</button>
         </div>
       </header>
+
+      {confirmRemove && (
+        <div className="alert bad" role="alertdialog" aria-label={`Quitar a ${name}`}>
+          ¿Quitar a {name}? Se borran de este dispositivo la conversación, la verificación y lo que esté en cola. No se puede
+          deshacer. Si te vuelve a escribir, aparecerá como contacto sin verificar.
+          <span className="alert-actions">
+            <button className={`small danger${removing ? ' busy' : ''}`} onClick={remove} disabled={removing}>Quitar contacto</button>
+            <button className="small ghost" onClick={() => setConfirmRemove(false)} disabled={removing}>Cancelar</button>
+          </span>
+        </div>
+      )}
 
       {view.notice && (
         <div className={`alert${view.notice.kind === 'key' ? ' bad' : ''}`} role="alert">
