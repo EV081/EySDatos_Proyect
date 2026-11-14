@@ -15,7 +15,7 @@ from crypto import (
     CryptoError, DecryptError, Identity, Initiator, KdfParams, ReplayError,
     Responder, SidCache, VaultError, WireError, decode, encode, fingerprint, sign_key_change, sign_registration,
 )
-from crypto.constants import HANDSHAKE_TTL, MAX_PLAINTEXT
+from crypto.constants import CLOCK_SKEW, HANDSHAKE_TTL, MAX_PLAINTEXT
 from crypto.encoding import b64d, b64e
 from crypto.fingerprint import qr_payload
 from crypto.wire import Hs1, Hs2, Hs3, Msg
@@ -610,6 +610,11 @@ class Orchestrator:
     def _on_hs1(self, hs1: Hs1) -> None:
         # Alguien nuevo en el canal privado queda como contacto sin verificar, pero solo si el
         # directorio conoce su llave; así un tercero no puede llenar la lista con ids inventados.
+        # Un hs1 vencido (p. ej. al releer el canal tras desbloquear) se descarta antes de tocar los contactos:
+        # si no, revive a un contacto quitado y sus mensajes viejos se marcan como no descifrables.
+        age = self._clock() - hs1.ts
+        if age > HANDSHAKE_TTL or age < -CLOCK_SKEW:
+            return
         contact = self._contacts.get(hs1.sender) or Contact(hs1.sender)
         pk = self._peer_key(contact)
         self._contacts[hs1.sender] = contact

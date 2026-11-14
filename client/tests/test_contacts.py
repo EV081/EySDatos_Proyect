@@ -74,3 +74,15 @@ def test_quitar_contacto_por_http(world):
     assert c.delete(f"/contacts/{BOB}", headers=auth).status_code == 423
     pre = c.options(f"/contacts/{BOB}", headers={"Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "DELETE"})
     assert pre.status_code == 200
+
+
+def test_un_hs1_vencido_del_canal_no_revive_al_contacto_quitado(pair, world, clock):
+    from crypto.constants import HANDSHAKE_TTL
+    _, alice, _ = pair
+    alice.remove_contact(BOB)
+    bob = world.restart(BOB)
+    bob.send_text(ALICE, "viejo")  # su hs1 queda en el canal
+    clock.advance(HANDSHAKE_TTL + 600)  # se relee días después (p. ej. al desbloquear)
+    world.flush()
+    assert alice.contacts() == []
+    assert world.restart(ALICE).contacts() == []
