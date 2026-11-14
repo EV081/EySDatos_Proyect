@@ -1,6 +1,6 @@
 # Política de privacidad
 
-**Versión:** 1.0
+**Versión:** 1.1
 **Vigente desde:** 2026-11-13
 
 Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
@@ -40,27 +40,27 @@ La ley establece reglas básicas, llamadas principios. Así las cumplimos:
 
 Puedes preguntarnos qué datos tuyos hay en el directorio, para qué los usamos, de dónde salieron y con quién los compartimos.
 
-**Ejemplo:** "Quiero saber qué datos míos tienen guardados." Te respondemos con tu ID de Discord, tu llave pública y las fechas de registro.
+**Ejemplo:** "Quiero saber qué datos míos tienen guardados." En la aplicación, **Mis datos y derechos ARCO** te muestra al instante lo que hay en tu dispositivo y en el directorio (tu ID, tu llave, las fechas y la versión del aviso que aceptaste), y te deja descargarlo.
 
 ### Rectificación: corregir lo que esté mal
 
 Si algún dato está equivocado o desactualizado, puedes pedir que lo corrijamos.
 
-**Ejemplo:** cambiaste de dispositivo y generaste una nueva identidad. Al publicarla, la llave nueva reemplaza a la anterior.
+**Ejemplo:** crees que tu llave se vio comprometida. Con **Cambiar mi llave** generas una nueva, que tu llave anterior autoriza con su firma; tu historial se conserva y tus contactos deberán volver a verificarte.
 
 ### Cancelación: borrar tus datos
 
 Puedes pedir que eliminemos tu registro del directorio. Lo quitamos de inmediato y de las copias de seguridad en un máximo de 30 días. Después de eso, nadie podrá encontrar tu llave para escribirte.
 
-**Ejemplo:** "Ya no quiero usar la aplicación, borren mi registro."
+**Ejemplo:** "Ya no quiero usar la aplicación, borren mi registro." Lo haces tú mismo con **Cancelar mi registro**, confirmando con tu contraseña maestra.
 
-**Importante:** borrar tu registro no borra lo que está en tu dispositivo (conversaciones, contactos). Eso lo controlas tú y puedes eliminarlo cuando quieras.
+**Importante:** al cancelar puedes elegir si también se borra lo que está en tu dispositivo (identidad, contactos e historial). También puedes borrar solo eso con **Borrar mis datos de este dispositivo**.
 
 ### Oposición: decir "no" a un uso de tus datos
 
 Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si tienes un motivo legítimo o si cambias de opinión. En la práctica, retirar tu consentimiento significa cancelar tu registro, porque sin tu llave publicada el servicio no puede funcionar.
 
-**Ejemplo:** "Ya no quiero que mi ID de Discord aparezca en el directorio."
+**Ejemplo:** "Ya no quiero que mi ID de Discord aparezca en el directorio." Usa **Cancelar mi registro**: retira tu consentimiento y borra tu registro en el mismo paso.
 
 ## Otros derechos que también tienes
 
@@ -69,6 +69,10 @@ Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si ti
 - **Tutela:** reclamar ante la ANPD si no respetamos tus derechos.
 
 ## Cómo pedir tus derechos
+
+**Desde la aplicación (lo más rápido):** abre la gestión de identidad y entra a **Mis datos y derechos ARCO**. Ahí puedes ver y descargar tus datos, cambiar tu llave, cancelar tu registro y borrar los datos de tu dispositivo. Lo que cambia el directorio te pide tu contraseña maestra y haber iniciado sesión con Discord en los últimos 10 minutos, para comprobar que eres tú.
+
+**Si prefieres pedírnoslo o algo no funciona:**
 
 1. Escríbenos por mensaje directo de Discord a cualquiera de los responsables, o abre una consulta en el repositorio del proyecto (https://github.com/EV081/EySDatos_Proyect) **sin poner datos personales** en ella; te contactaremos por un canal privado.
 2. Dinos **qué derecho** quieres ejercer y **qué pides** exactamente.
