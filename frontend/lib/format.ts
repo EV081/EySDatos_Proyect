@@ -12,6 +12,8 @@ const ERRORS: Record<string, string> = {
   key_changed: 'La llave del contacto cambió: hay que verificar la nueva huella.',
   peer_key_unavailable: 'No se pudo obtener la llave del contacto (¿está registrado en el directorio?).',
   invalid: 'Revisa los datos ingresados.',
+  login_required: 'Antes inicia sesión con Discord (python -m directory.client_lib.login) y vuelve a intentarlo dentro de 10 minutos.',
+  directory_error: 'El directorio no respondió o rechazó la operación. No se cambió nada; inténtalo más tarde.',
 };
 
 export function errorMessage(err: unknown): string {
@@ -109,3 +111,20 @@ export function parseQr(text: string): string | null {
 export function fingerprintFromDigest(digestHex: string): string {
   return (BigInt(`0x${digestHex}`) % 10n ** BigInt(FP_DIGITS)).toString().padStart(FP_DIGITS, '0');
 }
+
+// Fechas de los derechos ARCO: el cliente local usa segundos Unix y el directorio, ISO 8601.
+export function formatDate(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—';
+  const d = typeof value === 'number' ? new Date(value * 1000) : new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+const DIRECTORY_ERRORS: Record<string, string> = {
+  login_required: 'Para ver lo que guarda el directorio, inicia sesión con Discord (python -m directory.client_lib.login) y vuelve a abrir esta sección dentro de 10 minutos.',
+  not_registered: 'El directorio no tiene ningún registro tuyo.',
+  unavailable: 'El directorio no respondió. Lo que ves abajo es solo lo que hay en este dispositivo.',
+};
+
+export const directoryErrorText = (code: string | null): string | null => (code ? DIRECTORY_ERRORS[code] ?? DIRECTORY_ERRORS.unavailable : null);

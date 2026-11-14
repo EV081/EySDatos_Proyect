@@ -12,9 +12,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onLocked: () => void;
+  onPrivacy: () => void;
 }
 
-export function IdentityDialog({ api, status, open, onClose, onLocked }: Props) {
+export function IdentityDialog({ api, status, open, onClose, onLocked, onPrivacy }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [pass, setPass] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +77,8 @@ export function IdentityDialog({ api, status, open, onClose, onLocked }: Props) 
       </form>
       {error && <p className="error" role="alert">{error}</p>}
       <p className="hint">
-        <a className="out" href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad y tus derechos ARCO</a>
+        Ver, corregir o borrar tus datos:{' '}
+        <button type="button" className="link" onClick={() => { onClose(); onPrivacy(); }}>Mis datos y derechos ARCO</button>
       </p>
       <div className="row">
         <button className="ghost" onClick={lock}>Bloquear</button>

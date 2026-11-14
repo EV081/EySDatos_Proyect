@@ -1,6 +1,6 @@
 // Cliente HTTP de la API local (docs/api/client.openapi.json). No guarda nada: el token lo conserva
 // la app solo en sessionStorage.
-import type { Conversation, FingerprintInfo, Message, Status } from './types.ts';
+import type { Conversation, FingerprintInfo, Message, MyData, Status } from './types.ts';
 
 export class ApiError extends Error {
   status: number;
@@ -74,4 +74,10 @@ export class Api {
   send = (id: string, text: string) =>
     this.request<Conversation>('POST', `/conversations/${encodeURIComponent(id)}/messages`, { text });
   retry = (id: string) => this.request<Conversation>('POST', `/conversations/${encodeURIComponent(id)}/retry`);
+  // Derechos ARCO
+  myData = () => this.request<MyData>('GET', '/privacy/my-data');
+  rotateKey = (password: string) => this.request<Status>('POST', '/identity/rotate', { password });
+  cancelRegistration = (password: string, deleteLocal: boolean) =>
+    this.request<Status>('POST', '/identity/cancel', { password, delete_local: deleteLocal });
+  deleteLocalData = (password: string) => this.request<Status>('POST', '/identity/delete-local', { password });
 }
