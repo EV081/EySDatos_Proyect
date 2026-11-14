@@ -15,6 +15,7 @@ Todos los errores heredan de `CryptoError`. Los ids son los identificadores de D
 | Función | Qué hace |
 |---|---|
 | `Identity.create()` | Genera una identidad Ed25519 y una `store_key` aleatoria (RF1, RS11) |
+| `identity.rotate()` | Nueva llave de firma con la misma `store_key` (cambio de llave / rectificación); se publica con `sign_key_change` |
 | `identity.public_key` | 32 bytes; es lo que se publica en el directorio |
 | `identity.store_key` | 32 bytes; el cliente cifra con ella el historial y la cola de salida |
 | `identity.to_vault(password, kdf=KdfParams())` | Bóveda JSON (`bytes`): Argon2id + salt único + AES-256-GCM. **Es también el archivo de exportación** (RF12): puede usar otra contraseña |

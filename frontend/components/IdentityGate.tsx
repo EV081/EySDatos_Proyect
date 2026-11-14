@@ -2,6 +2,8 @@
 import { useState, type FormEvent } from 'react';
 import type { Api } from '@/lib/api';
 import { errorMessage } from '@/lib/format';
+import { isStrongPassword, MIN_PASSWORD_LENGTH, WEAK_PASSWORD_MESSAGE } from '@/lib/password';
+import { PasswordRules } from './PasswordRules';
 import { NOTICE_VERSION } from '@/lib/privacy';
 import type { Status } from '@/lib/types';
 
@@ -41,6 +43,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
         <summary>Aviso de privacidad (versión {NOTICE_VERSION})</summary>
         <p>
           <a className="out" href="/privacidad" target="_blank" rel="noopener noreferrer">Leer el aviso completo</a>
+          {' · '}
+          <a className="out" href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad y derechos ARCO</a>
         </p>
         <ul>
           <li><b>Qué se publica:</b> tu ID de Discord y tu llave pública de firma, en un directorio. Es lo único que el directorio guarda de ti, junto con las fechas de registro.</li>
@@ -59,6 +63,10 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
 
   const create = (e: FormEvent) => {
     e.preventDefault();
+    if (!isStrongPassword(pass)) {
+      setFails((n) => n + 1);
+      return setError(WEAK_PASSWORD_MESSAGE);
+    }
     if (pass !== pass2) return setError('Las contraseñas no coinciden.');
     void run(() => api.createIdentity(id.trim(), pass, NOTICE_VERSION));
   };
@@ -106,13 +114,14 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
           </label>
           <label>
             Contraseña maestra
-            <input type="password" minLength={10} autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} required />
+            <input type="password" minLength={MIN_PASSWORD_LENGTH} autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} required />
           </label>
+          <PasswordRules password={pass} />
           <label>
             Repite la contraseña
-            <input type="password" minLength={10} autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} required />
+            <input type="password" minLength={MIN_PASSWORD_LENGTH} autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} required />
           </label>
-          <p className="hint">Mínimo 10 caracteres. Si la olvidas no hay forma de recuperarla.</p>
+          <p className="hint">Si la olvidas no hay forma de recuperarla.</p>
           {consent}
           <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Crear identidad</button>
           <button type="button" className="link" onClick={() => { setMode('import'); setError(null); }}>

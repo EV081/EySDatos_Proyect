@@ -5,6 +5,7 @@ import type { Conversation, Message, Status } from '@/lib/types';
 import { ChatPanel } from './ChatPanel';
 import { CipherStream } from './Cipher';
 import { IdentityDialog } from './IdentityDialog';
+import { PrivacyDialog } from './PrivacyDialog';
 import { Sidebar } from './Sidebar';
 import { VerifyDialog } from './VerifyDialog';
 
@@ -24,6 +25,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
   const [loaded, setLoaded] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [identityOpen, setIdentityOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const sigRef = useRef('');
   const refreshRef = useRef<() => Promise<void>>(async () => {});
 
@@ -114,7 +116,16 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
           onDone={() => void refreshRef.current()}
         />
       )}
-      <IdentityDialog api={api} status={status} open={identityOpen} onClose={() => setIdentityOpen(false)} onLocked={onLocked} />
+      <IdentityDialog
+        api={api}
+        status={status}
+        open={identityOpen}
+        onClose={() => setIdentityOpen(false)}
+        onLocked={onLocked}
+        onPrivacy={() => setPrivacyOpen(true)}
+      />
+      {/* Tras cambiar la llave, cancelar o borrar, se relee el estado: sin identidad vuelve a la pantalla inicial. */}
+      <PrivacyDialog api={api} open={privacyOpen} onClose={() => setPrivacyOpen(false)} onStatus={onLocked} />
     </section>
   );
 }

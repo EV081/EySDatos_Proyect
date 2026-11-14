@@ -20,7 +20,14 @@ _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 
 
 class DirectoryError(Exception):
-    """El directorio no respondió, rechazó la solicitud o devolvió algo inesperado."""
+    """El directorio no respondió, rechazó la solicitud o devolvió algo inesperado.
+
+    `status` es el código HTTP cuando el directorio sí respondió (401: falta iniciar sesión con Discord o el
+    token venció; 404: no hay registro); None si no respondió."""
+
+    def __init__(self, message: str, status: int | None = None):
+        super().__init__(message)
+        self.status = status
 
 
 def _b64e(data: bytes) -> str:
@@ -86,13 +93,16 @@ class DirectoryClient:
     # --- DirectoryPort ----------------------------------------------------------------
 
     def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes],
-                 consent_version: str) -> None:
+                 consent_version: str, sign_old: Callable[[bytes], bytes] | None = None) -> None:
+        """Publica la llave. Con `sign_old(nonce)` (firma `sign_key_change` de la llave vigente) es un cambio
+        de llave autorizado también por la anterior: así se ejerce la rectificación."""
         token = self._token()
         nonce = self._challenge(discord_id, "register", token)
-        self._call("PUT", f"/v1/keys/{quote(discord_id, safe='')}", token, {
-            "public_key": _b64e(public_key), "nonce": _b64e(nonce), "signature": _b64e(sign(nonce)),
-            "consent_version": consent_version,
-        }, expect=204)
+        body = {"public_key": _b64e(public_key), "nonce": _b64e(nonce), "signature": _b64e(sign(nonce)),
+                "consent_version": consent_version}
+        if sign_old is not None:
+            body["old_signature"] = _b64e(sign_old(nonce))
+        self._call("PUT", f"/v1/keys/{quote(discord_id, safe='')}", token, body, expect=204)
 
     def get_key(self, discord_id: str) -> bytes | None:
         try:
@@ -111,7 +121,18 @@ class DirectoryClient:
         except (ValueError, KeyError, TypeError):
             raise DirectoryError("respuesta inválida del directorio") from None
 
-    # --- extras (aún no están en el puerto) -------------------------------------------
+    # --- derechos ARCO ----------------------------------------------------------------
+
+    def record(self, discord_id: str) -> dict:
+        """Acceso: todo lo que el directorio guarda de esta persona (exige el token de OAuth2, no lo consume)."""
+        resp = self._call("GET", "/v1/me", self._token(), None, expect=200)
+        try:
+            body = resp.json()
+            if body["discord_id"] != discord_id:
+                raise DirectoryError("respuesta inválida del directorio")
+            return body
+        except (ValueError, KeyError, TypeError):
+            raise DirectoryError("respuesta inválida del directorio") from None
 
     def cancel(self, discord_id: str, sign_key_change: Callable[[bytes, bytes], bytes]) -> None:
         """Borra el registro. `sign_key_change(new_public_key, nonce)` firma con la llave vigente; p. ej.
@@ -132,13 +153,13 @@ class DirectoryClient:
         except (ValueError, KeyError, TypeError):
             raise DirectoryError("respuesta inválida del directorio") from None
 
-    def _call(self, method: str, path: str, token: str, body: dict, expect: int) -> httpx.Response:
+    def _call(self, method: str, path: str, token: str, body: dict | None, expect: int) -> httpx.Response:
         try:
             resp = self._http.request(method, path, json=body, headers={"Authorization": f"Bearer {token}"})
         except httpx.HTTPError:
             raise DirectoryError("el directorio no respondió") from None
         if resp.status_code != expect:
-            raise DirectoryError(f"el directorio respondió {resp.status_code}")
+            raise DirectoryError(f"el directorio respondió {resp.status_code}", resp.status_code)
         return resp
 
     def _token(self) -> str:
@@ -150,5 +171,5 @@ class DirectoryClient:
             except OSError:
                 token = None
         if not token:
-            raise DirectoryError("falta el token de registro: ejecuta python -m directory.client_lib.login")
+            raise DirectoryError("falta el token de registro: ejecuta python -m directory.client_lib.login", 401)
         return token

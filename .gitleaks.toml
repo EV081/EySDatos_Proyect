@@ -17,7 +17,14 @@ keywords = ["password"]
 description = "Contraseñas desechables de la CI hasta 8c686ff, ya reemplazadas por aleatorias en cada ejecución"
 regexes = ['''^ci-(postgres|app|backup)$''']
 
-[allowlist]
+[[allowlists]]
+description = "Contraseña de prueba ficticia en las pruebas de ARCO del frontend (desde 50a51be)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(^|/)frontend/test/arco\.test\.ts$''']
+regexes = ['''^Clave-123456$''']
+
+[[allowlists]]
 description = "Material local que no se versiona"
 paths = [
   '''(^|/)\.env$''',

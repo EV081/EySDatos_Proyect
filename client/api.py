@@ -41,6 +41,11 @@ class ExportRequest(BaseModel):
     password: str = Field(min_length=10, max_length=256)
 
 
+class CancelRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=256)
+    delete_local: bool = True
+
+
 class AddContact(BaseModel):
     discord_id: str = Field(pattern=ID_PATTERN)
     alias: str | None = Field(default=None, max_length=64)
@@ -116,6 +121,27 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
     def import_identity(body: ImportIdentity):
         return orchestrator.import_identity(body.discord_id, json.dumps(body.vault).encode(), body.password,
                                            body.consent_version)
+
+    # --- derechos ARCO ---------------------------------------------------------------------
+    @app.get("/privacy/my-data", dependencies=[api])
+    def my_data():
+        """Acceso: datos de este dispositivo y, si responde, el registro del directorio."""
+        return orchestrator.my_data()
+
+    @app.post("/identity/rotate", dependencies=[api])
+    def rotate_key(body: Password):
+        """Rectificación: nueva llave autorizada por la anterior."""
+        return orchestrator.rotate_key(body.password)
+
+    @app.post("/identity/cancel", dependencies=[api])
+    def cancel_registration(body: CancelRequest):
+        """Cancelación y oposición: borra el registro del directorio (y opcionalmente lo local)."""
+        return orchestrator.cancel_registration(body.password, body.delete_local)
+
+    @app.post("/identity/delete-local", dependencies=[api])
+    def delete_local(body: Password):
+        """Borra la identidad, los contactos y el historial de este dispositivo."""
+        return orchestrator.delete_local_data(body.password)
 
     # --- contactos y verificación --------------------------------------------------------
     @app.get("/contacts", dependencies=[api])

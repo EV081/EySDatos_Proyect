@@ -3,16 +3,27 @@ from typing import Callable, Protocol
 
 
 class DirectoryError(Exception):
-    """El directorio no respondió o devolvió un error."""
+    """El directorio no respondió o devolvió un error. `status`: código HTTP si respondió (401, 404...)."""
+
+    def __init__(self, message: str = "", status: int | None = None):
+        super().__init__(message)
+        self.status = status
 
 
 class DirectoryPort(Protocol):
     def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes],
-                 consent_version: str) -> None:
+                 consent_version: str, sign_old: Callable[[bytes], bytes] | None = None) -> None:
         """Publica la llave. El directorio entrega un nonce; `sign(nonce)` devuelve la prueba de posesión.
 
         `consent_version` es la versión del aviso de privacidad que la persona aceptó: el directorio debe
-        guardarla junto con la fecha para poder demostrar el consentimiento."""
+        guardarla junto con la fecha para poder demostrar el consentimiento. Con `sign_old(nonce)` la llave
+        vigente autoriza el cambio a la nueva (rectificación)."""
+
+    def record(self, discord_id: str) -> dict:
+        """Derecho de acceso: todo lo que el directorio guarda de esta persona."""
+
+    def cancel(self, discord_id: str, sign_key_change: Callable[[bytes, bytes], bytes]) -> None:
+        """Cancelación: borra el registro. `sign_key_change(llave_nula, nonce)` firma con la llave vigente."""
 
     def get_key(self, discord_id: str) -> bytes | None:
         """Llave de firma publicada de ese usuario, o None si no está registrado (TLS 1.3, RS6)."""

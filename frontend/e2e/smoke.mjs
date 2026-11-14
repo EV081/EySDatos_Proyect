@@ -11,7 +11,7 @@ const root = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const shots = process.env.SHOTS_DIR ?? join(tmpdir(), 'e2ee-shots');
 mkdirSync(shots, { recursive: true });
 const ALICE = '111111111111111111', BOB = '222222222222222222';
-const PASS_A = 'contraseña-de-alice-1', PASS_B = 'contraseña-de-bob-2';
+const PASS_A = 'Contraseña-de-alice-1', PASS_B = 'Contraseña-de-bob-2';
 const procs = [];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let passed = 0;

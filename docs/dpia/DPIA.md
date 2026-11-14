@@ -132,12 +132,12 @@ Son valores propuestos y se revisan si cambia la finalidad.
 
 | Derecho | Cómo se atiende | Estado |
 |---|---|---|
-| Acceso | La persona consulta su propio registro (ID, llave, fechas) | ○ Pendiente (F1) |
-| Rectificación | Cambiar de llave: la anterior autoriza la nueva (`sign_key_change`) | ◐ Firma implementada en `crypto/`; falta el endpoint |
-| Cancelación | Borrar el registro del directorio, firmado con su llave; los respaldos y registros caducan en 30 y 90 días | ✔ (C-11): borrado inmediato en el directorio y en las copias en ≤ 30 días |
-| Oposición | No registrarse, o cancelar; no hay otro tratamiento al que oponerse | ✔ por diseño |
+| Acceso | La persona consulta su propio registro (ID, llave, fechas, aviso aceptado, llaves reemplazadas) y lo que hay en su dispositivo, y lo descarga en JSON | ✔ `GET /v1/me` en el directorio y "Mis datos y derechos ARCO" en la web (`directory/tests/test_arco.py`, `client/tests/test_arco.py`) |
+| Rectificación | Cambiar de llave: la anterior autoriza la nueva (`sign_key_change`); el historial se conserva (`Identity.rotate`) | ✔ "Cambiar mi llave" en la web (`POST /identity/rotate`); `test_rectificacion_*` |
+| Cancelación | Borrar el registro del directorio, firmado con su llave; los respaldos y registros caducan en 30 y 90 días | ✔ (C-11): borrado inmediato en el directorio y en las copias en ≤ 30 días; botón "Cancelar mi registro" en la web (`POST /identity/cancel`) |
+| Oposición | No registrarse, o cancelar; no hay otro tratamiento al que oponerse. Retirar el consentimiento es el mismo botón que la cancelación | ✔ por diseño y desde la web |
 | Portabilidad | Exportar la identidad cifrada a otro dispositivo (RF12) | ✔ `test_RF12_exportar_e_importar_en_otro_dispositivo` |
-| Borrado local de datos | Hoy se borra eliminando los archivos; falta un botón en la aplicación | ○ Pendiente (Elmer) |
+| Borrado local de datos | "Borrar mis datos de este dispositivo" (o al cancelar): borra `vault.json` y `store.enc` con la contraseña maestra | ✔ `POST /identity/delete-local`; `test_borrado_local_*` |
 
 * **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. Si el directorio se aloja con un proveedor, se firmará un contrato y se elegirá la región con criterio legal (para la demostración corre en local).
 * **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio no sale del equipo del responsable durante la demostración.

@@ -38,3 +38,15 @@ class PeerUnavailable(ClientError):
     """No se pudo obtener la llave del contacto (directorio caído o contacto sin registrar)."""
 
     status, code = 502, "peer_key_unavailable"
+
+
+class LoginRequired(ClientError):
+    """El directorio pide iniciar sesión con Discord (falta el token de registro o venció)."""
+
+    status, code = 403, "login_required"
+
+
+class DirectoryUnavailable(ClientError):
+    """El directorio no respondió o rechazó la operación sobre el propio registro."""
+
+    status, code = 502, "directory_error"

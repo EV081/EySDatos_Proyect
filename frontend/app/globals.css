@@ -37,6 +37,8 @@ h1, h2, .brand, .head-row b { color: var(--ink); font-weight: 800; font-stretch:
 .muted { color: var(--mute); }
 .hint { color: var(--mute); font-size: 13px; margin: 0; }
 .error { color: var(--red); margin: 6px 0 0; font-size: 13px; font-weight: 600; }
+.pw-rules { list-style: none; margin: 0; padding: 0; color: var(--mute); font-size: 13px; display: grid; gap: 2px; }
+.pw-rules li.ok { color: var(--blue); font-weight: 600; }
 
 /* --- botones ---
    Al pasar el cursor: el relleno entra barriendo desde la izquierda y el botón se levanta sobre una sombra dura.
@@ -201,6 +203,25 @@ dialog::backdrop { background: rgba(0, 0, 0, .55); }
 :root[data-theme="dark"] dialog { box-shadow: 10px 10px 0 var(--blue); }
 dialog h2 { margin: 0 0 8px; font-size: 26px; line-height: 1.1; }
 .row { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.row.start { justify-content: flex-start; flex-wrap: wrap; }
+
+/* --- derechos ARCO --- */
+dialog.wide { max-width: 680px; max-height: calc(100vh - 48px); overflow-y: auto; }
+.arco { border-top: 2px solid var(--ink); padding: 14px 0 6px; }
+.arco h3, .arco summary { font-size: 17px; font-weight: 800; color: var(--ink); margin: 0 0 8px; }
+.arco summary { cursor: pointer; }
+.arco form { margin-top: 10px; }
+.arco h4 { margin: 14px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); }
+.arco-letter { display: inline-block; min-width: 26px; padding: 0 6px; margin-right: 6px; text-align: center; background: var(--ink); color: var(--paper); font-family: var(--font-mono); }
+.kv { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 6px 14px; margin: 0; font-size: 14px; }
+.kv dt { color: var(--mute); font-weight: 600; }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.kv .pk { margin: 0; }
+.kv .replaced { display: block; }
+.ok-note { background: var(--blue-t); color: var(--blue); border: 2px solid var(--blue); padding: 8px 12px; font-weight: 600; font-size: 14px; }
+button.danger { color: var(--paper); border-color: var(--red); background: linear-gradient(var(--ink), var(--ink)) no-repeat left center / 0% 100% var(--red); }
+button.danger:hover:not(:disabled) { color: var(--paper); box-shadow: 4px 4px 0 var(--red); }
+@media (max-width: 520px) { .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; } }
 
 /* La huella como llave: 12 bloques de 5 dígitos en rejilla, que es como se dicta en la ceremonia.
    Al verificar, cada bloque se "cierra" en azul, uno tras otro. */
@@ -251,6 +272,7 @@ label.check input { width: auto; margin-top: 3px; accent-color: var(--ink); }
 .legal h1 { font-size: 46px; line-height: 1; font-weight: 850; font-stretch: 125%; }
 .legal h2 { font-size: 22px; margin-top: 34px; padding-top: 12px; border-top: 2px solid var(--ink); }
 .legal li { margin: 4px 0; }
+.legal h3 { font-size: 17px; margin: 22px 0 4px; }
 a.out { color: var(--blue); font-weight: 600; text-underline-offset: 3px; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }

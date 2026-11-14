@@ -75,6 +75,10 @@ class Identity:
     def create(cls) -> "Identity":
         return cls(Ed25519PrivateKey.generate(), os.urandom(aead.KEY_LEN))
 
+    def rotate(self) -> "Identity":
+        """Nueva llave de firma con la misma llave del almacén: el historial local sigue legible (rectificación)."""
+        return type(self)(Ed25519PrivateKey.generate(), self._store_key)
+
     @property
     def public_key(self) -> bytes:
         return self._sk.public_key().public_bytes_raw()
