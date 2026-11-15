@@ -23,7 +23,7 @@ Es la ley peruana que protege tus datos personales: cualquier información que s
 
 El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
 
-El directorio se aloja en AWS EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase. La región de la base y el destino de las copias deben constar en el inventario de alojamiento del equipo.
+El directorio se aloja en AWS EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte (`us-east-1`), durante 30 días con rotación. La región del proyecto Supabase sigue pendiente de confirmar y documentar en el inventario de alojamiento.
 
 ## Los principios que seguimos
 
@@ -70,7 +70,7 @@ Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si ti
 ## Otros derechos que también tienes
 
 - **Información:** conocer, antes de dar tus datos, quién los usará, para qué y por cuánto tiempo. Por eso te mostramos el aviso de privacidad antes de crear tu identidad.
-- **Portabilidad:** llevar tu identidad a otro dispositivo. La aplicación te permite exportarla en un archivo cifrado con tu contraseña.
+- **Portabilidad:** llevar tu identidad a otro dispositivo. La aplicación te permite exportarla en un archivo cifrado con la contraseña que elijas para esa exportación; no incluye el historial ni los contactos.
 - **Tutela:** reclamar ante la ANPD si no respetamos tus derechos.
 
 ## Cómo pedir tus derechos
@@ -104,7 +104,7 @@ Hay datos que **no tenemos**, así que no podemos entregarlos, ni a ti ni a nadi
 - Tu **llave privada** y tu **contraseña maestra**: nunca salen de tu dispositivo.
 - Tus **contactos** y tu **historial**: viven solo en tu dispositivo.
 
-Por eso, si olvidas tu contraseña, no podemos recuperarla. Exporta tu identidad como respaldo.
+No podemos restablecer tu contraseña maestra. Si la olvidas, puedes recuperar la identidad desde una exportación previa cuya contraseña recuerdes; también puedes generar una exportación mientras conserves una sesión abierta. La exportación contiene la identidad y la clave del almacén, pero no el historial ni los contactos: para recuperarlos también necesitas conservar el almacén local cifrado.
 
 ## Si no estás de acuerdo con nuestra respuesta
 
@@ -112,7 +112,7 @@ Si no te respondemos a tiempo, o si nuestra respuesta no te convence, puedes pre
 
 ## Acceso con el autenticador
 
-La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
+El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
 
 Si pierdes el autenticador, usa un código de recuperación después de entrar con Discord para vincular uno nuevo. Esos códigos no recuperan la contraseña maestra. Cancelar el registro borra el factor: exporta lo necesario antes de cancelar, porque no podrás validar el próximo desbloqueo habitual de los archivos conservados.
 

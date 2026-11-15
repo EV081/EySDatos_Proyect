@@ -14,7 +14,7 @@ Este aviso te explica, en lenguaje claro, qué datos tuyos trata esta aplicació
 
 ## Quién es el responsable
 
-El responsable del tratamiento y titular del banco de datos del directorio es el equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, con domicilio en Lima, Perú. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe. El domicilio postal se completará antes de ampliar el uso fuera de la demostración académica.
+El responsable del tratamiento y titular del banco de datos del directorio es el equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, con domicilio en Lima, Perú. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe. El domicilio postal se completará antes de ampliar el uso con datos de terceros.
 
 Para ejercer tus derechos, escribe a elmer.villegas@utec.edu.pe o a farid.aquino@utec.edu.pe. Te responderemos por un canal privado. No publiques tus datos personales en el repositorio.
 
@@ -30,7 +30,7 @@ Lo que se guarda en el directorio:
   el estado de vinculación y los contadores y fechas necesarios para impedir reutilización y limitar intentos.
   Estos datos de autenticación son privados y no se publican con tu llave. El QR se genera sin servicios externos. Al desbloquear, el directorio recibe también un código temporal y una firma sobre un desafío; no recibe tu contraseña ni el historial. El directorio valida TOTP directamente, sin consultar una API de Microsoft.
 
-Lo que **no** recogemos: tu nombre, correo, teléfono, foto, nombre de usuario ni dirección IP. No hacemos perfiles, no usamos tus datos para publicidad ni para análisis.
+La aplicación no solicita tu nombre, correo, teléfono, foto ni nombre de usuario, y sus registros no guardan tu dirección IP. Los registros del alojamiento se revisan por separado. No hacemos perfiles, no usamos tus datos para publicidad ni para análisis.
 
 Lo que se queda **solo en tu dispositivo** y nosotros no vemos: el contenido de tus conversaciones, tu llave privada, tus contactos y su estado de verificación, y los mensajes pendientes de envío. Todo se guarda cifrado con una clave derivada de tu contraseña maestra.
 
@@ -57,14 +57,14 @@ Tu ID de Discord, tu llave pública y la vinculación de una app autenticadora s
 - **Otras personas usuarias:** ven tu ID de Discord y tu llave pública cuando te buscan.
 - **Discord:** recibe tus mensajes **ya cifrados** y los metadatos (quién escribe, a quién, cuándo y de qué tamaño). Discord es un responsable independiente de su propia plataforma.
 - **Las personas que operan el directorio:** acceden a lo que está en el directorio, con permisos mínimos.
-- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. La región del proyecto Supabase debe confirmarse y documentarse. El destino de los respaldos queda pendiente de documentar.
+- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. La región del proyecto Supabase debe confirmarse y documentarse. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`).
 - **Autoridades:** solo si una orden válida lo exige, y únicamente con los datos que realmente conservamos en el directorio y sus registros, descritos en este aviso. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
 
 No vendemos ni cedemos tus datos a otras personas o empresas.
 
 ## Transferencias internacionales
 
-Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; la región del proyecto Supabase debe confirmarse antes de ampliar el uso con datos de terceros. El destino de los respaldos queda pendiente de documentar. Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
+Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; la región del proyecto Supabase debe confirmarse antes de ampliar el uso con datos de terceros. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`). Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
 
 ## Cuánto tiempo conservamos tus datos
 
@@ -81,7 +81,7 @@ Lo que Discord conserve depende de sus propias condiciones. Aun así, los mensaj
 
 ## El banco de datos
 
-Los datos del directorio forman un banco de datos personales. Hoy, por ser una demostración académica, **no está inscrito** en el Registro Nacional de Protección de Datos Personales; se inscribirá antes de cualquier uso real, si corresponde.
+Los datos del directorio forman un banco de datos personales. El banco del proyecto **no está inscrito** en el Registro Nacional de Protección de Datos Personales. Antes de ampliar el uso del servicio se evaluará la obligación de inscripción y se realizará el trámite si corresponde, como se recoge en la DPIA.
 
 ## Tus derechos
 
@@ -99,13 +99,13 @@ Responderemos dentro de los plazos que establece la ley. No tomamos decisiones a
 
 ## Cómo protegemos tus datos
 
-Cifrado de extremo a extremo con renovación periódica de claves, verificación de identidad fuera de Discord, tu llave privada cifrada con tu contraseña maestra, conexión protegida con el directorio, permisos mínimos y registros con IDs seudonimizados, sin contenido ni secretos. Si ocurre un incidente de seguridad, lo documentaremos y evaluaremos las comunicaciones del artículo 34 del reglamento. Cuando se cumplan sus supuestos, notificaremos a la ANPD en un máximo de 48 horas desde que lo conozcamos; si afecta a otros derechos, te lo comunicaremos también dentro de las 48 horas y sin dilación indebida. En el entorno digital se contempla además la comunicación al Centro Nacional de Seguridad Digital.
+El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. Usamos cifrado de extremo a extremo con renovación periódica de claves, verificación de identidad fuera de Discord, tu llave privada cifrada con tu contraseña maestra, conexión protegida con el directorio, permisos mínimos y registros con IDs seudonimizados, sin contenido ni secretos. Si ocurre un incidente de seguridad, lo documentaremos y evaluaremos las comunicaciones del artículo 34 del reglamento. Cuando se cumplan sus supuestos, notificaremos a la ANPD en un máximo de 48 horas desde que lo conozcamos; si afecta a otros derechos, te lo comunicaremos también dentro de las 48 horas y sin dilación indebida. En el entorno digital se contempla además la comunicación al Centro Nacional de Seguridad Digital.
 
 ## Lo que debes saber
 
-- **No hay recuperación de contraseña.** Si olvidas tu contraseña maestra, pierdes tu identidad y tu historial. Exporta tu identidad como respaldo.
-- **El desbloqueo habitual requiere conexión al directorio y un código nuevo.** Si falla la validación, la identidad y el historial permanecen bloqueados. El modo de desarrollo sin conexión es una simulación y no valida este segundo factor.
-- **El MFA no cambia el cifrado de tus archivos.** Una copia de la bóveda y la contraseña correcta permiten descifrarla fuera de la aplicación.
+- **No hay recuperación de contraseña.** No podemos restablecer tu contraseña maestra. Si la olvidas y no conservas una sesión abierta ni una exportación cuya contraseña recuerdes, no podrás recuperar tu identidad. Puedes exportarla previamente con otra contraseña. Esa exportación no incluye el historial: para recuperarlo también necesitas conservar el almacén local cifrado.
+- **El desbloqueo habitual requiere conexión al directorio y un código nuevo.** Si falla la validación, la aplicación no abre la identidad ni el historial. Una sesión que ya estaba abierta conserva su plazo restante. El modo de desarrollo sin conexión es una simulación y no valida este segundo factor.
+- **El MFA no cambia el cifrado de tus archivos.** Una copia de la bóveda y la contraseña correcta permiten descifrarla fuera de la aplicación, sin consultar al directorio ni introducir un código TOTP. Para leer el historial también hace falta el archivo del almacén local cifrado.
 - **Guarda los códigos de recuperación del autenticador fuera del dispositivo.** Se usan después de iniciar sesión con Discord para vincular otro autenticador; no recuperan la contraseña maestra. Si pierdes el autenticador y los códigos, no hay restablecimiento automático.
 - **Antes de cancelar el registro, exporta lo que necesites.** La cancelación elimina el factor del servidor. Si conservas los archivos locales, su próximo desbloqueo habitual ya no podrá validarse.
 - **Los metadatos son visibles** para Discord y para las personas del canal.

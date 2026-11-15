@@ -1,17 +1,17 @@
 # Políticas de uso seguro
 
-**Versión 1.2, 14 de noviembre de 2026.** Incluye MFA, vencimiento de la sesión local y custodia de la clave que cifra el TOTP.
+**Versión 1.3, 15 de noviembre de 2026.** Estas políticas establecen el uso del MFA, el vencimiento de la sesión local y la custodia de la clave que cifra el TOTP. El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator.
 
 ## 1. Para las personas usuarias
 
 | Política | Por qué |
 |---|---|
-| Usa una **contraseña maestra** larga y única (una frase de 4 o más palabras), que no uses en otro sitio. No hay recuperación: si la olvidas, solo te queda tu exportación | Protege a la vez tu llave, tu historial y tus contactos (punto único de falla, sección 7.3 del informe) |
+| Usa una **contraseña maestra** larga y única (una frase de 4 o más palabras), que no uses en otro sitio. No podemos restablecerla; conserva una exportación de identidad con otra contraseña que recuerdes | Protege a la vez tu llave, tu historial y tus contactos (punto único de falla, sección 7.3 del informe) |
 | **Protege el autenticador y sus códigos de recuperación.** Guarda los códigos fuera del dispositivo, no los compartas y comprueba el dominio antes de escribir un TOTP | El código es temporal, pero un sitio falso puede usarlo mientras sigue vigente. La recuperación no recupera tu contraseña maestra |
 | **Verifica** a cada contacto comparando la huella **fuera de Discord** (en persona, por llamada o con el QR) antes de hablar de algo sensible | Es la única defensa contra un directorio que entregue una llave falsa (R2). Un contacto sin verificar se muestra como tal |
 | Si aparece la **alerta de cambio de llave**, no sigas la conversación: confirma con la persona por otra vía y repite la verificación. La aplicación no ofrece "continuar" | Un cambio de llave inesperado puede ser una suplantación |
 | **Bloquea** la aplicación cuando no la uses y protege el dispositivo (bloqueo de pantalla, sistema actualizado, antivirus) | Con la aplicación desbloqueada, quien tenga el dispositivo ve todo (S4) |
-| Guarda tu **exportación de identidad** en un medio fuera del dispositivo, con otra contraseña fuerte | Es tu único respaldo; un archivo exportado con contraseña débil es una llave expuesta |
+| Guarda tu **exportación de identidad** en un medio fuera del dispositivo, con otra contraseña fuerte | Respalda la identidad y la clave del almacén, pero no incluye historial ni contactos. Para recuperarlos también hace falta el almacén local cifrado; una exportación con contraseña débil expone tus llaves |
 | Si pierdes el dispositivo o sospechas que tu llave se filtró, **cancela tu registro** o publica una llave nueva, y avisa a tus contactos | Tus contactos recibirán la alerta y dejarán de confiar en la llave vieja |
 | La aplicación es para **mayores de edad** y para conversaciones legítimas. No la uses para acosar, para el fraude ni para compartir contenido ilegal | Aviso de privacidad y consideraciones éticas (6.3) |
 | Recuerda que Discord y los miembros del canal ven **quién habla con quién y cuándo**, aunque no el contenido | Los metadatos no están protegidos (R1) |
@@ -50,7 +50,7 @@
 ### 2.3 Datos personales y registros
 
 * El directorio publica ID y llave pública y conserva fechas, aviso y los datos privados mínimos del segundo factor: secreto cifrado, hashes de recuperación, pasos utilizados y estado de intentos. El código temporal y la contraseña maestra no se registran. Agregar cualquier dato nuevo exige actualizar antes la DPIA y el aviso de privacidad (y subir su versión).
-* Los registros nunca contienen IDs en claro, IPs, llaves, tokens ni mensajes; se revisan con `test_C09_*` en cada push. Solo el equipo lee los registros, y únicamente para investigar un incidente o una alerta.
+* Los registros de la aplicación no contienen IDs en claro, IPs, llaves, tokens ni mensajes; las pruebas automatizadas comprueban esta restricción. Los registros de EC2 y de cualquier proxy se revisan por separado. Solo el equipo lee los registros, y únicamente para investigar un incidente o una alerta.
 * Retención: registros de auditoría 90 días, llaves reemplazadas 90 días, copias de seguridad 30 días y el registro del directorio hasta que la persona lo cancele. La tarea diaria (`python -m ops.scheduled daily`) aplica la purga. También elimina las sesiones MFA vencidas (cinco minutos de validez) y altas sin confirmar de más de un día. La sesión local de 30 minutos por defecto es otro plazo y no se conserva como token de desbloqueo.
 * Las solicitudes de derechos (acceso, rectificación, cancelación, oposición) se responden en el plazo legal. La cancelación la puede hacer la propia persona desde su cliente.
 
@@ -63,8 +63,12 @@
 
 ### 2.5 Continuidad
 
-* Copia diaria cifrada fuera del servidor, respaldo protegido separado de `TOTP_ENCRYPTION_KEY` y restauración de prueba semanal (`ops.backup.backup verify`). Objetivos: RPO de 24 h y RTO de 30 min.
+* Copia diaria cifrada en el bucket privado S3 `proyecto-eticayseguridad`, en Virginia del Norte (`us-east-1`), respaldo protegido separado de `TOTP_ENCRYPTION_KEY` y restauración de prueba semanal. Objetivos: RPO de 24 h y RTO de 30 min. La tarea programada está instalada y activa; una copia de S3 se descargó y restauró en PostgreSQL aislado. Falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado.
 * Las alertas (`alerts.jsonl` o el webhook) se revisan a diario. Una alerta de `acceso_ajeno` o de varios `cambio_de_llave` se trata como un posible incidente.
+
+### 2.6 Revisión interna y aprobación
+
+Elmer Villegas Suarez y Farid Aquino Castro realizaron la revisión cruzada del proyecto y la revisión humana del protocolo, junto con el análisis automatizado de seguridad. Ambas revisiones están finalizadas. La aprobación de las medidas y de los riesgos residuales consta en la [DPIA](../dpia/DPIA.md); los correos elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe se consignan como firma del equipo. El [plan de respuesta a incidentes](respuesta-incidentes.md) establece los roles, contactos y procedimientos de actuación.
 
 ## 3. Incumplimiento
 

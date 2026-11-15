@@ -352,7 +352,7 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 
 **Medidas.** Definimos 25 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
 
-**Decisión.** El equipo revisó y aprobó la DPIA, y aceptó seis riesgos residuales de nivel medio por las razones del paso 6. Los correos de ambos integrantes se consignan como firma en el paso 7. El directorio está desplegado en EC2; los clientes se ejecutan localmente. El análisis de código, el borrado local y el MFA están implementados; el MFA está desplegado y probado con Microsoft Authenticator. Antes de ampliar el uso quedan el simulacro de incidentes, las comprobaciones operativas del alojamiento y los requisitos de C-24.
+**Decisión.** Elmer Villegas Suarez y Farid Aquino Castro realizaron la revisión cruzada del proyecto y la revisión humana del protocolo. El equipo revisó y aprobó la DPIA, y aceptó seis riesgos residuales de nivel medio por las razones del paso 6. Los correos de ambos integrantes se consignan como firma en el paso 7. El directorio está desplegado en EC2; los clientes se ejecutan localmente. El análisis de código, el borrado local y el MFA están implementados; el MFA está desplegado y probado con Microsoft Authenticator. Antes de ampliar el uso quedan el simulacro de incidentes, las comprobaciones operativas del alojamiento y los requisitos de C-24.
 
 ### 6.2 Cumplimiento de la Ley 29733 y su reglamento
 
@@ -375,14 +375,14 @@ El sistema se hace en Perú y trata datos de personas identificables, así que a
 | Aviso de privacidad | Hecho ([aviso](privacidad/aviso-de-privacidad.md)), también dentro de la app. Incluye correos de contacto; falta completar domicilio postal antes de ampliar el uso |
 | Medidas de seguridad | Implementadas en el código, incluido el borrado local (C-21); falta comprobar las medidas operativas en el entorno desplegado |
 | Notificar incidentes según el art. 34 del reglamento | El [plan de incidentes](politicas/respuesta-incidentes.md) define cuándo corresponde notificar a la ANPD (máximo 48 h), a las personas y al CNSD; falta el primer simulacro |
-| Inscribir el banco de datos | Pendiente; es un proyecto académico, se evaluará antes de un uso real (C-24) |
-| Oficial de datos personales | No se prevé por el volumen y porque no podemos leer los mensajes; hay persona de contacto |
-| Evaluación de impacto | Hecha de forma voluntaria (6.1) |
+| Inscribir el banco de datos | Pendiente; se evaluará la obligación de inscripción y se realizará el trámite si corresponde antes de ampliar el uso (C-24) |
+| Oficial de datos personales | No designado; ambos integrantes realizan la revisión interna y atienden los correos de contacto. La necesidad de designación se revisará antes de ampliar el uso |
+| Evaluación de impacto | Realizada como parte del proyecto; revisión interna finalizada y aprobación del equipo consignada mediante sus correos en el paso 7 de la DPIA |
 
 ### 6.3 Consideraciones éticas
 
 * **Sin acceso excepcional ni llave de custodia.** Es la decisión central. Una llave que deje leer conversaciones a una autoridad o al operador anula la PFS y tarde o temprano se filtra o se usa mal (Abelson et al., 2015). El costo es real: ante una orden solo podemos entregar los datos que realmente conserva el directorio, incluidos sus registros de autenticación, nunca el contenido de los chats, y no podemos ayudar a investigar algo que pase dentro de un chat. El aviso lo dice claro.
-* **Las llaves son de la persona.** Por eso no hay recuperación de contraseña: si la olvidas, pierdes tu identidad e historial. Preferimos esa carga antes que guardar un respaldo en un servidor que nos permitiría leer mensajes. Se avisa y se puede exportar la identidad cifrada. Recuperar el autenticador no recupera la contraseña ni descifra los archivos locales.
+* **Las llaves son de la persona.** El servicio no puede restablecer la contraseña maestra. Una exportación previa con otra contraseña conocida permite recuperar la identidad y la clave del almacén; también puede generarse mientras la sesión siga abierta. El historial y los contactos no se incluyen en la exportación: para recuperarlos se necesita además el almacén local cifrado. Sin una sesión abierta ni una exportación utilizable, olvidar la contraseña impide recuperar esos datos. Recuperar el autenticador no recupera la contraseña ni descifra los archivos locales.
 * **MFA y disponibilidad.** El segundo factor ya protege el registro y el desbloqueo habitual, pero necesita conexión al directorio. Si se pierde el celular, la recuperación pasa por Discord y un código de recuperación; sin ambos medios no hay restablecimiento automático. Cancelar el registro elimina el factor: si se conservan archivos locales, hay que exportar lo necesario antes de cancelar, porque el próximo desbloqueo habitual no podrá validarse.
 * **El directorio concentra confianza.** Quien lo opere podría dar una llave falsa. Por eso guarda lo mínimo, no registra IP, deja rastro de cada cambio de llave y no sustituye llaves. Lo que las reglas no evitan lo limita el diseño: con la verificación fuera de banda cualquiera comprueba que no lo engañan.
 * **Advertencias sin "continuar".** Ante un cambio de llave de un contacto verificado no se puede seguir sin volver a verificar. Es algo paternalista, pero en estudios de campo entre un tercio y siete de cada diez personas ignoraron advertencias de certificados que sí dejaban continuar (Akhawe & Felt, 2013).
@@ -462,7 +462,7 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | **Menores de edad** | Podrían declarar una edad que no tienen y no comprender el riesgo | Servicio para mayores de edad con declaración obligatoria, sin comprobación documental |
 | **Equipo responsable** | Debe evaluar y documentar la brecha y comunicarla según los supuestos del art. 34 del reglamento | Plan de incidentes, auditoría y evidencia |
 | **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
-| **Institución académica** | Su nombre queda ligado al proyecto si hay brecha con datos reales | No usar datos de terceros hasta cerrar las condiciones de la DPIA |
+| **Institución vinculada al proyecto** | Su nombre queda ligado al proyecto si hay una brecha con datos reales | Completar las acciones de la DPIA antes de ampliar el uso con datos de terceros |
 | **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
 | **Proveedores de alojamiento (AWS EC2 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de AWS y Supabase, región del proyecto Supabase y copias cifradas en S3 (`us-east-1`) |
 
@@ -482,7 +482,7 @@ Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es 
 
 Estas mejoras quedan para después. Las agrupamos según cuándo sería razonable trabajarlas y qué riesgo ayudarían a reducir.
 
-### 8.1 Antes de un uso real
+### 8.1 Antes de ampliar el uso
 
 | Recomendación | Reduce | Por qué | Por qué no ahora |
 |---|---|---|---|
@@ -492,7 +492,7 @@ Estas mejoras quedan para después. Las agrupamos según cuándo sería razonabl
 | Almacén de claves para seudonimización, CA y cifrado del TOTP | R5, R8, R10 | Una variable de entorno es tan segura como su servidor | Requiere integrar la gestión de secretos con el despliegue en EC2 |
 | Comprobar dependencias y firmar los archivos que distribuimos | S7 | Es el riesgo de mayor impacto y ninguna prueba funcional lo detecta | Pide infraestructura de publicación; el escaneo y el SBOM ya corren en CI |
 | Divulgación responsable de vulnerabilidades y pentests periódicos | S8, S10 | Quien encuentre un fallo debe saber cómo avisar | No tiene sentido sin usuarios reales |
-| Cumplimiento legal del uso real (banco de datos, edad mínima, contacto, GDPR si aplica) | R9, R12 | Son obligaciones, no mejoras | Fuera del alcance de una demo académica |
+| Requisitos para ampliar el uso (banco de datos, edad mínima, contacto, GDPR si aplica) | R9, R12 | Son obligaciones que se revisan según el alcance del servicio | Requiere completar la evaluación y las acciones de C-24 antes de ampliar el uso |
 
 ### 8.2 A mediano plazo
 
@@ -524,8 +524,6 @@ Esto requiere diseñar la migración de bóvedas y exportaciones, la forma de gu
 Ninguna medida reemplaza a las otras: la seguridad se arma con capas, y cada una cubre la falla de otra.
 
 ## 9. Lecciones aprendidas y retrospectiva
-
-*Borrador pendiente de revisión con la experiencia del equipo.*
 
 **Lo que salió bien**
 

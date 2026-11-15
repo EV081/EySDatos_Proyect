@@ -1,8 +1,8 @@
 # Plan de respuesta a incidentes
 
-**Versión 1.4, 14 de noviembre de 2026.** Actualiza el alcance al directorio en EC2, el MFA de registro y desbloqueo, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. La restricción C-19 de la DPIA queda pendiente de completar con el simulacro y la validación operativa.
+**Versión 1.5, 15 de noviembre de 2026.** El plan cubre el directorio en EC2, el MFA de registro y desbloqueo, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. El plan corresponde a la medida C-19 de la DPIA; el simulacro y la validación de los contactos operativos forman parte de las acciones pendientes.
 
-**Alcance.** Directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL alojado en Supabase; respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. El destino de las copias queda pendiente de confirmar en el inventario del alojamiento. No se incluyen IP, credenciales ni tokens en este documento.
+**Alcance.** Directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL alojado en Supabase; respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. Las copias cifradas se alojan en el bucket privado S3 `proyecto-eticayseguridad`, en Virginia del Norte (`us-east-1`). No se incluyen IP, credenciales ni tokens en este documento.
 
 **Regla de notificación.** Se evalúan los supuestos de los artículos 34 a 36 del [reglamento de la Ley 29733, DS 016-2024-JUS](https://www.gob.pe/institucion/anpd/normas-legales/6554453-n-016-2024-jus). Se documenta todo incidente; no se presume que todos tengan las mismas obligaciones de comunicación. La sección 5 fija los criterios.
 
@@ -17,24 +17,26 @@
 
 **Contactos:** ANPD (Autoridad Nacional de Protección de Datos Personales, Ministerio de Justicia y Derechos Humanos), por su mesa de partes virtual. Discord: Trust & Safety, para la revocación de bots o los abusos de la plataforma. Contactos del equipo: [elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe) y [farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe). Para AWS, usar el canal de soporte de la cuenta. Para la base, usar el soporte y los controles de acceso del proyecto Supabase; su región debe documentarse por separado. Antes del simulacro, confirmar que ambos integrantes pueden acceder a esos canales desde un equipo seguro.
 
+La revisión interna del protocolo y de esta evaluación fue realizada por Elmer Villegas Suarez y Farid Aquino Castro. La aprobación de las medidas y de los riesgos residuales consta en el paso 7 de la [DPIA](../dpia/DPIA.md), con sus correos como firma del equipo.
+
 ## 2. Identificar y Proteger: preparación
 
 Lo que ya existe y que este plan usa:
 
 | Capacidad | Dónde |
 |---|---|
-| Registros de auditoría seudonimizados, 90 días | `logs/audit.jsonl` (F5) |
+| Registros de auditoría seudonimizados, 90 días | Registro de auditoría del directorio |
 | Alertas automáticas | `logs/alerts.jsonl` y el webhook opcional (F5) |
-| Copias cifradas, fuera del servidor, con restauración probada | `python -m ops.backup.backup` (F4) |
+| Copias cifradas, fuera del servidor, con restauración probada | S3 en Virginia del Norte; [procedimiento de copias y restauración](../../ops/backup/README.md) |
 | Revocación del certificado del directorio | `python -m ops.certs.pki revoke` (F2) |
 | Cancelación y cambio de llave en el directorio | `DELETE /v1/keys/{id}`, `PUT` con `old_signature` (F1) |
 | Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6); GitGuardian revisa el repositorio público en GitHub |
-| Alerta de cambio de llave a los contactos | Cliente (RF8) |
+| Alerta de cambio de llave a los contactos | Cliente: revoca la verificación y avisa al detectar un cambio de llave |
 | Segundo factor y desbloqueo | OAuth2 + TOTP para el registro; desafío firmado + TOTP para desbloquear. Sesión local de 30 minutos por defecto; eventos `mfa_rechazado`, `mfa_recuperacion` y `sesion_local` en la auditoría |
-| Inventario de datos y riesgos | DPIA y secciones 6.4 y 7 del informe |
-| Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase; confirmar la región del proyecto de la base. Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado; confirmar el destino de respaldos |
+| Inventario de datos y riesgos | [DPIA](../dpia/DPIA.md) y secciones 6.4 y 7 del [informe](../README.md) |
+| Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase; confirmar la región del proyecto de la base. Respaldos cifrados en S3, Virginia del Norte (`us-east-1`). Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado |
 
-**Validación del despliegue pendiente de registrar:** comprobar TLS, permisos IAM, acceso de administración restringido, programación de copias, restauración y retención. Los scripts y pruebas del repositorio no demuestran que estén configurados en EC2. La llave privada de la CA y la clave de los respaldos se custodian fuera de la instancia.
+**Comprobaciones operativas:** verificar TLS, permisos IAM, acceso de administración restringido y retención en el alojamiento. La tarea de copias está instalada y activa; una copia cifrada de S3 se descargó y restauró en PostgreSQL aislado, con 2 registros y 1 factor MFA descifrable mediante la clave original. Falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado. La llave privada de la CA y la clave de los respaldos se custodian fuera de la instancia.
 
 ## 3. Detectar: fuentes y clasificación
 
@@ -49,7 +51,7 @@ Lo que ya existe y que este plan usa:
 | **Medio** | Hay un intento detectado sin exposición confirmada | Alerta de enumeración, `acceso_ajeno` aislado, dependencia vulnerable sin explotación conocida | Antes de 24 h |
 | **Bajo** | Hay una indisponibilidad sin exposición | S12 | Siguiente día hábil |
 
-La prueba real con Authenticator está confirmada por el equipo. El simulacro y la recuperación de la base junto con su clave TOTP siguen pendientes de registrar.
+El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. La restauración aislada de una copia de S3 permitió recuperar la base y descifrar un factor MFA con la clave TOTP original; queda probar el inicio de sesión del servicio recuperado y realizar el simulacro del anexo B.
 
 **Referencias de escenarios:** S1 a S12 corresponden a la tabla 7.1 del informe.
 
@@ -129,7 +131,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 ## 8. Ejercicios
 
-* **Simulacro en papel** cada semestre, y antes de un uso real. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". El equipo recorre las secciones 4 a 6 con el reloj de 48 h corriendo y registra los resultados en el anexo B. Incluir pérdida de autenticador, indisponibilidad de EC2 y restauración de PostgreSQL con su clave de cifrado TOTP; la copia de la base por sí sola no basta.
+* **Simulacro en papel** cada semestre, y antes de ampliar el uso. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". El equipo recorre las secciones 4 a 6 con el reloj de 48 h corriendo y registra los resultados en el anexo B. Incluir pérdida de autenticador, indisponibilidad de EC2 y restauración de PostgreSQL con su clave de cifrado TOTP; la copia de la base por sí sola no basta.
 * **Restauración real** de una copia cada semana (`backup verify`, automatizable) y una restauración completa sobre un servidor limpio cada semestre.
 
 ---
@@ -157,7 +159,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 | Fecha | Escenario | Participantes | Tiempo hasta la decisión de notificar | Hallazgos y acciones |
 |---|---|---|---|---|
-| (pendiente: primer simulacro antes de la demostración) | | | | |
+| Pendiente: primer simulacro antes de la entrega | | | | |
 
 ## Anexo C: incidentes registrados
 
