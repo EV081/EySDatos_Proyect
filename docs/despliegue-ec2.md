@@ -1,117 +1,141 @@
-# Desplegar el directorio en EC2 con PostgreSQL en Supabase
+# Desplegar desde cero: EC2, Supabase y respaldo en S3
 
-El directorio corre en una instancia EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL está en el proyecto de Supabase elegido por el equipo. En EC2 se levanta solo el servicio `directory`; la base no se mueve a la instancia ni se levanta el servicio local `db`. El cliente y el frontend se ejecutan en las laptops: sigue la [guía de ejecución local](ejecucion-local.md).
+Aquí empezamos con una cuenta de AWS Academy y el laboratorio iniciado. Primero creamos EC2 y Supabase; después instalamos el directorio y las copias de seguridad. El directorio funciona en EC2, Virginia del Norte (`us-east-1`); PostgreSQL se aloja en Supabase y las copias cifradas en S3. El cliente y el frontend corren en las laptops según la [guía local](ejecucion-local.md).
 
-Esta guía describe HTTPS directo con la CA del proyecto en el puerto 8443, según el Compose del repositorio. Sustituye `HOST_EC2`, `USUARIO_EC2` y las rutas de ejemplo por tus datos; no publiques credenciales ni la IP real en el repositorio. Si el servidor ya funciona, consulta primero la sección 7 para actualizarlo conservando los datos y las claves existentes.
+Los comandos del servidor usan Ubuntu 22.04 o 24.04 **x86_64**, usuario `ubuntu` y clon en `/home/ubuntu/EySDatos_Proyect`. Sustituye `HOST_EC2`, referencias, contraseñas y nombres de bucket por los valores propios. En tu computadora necesitas Git, OpenSSH y el entorno Python del paso 1 de la guía local para emitir los certificados. Sigue los pasos en orden para una instalación nueva.
 
-## 1. Preparar la instancia
+## 1. Crear EC2 e instalar las herramientas
 
-Necesitas una instancia Linux con Docker Engine, el complemento `docker compose`, Git y Python 3.12 con soporte para entornos virtuales. El usuario de administración debe poder ejecutar Docker y conectarse por SSH.
+En la consola AWS, selecciona `us-east-1` y crea una instancia con Ubuntu Server 22.04/24.04, arquitectura x86_64, almacenamiento suficiente para Docker y acceso a Internet. Descarga la llave SSH `.pem`. Asocia a EC2 un rol permitido por AWS Academy para que pueda usar el bucket de respaldos; si el laboratorio ofrece `LabInstanceProfile`, revisa sus permisos en el paso 8. Conviene mantener la misma dirección pública: si cambia, también habrá que cambiar el certificado, la dirección de retorno de Discord y la configuración de cada laptop.
 
-En el grupo de seguridad permite:
+En el grupo de seguridad configura:
 
 | Puerto | Uso | Origen |
 |---|---|---|
 | TCP 22 | SSH | IP de administración |
-| TCP 8443 | Directorio HTTPS | IP de los participantes que usarán el servicio |
+| TCP 8443 | Directorio HTTPS | IP de los participantes |
 
-No abras puertos de entrada de PostgreSQL en EC2. El directorio necesita salida hacia el host de Supabase en el puerto de su conexión (5432 en los ejemplos), además de HTTPS a Discord. Si configuraste restricciones de red en Supabase, permite la IP de salida de EC2. Las reglas de entrada se configuran según el puerto y el origen, como describe [AWS](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-rules-reference.html).
+EC2 debe poder conectarse a Supabase por el puerto 5432 y usar HTTPS para Discord, S3 y las descargas de instalación. No abras PostgreSQL como puerto de entrada en EC2. Si Supabase tiene restricciones de red, autoriza la IP de salida de EC2. Consulta las [reglas de grupos de seguridad de AWS](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-rules-reference.html).
 
-Conéctate desde tu computadora:
+Desde tu computadora, protege la llave y conéctate:
 
 ```bash
-ssh -i /ruta/clave-ec2.pem USUARIO_EC2@HOST_EC2
+chmod 400 /ruta/clave-ec2.pem
+ssh -i /ruta/clave-ec2.pem ubuntu@HOST_EC2
 ```
 
-En EC2, prepara el repositorio y el entorno para aplicar las migraciones:
+En EC2 instala las herramientas básicas:
 
 ```bash
+sudo apt update
+sudo apt install -y git make curl ca-certificates openssl unzip cron postgresql-common
+```
+
+Instala Docker Engine y Compose desde el [repositorio oficial de Docker](https://docs.docker.com/engine/install/ubuntu/):
+
+```bash
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+. /etc/os-release
+printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n' "$(dpkg --print-architecture)" "$VERSION_CODENAME" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+sudo usermod -aG docker ubuntu
+exit
+```
+
+Vuelve a entrar por SSH para aplicar el grupo Docker. Los comandos siguientes se ejecutan en EC2:
+
+```bash
+docker --version
+docker compose version
+docker run --rm hello-world
+```
+
+Instala las herramientas cliente PostgreSQL 17 desde [PGDG](https://www.postgresql.org/download/linux/ubuntu/), compatibles con el despliegue probado en este proyecto. En Supabase comprueba la versión de PostgreSQL: si usas una versión mayor, instala un cliente compatible antes de generar copias.
+
+```bash
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+sudo apt update
+sudo apt install -y postgresql-client-17
+pg_dump --version
+pg_restore --version
+```
+
+Esto instala clientes de PostgreSQL; la base de producción seguirá en Supabase. Prepara Python 3.12 con [uv](https://docs.astral.sh/uv/getting-started/installation/), descarga el proyecto e instala dependencias:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+"$HOME/.local/bin/uv" python install 3.12
 git clone https://github.com/EV081/EySDatos_Proyect.git
 cd EySDatos_Proyect
-python3 -m venv .venv
-.venv/bin/python -m pip install -r directory/requirements.txt
+"$HOME/.local/bin/uv" venv --python 3.12 --seed .venv
+"$HOME/.local/bin/uv" pip install --python .venv/bin/python -r directory/requirements.txt
+mkdir -p ops/certs/private
 ```
 
-Si ya existe el clon, usa ese directorio en los pasos siguientes.
+Desde este punto trabaja en `/home/ubuntu/EySDatos_Proyect`, salvo cuando se indique expresamente la computadora responsable.
 
-## 2. Configurar el `.env` de EC2
+## 2. Crear Supabase, la aplicación OAuth y el `.env`
 
-El directorio necesita solo estas seis variables. Conserva los valores que ya funcionan en tu instancia; aquí se muestran ejemplos, no credenciales reales:
+En Supabase crea una organización/proyecto, elige y registra su región y guarda su contraseña administrativa. La región de Supabase se registra por separado de EC2. En **Connect**, copia el host y referencia del **Session pooler**, puerto 5432: permite conexión desde EC2 con IPv4. El administrador usa `postgres.PROJECT_REF`; nuestros roles usarán `directory_app.PROJECT_REF` y `directory_backup.PROJECT_REF`. No uses el pooler de transacciones de 6543 para esta guía. Consulta las [conexiones de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
+
+En los ajustes SSL de la base, descarga el certificado raíz de Supabase. Cópialo desde tu computadora a EC2:
+
+```bash
+scp -i /ruta/clave-ec2.pem /ruta/certificado-descargado.crt ubuntu@HOST_EC2:~/EySDatos_Proyect/ops/certs/supabase-ca.pem
+```
+
+Este certificado público verifica PostgreSQL y es distinto de la CA HTTPS del directorio. En EC2:
+
+```bash
+chmod 644 ops/certs/supabase-ca.pem
+openssl rand -hex 24
+openssl rand -hex 24
+openssl rand -base64 32 | tr '+/' '-_'
+openssl rand -base64 32 | tr '+/' '-_'
+```
+
+Guarda los cuatro resultados por separado: contraseña de `directory_app`, contraseña de `directory_backup`, `PSEUDONYM_KEY` y `TOTP_ENCRYPTION_KEY`, respectivamente. Guarda una copia protegida de las claves fuera de EC2; no se regeneran en cada arranque.
+
+En [Discord Developer Portal](https://discord.com/developers/applications), crea la aplicación OAuth del directorio. Copia el **Application ID** y el **Client Secret**; en **OAuth2 > Redirects** registra exactamente `https://HOST_EC2:8443/auth/callback`. Cada participante creará su propio bot según la guía local. El directorio usa OAuth con alcance `identify`; Authenticator usa TOTP y no requiere una API key de Microsoft.
+
+En EC2 crea `.env` con `nano .env` y completa las seis variables de la API:
 
 ```dotenv
-DATABASE_URL='postgresql://directory_app.PROJECT_REF:CONTRASENA_ROL_APP@POOLER_HOST:5432/postgres'
+DATABASE_URL='postgresql://directory_app.PROJECT_REF:CONTRASENA_ROL_APP@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/app/ops/certs/supabase-ca.pem'
 DISCORD_CLIENT_ID=ID_DE_LA_APLICACION_OAUTH
 DISCORD_CLIENT_SECRET=SECRETO_DE_LA_APLICACION_OAUTH
 DISCORD_REDIRECT_URI=https://HOST_EC2:8443/auth/callback
 PSEUDONYM_KEY=CLAVE_BASE64URL_DE_32_BYTES
-TOTP_ENCRYPTION_KEY=CLAVE_FERNET_EXISTENTE
+TOTP_ENCRYPTION_KEY=OTRA_CLAVE_BASE64URL_DE_32_BYTES
 ```
 
-`POSTGRES_PASSWORD=no-se-usa` puede eliminarse con el Compose actualizado: el directorio no arranca PostgreSQL local. No hacen falta `DATABASE_ADMIN_URL`, contraseñas de migración ni variables `BACKUP_*` para iniciar la API. Compose configura por separado el directorio de auditoría; el webhook es opcional.
-
-Las migraciones del paso 4 y los respaldos del paso 8 usan variables adicionales **cuando se ejecutan esas tareas**. Puedes mantenerlas en archivos privados separados, o añadir las de respaldo al mismo `.env`; no se pasan automáticamente al contenedor del directorio.
-
-Copia el host y la referencia reales desde **Connect** en tu proyecto Supabase. Los ejemplos usan **Session pooler**, puerto 5432, para una conexión persistente desde EC2 con IPv4. Para el rol de aplicación, el usuario es `directory_app.PROJECT_REF`; la contraseña es la del rol, no la del usuario `postgres`. La alternativa es conexión directa si EC2 tiene conectividad hacia la dirección que ofrece Supabase; conserva el formato correspondiente del panel. No uses el pooler de transacciones de 6543 para estas instrucciones. Véase la [guía de conexiones de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
-
-`DATABASE_URL` es la conexión del servicio con el rol de permisos mínimos. La conexión administrativa solo se configura en el paso 4 si necesitas aplicar migraciones. No utilices el usuario administrador para ejecutar la aplicación. No necesitas una clave `anon` ni `service_role`: este backend usa PostgreSQL mediante psycopg, no la API HTTP de Supabase.
-
-Si vas a usar la verificación TLS explícita de la base, descarga el certificado raíz indicado para tu conexión en Supabase y guárdalo como `ops/certs/supabase-ca.pem` en EC2. Es distinto de `ca.pem`, que verifica el HTTPS del directorio. `sslmode=verify-full` y `sslrootcert` verifican el servidor de la base. Para exigir la verificación del certificado de la base, añade a `DATABASE_URL` los parámetros `sslmode=verify-full&sslrootcert=/app/ops/certs/supabase-ca.pem` y copia ese certificado a EC2. El montaje de `ops/certs` lo hace visible al contenedor. La ruta de una conexión ejecutada en el host es distinta: `ops/certs/supabase-ca.pem`. Estos parámetros son una configuración TLS explícita; no añaden otras credenciales al `.env` de arranque.
-
-Sustituye todos los ejemplos por los valores de tu proyecto. Conserva las credenciales existentes. Si generas contraseñas nuevas para los roles del proyecto, `openssl rand -hex 24` evita caracteres que requieren escape en URLs. Si tu contraseña existente contiene caracteres especiales, codifica esos caracteres en la URL, como explica [Supabase](https://supabase.com/docs/guides/database/postgres/roles#special-symbols-in-passwords).
-
-No necesitas `POSTGRES_PASSWORD` ni `db:5432` en este despliegue; esas opciones corresponden a PostgreSQL local para desarrollo y pruebas.
-
-Solo en una instalación nueva, genera `PSEUDONYM_KEY` y `TOTP_ENCRYPTION_KEY` ejecutando dos veces este comando y asignando un resultado distinto a cada variable:
-
-```bash
-openssl rand -base64 32 | tr '+/' '-_'
-```
-
-**Si ya tienes Authenticator vinculado, conserva `TOTP_ENCRYPTION_KEY`.** Generar otra clave no recifra los secretos guardados y dejaría de poder validarlos. Conserva su respaldo protegido fuera de la instancia y separado del volcado de PostgreSQL. No necesita una API key de Microsoft.
+La aplicación usa el usuario de base de datos con los permisos necesarios para la app, que se creará en el paso 4; no la conexión administrativa. El certificado se verá dentro del contenedor en `/app/ops/certs/`. No necesitas `POSTGRES_PASSWORD`, claves `anon` ni `service_role` para esta arquitectura. Más adelante agregamos las variables para preparar las tablas y hacer las copias.
 
 ```bash
 chmod 600 .env
 ```
 
-En Discord Developer Portal, configura para la aplicación OAuth la misma URI de redirección que pusiste en `DISCORD_REDIRECT_URI`, incluido HTTPS, host, puerto y `/auth/callback`. La instancia necesita salida HTTPS a Discord y su reloj debe estar sincronizado para verificar TOTP.
+Las contraseñas hexadecimales generadas evitan escapes en las URLs. Si usas otras contraseñas con símbolos, [codifícalos en la URL](https://supabase.com/docs/guides/database/postgres/roles#special-symbols-in-passwords). El reloj de EC2 y el celular deben estar sincronizados para validar TOTP.
 
-## 3. Preparar los certificados desde la computadora responsable
+## 3. Emitir y copiar los certificados HTTPS
 
-La llave privada de la CA se conserva en la computadora responsable. En esa computadora, desde la raíz del proyecto, configura el host público y la contraseña de la CA:
+En la **computadora responsable**, prepara el clon y `.venv` siguiendo el paso 1 de la guía local. Desde su raíz ejecuta:
 
 ```bash
 export DIRECTORY_EXTRA_HOSTS=HOST_EC2
-read -r -s -p 'Contraseña de la CA (mínimo 12 caracteres): ' CA_KEY_PASSWORD
+read -r -s -p 'Contraseña nueva de la CA (mínimo 12 caracteres): ' CA_KEY_PASSWORD
 echo
 export CA_KEY_PASSWORD
-```
-
-Si es una CA nueva, ejecuta:
-
-```bash
 .venv/bin/python -m ops.certs.pki init
+scp -i /ruta/clave-ec2.pem ops/certs/server.pem ubuntu@HOST_EC2:~/EySDatos_Proyect/ops/certs/server.pem
+scp -i /ruta/clave-ec2.pem ops/certs/private/server.key ubuntu@HOST_EC2:~/e2ee-server.key
 ```
 
-Si la CA ya existe y necesitas emitir o renovar el certificado para ese host, usa en cambio:
-
-```bash
-.venv/bin/python -m ops.certs.pki issue
-```
-
-Crea en EC2 la carpeta de destino desde la raíz del clon:
-
-```bash
-mkdir -p ops/certs/private
-```
-
-Desde la computadora responsable, copia el certificado de servidor y su llave. Ajusta la ruta remota al clon que acabas de preparar:
-
-```bash
-scp -i /ruta/clave-ec2.pem ops/certs/server.pem USUARIO_EC2@HOST_EC2:~/EySDatos_Proyect/ops/certs/server.pem
-scp -i /ruta/clave-ec2.pem ops/certs/private/server.key USUARIO_EC2@HOST_EC2:~/e2ee-server.key
-```
-
-Si configuraste `sslrootcert` para Supabase, copia también su certificado público a `ops/certs/supabase-ca.pem` en EC2 y dale permisos de lectura (`chmod 644`). No copies `private/ca.key` al servidor. En EC2, permite que el UID 10001 de la imagen lea la llave montada:
+`init` crea la CA, el certificado de servidor y la CRL. La llave privada `ops/certs/private/ca.key` permanece cifrada en la computadora responsable: no se copia a EC2. En **EC2**, permite que el UID 10001 del servicio lea su llave:
 
 ```bash
 chmod 644 ops/certs/server.pem
@@ -120,43 +144,47 @@ sudo install -o 10001 -g 10001 -m 600 ~/e2ee-server.key ops/certs/private/server
 rm ~/e2ee-server.key
 ```
 
-Entrega `ca.pem` y `crl.pem` vigentes a las laptops por un canal confiable. El navegador también debe confiar en esa CA para abrir el login OAuth. Renueva la CRL antes de los 30 días; `pki issue` regenera certificado y CRL. El certificado de servidor vence a los 90 días. Tras renovar, copia los archivos actualizados y reinicia el directorio.
+Entrega `ops/certs/ca.pem` y `ops/certs/crl.pem` a los participantes por un canal confiable. Importan la CA en su navegador y colocan ambos archivos en su clon local. El nombre o IP usado en `HOST_EC2` debe coincidir con el certificado.
 
-## 4. Aplicar las migraciones en Supabase
+El certificado vence a los 90 días y la CRL a los 30. Para su mantenimiento, `pki issue` en la computadora responsable emite un certificado y renueva la CRL; distribuye los archivos públicos actualizados y copia el nuevo certificado/llave a EC2 antes de reiniciar el servicio. Conserva la CA y su contraseña para poder renovarlos.
 
-Usa el proyecto y los datos que ya tienes en Supabase. No crees otro PostgreSQL en EC2. Antes de aplicar cambios al esquema, conserva el respaldo correspondiente del proyecto y la clave de cifrado TOTP vigente.
+## 4. Crear los roles y aplicar las migraciones en Supabase
 
-Si el esquema ya está actualizado y solo vas a recrear el contenedor, puedes pasar al paso 5. Cuando haya migraciones nuevas, prepara un archivo privado `.env.migraciones` en el equipo que las ejecutará:
+En EC2 crea `.env.migraciones` con la conexión administrativa de Supabase y las dos contraseñas generadas en el paso 2:
 
 ```dotenv
-DATABASE_ADMIN_URL='postgresql://postgres.PROJECT_REF:CONTRASENA_ADMIN@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=ops/certs/supabase-ca.pem'
-DIRECTORY_APP_PASSWORD=CONTRASENA_ROL_APP_EXISTENTE
-# Solo para crear o habilitar el rol de copias:
+DATABASE_ADMIN_URL='postgresql://postgres.PROJECT_REF:CONTRASENA_ADMIN@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/home/ubuntu/EySDatos_Proyect/ops/certs/supabase-ca.pem'
+DIRECTORY_APP_PASSWORD=CONTRASENA_ROL_APP
 DIRECTORY_BACKUP_PASSWORD=CONTRASENA_ROL_RESPALDO
 ```
 
-La URL administrativa debe apuntar al proyecto correcto de Supabase; este archivo no es necesario para que la API funcione. Con el certificado disponible:
+Ejecuta este bloque entre paréntesis. Así, al terminar, las variables del administrador dejan de estar cargadas en esa terminal:
 
 ```bash
 chmod 600 .env.migraciones
+(
+set -e
 set -a
 . ./.env.migraciones
 set +a
 .venv/bin/python -m directory.migrations.apply
+)
 ```
 
-El script se conecta con `DATABASE_ADMIN_URL`, prepara los roles `directory_owner`, `directory_app` y `directory_backup`, y aplica las migraciones al esquema `directory`, incluidas `003_mfa.sql` y `004_session_mfa.sql`. Supabase conserva los datos; no se usa el volumen local `directory-db`. Mantén las mismas contraseñas de los roles al actualizar.
+El script crea `directory_owner`, `directory_app` y `directory_backup`, y aplica `001_init.sql`, `002_backup_role.sql`, `003_mfa.sql` y `004_session_mfa.sql` al esquema `directory`. La contraseña de aplicación debe coincidir con `DATABASE_URL`; la de respaldo se usará en el paso 8.
 
-Si aparece `permission denied for database postgres` al crear el esquema o usar el rol propietario, abre **SQL Editor** de Supabase como `postgres`, comprueba que el rol `directory_owner` ya existe y ejecuta:
+Si Supabase devuelve `permission denied for database postgres` al crear el esquema, abre **SQL Editor** como `postgres` y, con `directory_owner` ya creado por el script, ejecuta:
 
 ```sql
 GRANT directory_owner TO postgres;
 GRANT CREATE ON DATABASE postgres TO directory_owner;
 ```
 
-Después repite la migración. El permiso `CREATE` se concede al rol propietario de migraciones, no a `directory_app`. Supabase documenta este caso en su [guía de permisos de migración](https://supabase.com/kb/troubleshooting/resolving-permission-denied-for-database-postgres-during-migrations-78f33a). Si las migraciones ya están aplicadas, no vuelvas a crear tablas ni a vincular factores manualmente: conserva el esquema y las claves existentes.
+Repite el bloque de migraciones. El permiso pertenece al propietario de migraciones, no al rol de aplicación. Véase la [guía de permisos de Supabase](https://supabase.com/kb/troubleshooting/resolving-permission-denied-for-database-postgres-during-migrations-78f33a).
 
-## 5. Levantar el directorio
+## 5. Construir y arrancar el directorio por primera vez
+
+En EC2, desde la carpeta principal del proyecto:
 
 ```bash
 docker compose --profile deploy up -d --build directory
@@ -164,11 +192,11 @@ docker compose --profile deploy ps
 docker compose --profile deploy logs --tail=50 directory
 ```
 
-El servicio escucha por HTTPS en 8443 y se conecta a la URL de Supabase de `DATABASE_URL`. Los registros se guardan en `directory-logs`. Con el perfil `deploy` se arranca solo el directorio; el servicio `db` queda reservado al perfil local. Confirma que `docker compose --profile deploy ps` no muestre una base local iniciada por este despliegue.
+El servicio escucha por HTTPS en 8443, usa Supabase y guarda auditoría en el volumen `directory-logs`. Este despliegue inicia solo `directory`; `db` está reservado al desarrollo local. Los errores de conexión deben resolverse antes del primer login: revisa host/rol/contraseña de Supabase, certificado raíz y permisos del esquema.
 
-## 6. Comprobar desde una laptop
+## 6. Comprobar HTTPS y completar el primer login
 
-Con la URL real configurada en el `.env` local y `ca.pem` y `crl.pem` vigentes:
+En una **laptop**, sigue los pasos 1 a 3 de la guía local: instala dependencias, recibe `ca.pem` y `crl.pem`, e indica la URL remota en su `.env`. Comprueba:
 
 ```bash
 set -a
@@ -177,24 +205,17 @@ set +a
 curl --cacert "$DIRECTORY_CA_FILE" --crlfile "$DIRECTORY_CRL_FILE" --tlsv1.3 --tls-max 1.3 --include "$DIRECTORY_URL/health"
 ```
 
-La respuesta esperada es `204 No Content`. Después sigue la [guía local](ejecucion-local.md#4-iniciar-sesión-con-discord-y-vincular-authenticator): completa Discord y Authenticator, guarda el token y crea o importa la identidad. Bloquea y desbloquea con un código nuevo; un código ya usado debe rechazarse.
+La respuesta esperada es `204 No Content`. Continúa con [Discord y Authenticator](ejecucion-local.md#4-iniciar-sesión-con-discord-y-vincular-authenticator), guarda los códigos de recuperación y el token de registro. Arranca `make client` y `make frontend` en dos terminales, crea tu identidad y comprueba el bloqueo/desbloqueo con un código nuevo de Authenticator. Un código usado debe rechazarse.
 
-## 7. Actualizar un despliegue existente
+## 7. Guardar la configuración de recuperación
 
-Antes de actualizar, conserva el respaldo de la base de Supabase y los secretos vigentes, especialmente `TOTP_ENCRYPTION_KEY`. Con los cambios ya publicados en la rama que usa el servidor, ejecuta en EC2:
+Guarda fuera de EC2 una copia protegida de `TOTP_ENCRYPTION_KEY`, `PSEUDONYM_KEY`, las credenciales necesarias y la CA con su contraseña. Guarda también `BACKUP_KEY` cuando la generes en el paso 8, separada del bucket. Cambiar `TOTP_ENCRYPTION_KEY` sin recifrar la base impide validar los factores ya vinculados. La copia de PostgreSQL no incluye esa clave ni las identidades e historiales locales de las laptops.
 
-```bash
-git pull --ff-only
-docker compose --profile deploy up -d --build directory
-```
-
-Si la actualización añade migraciones, instala las dependencias de `directory/requirements.txt` en el entorno del host y aplica primero el paso 4 con `.env.migraciones`. No cargues variables administrativas en el `.env` del servicio por el simple hecho de actualizar código.
-
-Repite la comprobación HTTPS y el desbloqueo con Authenticator. No vuelvas a vincular el celular ni regeneres claves solo por actualizar código. Una actualización del cliente o del frontend se aplica también en cada laptop reiniciando `make client` y volviendo a ejecutar `make frontend`; actualizar EC2 por sí solo no cambia la interfaz local.
+El directorio ya puede atender solicitudes; completa el respaldo diario y su prueba de recuperación para terminar la instalación.
 
 ## 8. Activar el respaldo diario de Supabase en S3
 
-**Estado:** el volcado cifrado y la restauración están implementados y tienen un [ensayo local registrado](../ops/reports/f4-simulacro.txt). La integración S3 del repositorio tiene pruebas simuladas; el bucket y la tarea de EC2 deben crearse y comprobarse en la cuenta AWS Academy. Agregar solo una variable no programa un respaldo.
+**Prueba del proyecto:** ya subimos una copia cifrada al bucket `proyecto-eticayseguridad`, comprobamos que llegó sin cambios y la recuperamos en una base de prueba separada. Se recuperaron 2 registros y se pudo descifrar el secreto de 1 autenticador ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta comprobar su primera ejecución automática. Los pasos siguientes permiten repetir la instalación con un bucket nuevo.
 
 ### 8.1 Crear el bucket y comprobar el rol
 
@@ -207,32 +228,42 @@ En la consola de S3 de tu cuenta de AWS Academy:
 
 El bloqueo público y los permisos se comprueban antes de subir datos ([referencia de AWS](https://docs.aws.amazon.com/cli/latest/reference/s3api/get-public-access-block.html)).
 
-En EC2 necesitas AWS CLI v2 reciente y un perfil de instancia permitido por el laboratorio con acceso al bucket. Comprueba desde EC2:
+En EC2 instala AWS CLI v2:
 
 ```bash
+cd /tmp
+curl -fSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+unzip -q awscliv2.zip
+sudo ./aws/install
+cd /home/ubuntu/EySDatos_Proyect
 aws --version
-aws sts get-caller-identity
+pg_dump --version
+pg_restore --version
+.venv/bin/python --version
 ```
+
+Estos comandos son para la instancia **x86_64** del paso 1; la [instalación oficial de AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) incluye el paquete alternativo para ARM. El rol de EC2 se comprueba a continuación; no se necesitan claves AWS estáticas en el `.env`.
+
+En la consola EC2, selecciona la instancia y abre **Actions > Security > Modify IAM role** para asociar el perfil permitido por AWS Academy. Comprueba desde EC2:
+
+```bash
+aws sts get-caller-identity
+aws s3api get-public-access-block --bucket NOMBRE_DEL_BUCKET_NUEVO
+aws s3api get-bucket-versioning --bucket NOMBRE_DEL_BUCKET_NUEVO
+```
+
+El primer comando debe mostrar la cuenta o rol que usa EC2. El segundo debe mostrar los cuatro bloqueos en `true`. El tercero no debe mostrar `Status`: el versionado debe estar desactivado. Si aparecen `false`, activa los cuatro bloqueos en **S3 > bucket > Permissions > Block public access** antes de seguir.
 
 Los permisos necesarios son `s3:GetBucketPublicAccessBlock`, `s3:GetBucketVersioning` y `s3:ListBucket` sobre ese bucket; `s3:PutObject`, `s3:GetObject` y `s3:DeleteObject` sobre su prefijo `directory/`. Usa el rol de la instancia que permita AWS Academy, sin guardar `AWS_ACCESS_KEY_ID` ni `AWS_SECRET_ACCESS_KEY` en el `.env`. Que puedas crear un bucket desde la consola no demuestra por sí solo que el rol de EC2 pueda escribir en él.
 
 ### 8.2 Configurar la tarea
 
-Prepara AWS CLI y `pg_dump`/`pg_restore` de una versión compatible con PostgreSQL de Supabase **en EC2**, donde se ejecutará el trabajo. La imagen del directorio no contiene las herramientas de operaciones ni programa esta tarea. Si hasta ahora solo usabas el contenedor, prepara también el entorno Python del host, reutilizándolo si ya existe:
+El entorno Python 3.12 y las herramientas `pg_dump`/`pg_restore` ya se instalaron en el paso 1. La tarea se ejecuta directamente en EC2, fuera del contenedor del directorio.
 
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r directory/requirements.txt
-pg_dump --version
-pg_restore --version
-```
-
-Instala AWS CLI v2 desde la [guía oficial para Linux](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) si `aws --version` no funciona. Las herramientas de PostgreSQL deben corresponder a una versión compatible con la del proyecto Supabase.
-
-Habilita el rol `directory_backup` con su contraseña de lectura mediante el paso 4 o con la administración del proyecto. Agrega estas variables al `.env` de EC2, o guárdalas en `.env.backup` si prefieres separarlas:
+El usuario `directory_backup`, que solo puede leer la base, se habilitó en el paso 4. Usa su contraseña para agregar estas variables al `.env` de EC2, o guárdalas en `.env.backup` si prefieres separarlas:
 
 ```dotenv
-BACKUP_DATABASE_URL='postgresql://directory_backup.PROJECT_REF:CONTRASENA_ROL_RESPALDO@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/RUTA/AL/REPO/ops/certs/supabase-ca.pem'
+BACKUP_DATABASE_URL='postgresql://directory_backup.PROJECT_REF:CONTRASENA_ROL_RESPALDO@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/home/ubuntu/EySDatos_Proyect/ops/certs/supabase-ca.pem'
 BACKUP_KEY=CLAVE_BASE64URL_DE_32_BYTES
 BACKUP_DIR=/var/tmp/eysd-backups
 BACKUP_S3_BUCKET=NOMBRE_DEL_BUCKET_NUEVO
@@ -240,13 +271,13 @@ BACKUP_S3_PREFIX=directory
 AWS_REGION=us-east-1
 ```
 
-`BACKUP_DATABASE_URL` usa el rol de lectura, no el administrador. Genera `BACKUP_KEY` una sola vez con `openssl rand -base64 32 | tr '+/' '-_'` y guarda una copia protegida fuera de EC2 y del bucket. No uses `TOTP_ENCRYPTION_KEY` como `BACKUP_KEY`: tienen funciones diferentes y se respaldan por separado. Ajusta la ruta absoluta al certificado y protege el archivo privado con permisos 600.
+`BACKUP_DATABASE_URL` usa el usuario de base de datos que solo puede leer, no el administrador. Genera `BACKUP_KEY` una sola vez con `openssl rand -base64 32 | tr '+/' '-_'` y guarda una copia protegida fuera de EC2 y del bucket. No uses `TOTP_ENCRYPTION_KEY` como `BACKUP_KEY`: tienen funciones diferentes y se respaldan por separado. Ajusta la ruta absoluta al certificado y ejecuta `chmod 600 .env` (o `chmod 600 .env.backup` si elegiste el archivo separado).
 
-`BACKUP_DIR` es un área de archivos **ya cifrados** mientras se suben a S3; no es el destino remoto. El código comprueba bloqueo público, ausencia de versionado, tamaño y SHA-256 del objeto subido mediante [PutObject](https://docs.aws.amazon.com/cli/latest/reference/s3api/put-object.html) y [HeadObject](https://docs.aws.amazon.com/cli/latest/reference/s3api/head-object.html). Solo después de verificar la copia nueva elimina los archivos del proyecto de más de 30 días bajo ese prefijo; no toca otros objetos. Una regla de ciclo de vida de S3 puede complementar la limpieza, pero su [eliminación es asíncrona](https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-expire-general-considerations.html) y no sustituye la comprobación del trabajo.
+`BACKUP_DIR` guarda las copias **ya cifradas** en EC2 mientras se suben. La copia externa queda en S3. El programa comprueba que el bucket bloquee el acceso público y no tenga versionado. Después sube la copia con [PutObject](https://docs.aws.amazon.com/cli/latest/reference/s3api/put-object.html) y revisa su tamaño y SHA-256 con [HeadObject](https://docs.aws.amazon.com/cli/latest/reference/s3api/head-object.html). Solo si todo coincide borra las copias de más de 30 días dentro de la carpeta `directory/` del bucket. Conserva los demás archivos.
 
 ### 8.3 Ejecutar y comprobar la primera copia
 
-Desde la raíz del clon en EC2:
+Desde la carpeta principal del proyecto en EC2:
 
 ```bash
 make backup-remote
@@ -262,28 +293,82 @@ Debe terminar con código 0 y mostrar `copia remota verificada (SHA-256)`. Un er
 
 ### 8.4 Programarlo diariamente
 
-En EC2, con el usuario que puede ejecutar AWS CLI y leer la configuración:
+En EC2, activa cron y abre la programación del usuario `ubuntu`, que puede ejecutar AWS CLI y leer la configuración:
 
 ```bash
+sudo systemctl enable --now cron
 crontab -e
 ```
 
-Agrega esta línea, reemplazando la ruta absoluta del clon. Usa la variante que corresponda a tu archivo de configuración:
+Agrega esta línea, reemplazando la ruta completa de la carpeta del proyecto. Usa la variante que corresponda a tu archivo de configuración:
 
 ```cron
-0 3 * * * cd /RUTA/AL/REPO && /usr/bin/make backup-remote >> /var/tmp/eysd-backup.log 2>&1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+0 3 * * * cd /home/ubuntu/EySDatos_Proyect && /usr/bin/flock -n /var/tmp/eysd-backup.lock /usr/bin/make backup-remote >> /var/tmp/eysd-backup.log 2>&1
 ```
 
 ```cron
-0 3 * * * cd /RUTA/AL/REPO && /usr/bin/make backup-remote ENV_FILE=.env.backup >> /var/tmp/eysd-backup.log 2>&1
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+0 3 * * * cd /home/ubuntu/EySDatos_Proyect && /usr/bin/flock -n /var/tmp/eysd-backup.lock /usr/bin/make backup-remote ENV_FILE=.env.backup >> /var/tmp/eysd-backup.log 2>&1
 ```
 
-Es a las 03:00 según la zona horaria del servidor, no necesariamente Lima. Comprueba `crontab -l`, que el servicio cron esté activo, y que se genere una copia nueva tras la siguiente ejecución. Si cron no encuentra `aws` o `pg_dump`, configura su `PATH` con las rutas de instalación reales. Revisa el resultado y los errores; una EC2 apagada o un rol sin sesión válida no ejecutará la copia diaria. Esta línea programa F4; la purga y auditoría de F5 pertenecen a `ops.scheduled` y requieren configurar también el acceso a los registros del contenedor.
+Después de guardar el crontab, comprueba:
+
+```bash
+crontab -l
+sudo systemctl is-active cron
+timedatectl
+```
+
+Tras las próximas 03:00 del servidor revisa `tail -n 30 /var/tmp/eysd-backup.log`: debe aparecer una nueva copia remota verificada. Un log vacío antes del primer horario no acredita un fallo ni una ejecución.
+
+`flock` evita que se hagan dos copias al mismo tiempo; usa solo una de las variantes anteriores. Es a las 03:00 según la zona horaria del servidor, no necesariamente Lima. Comprueba `crontab -l`, que el servicio cron esté activo, y que se genere una copia nueva tras la siguiente ejecución. Si cron no encuentra `aws` o `pg_dump`, configura su `PATH` con las rutas de instalación reales. Revisa el resultado y los errores; una EC2 apagada o un rol sin sesión válida no ejecutará la copia diaria. Esta línea programa F4; la purga y auditoría de F5 pertenecen a `ops.scheduled` y requieren configurar también el acceso a los registros del contenedor.
 
 ### 8.5 Comprobar la recuperación
 
-La verificación SHA-256 prueba la transferencia, no reemplaza una restauración. Descarga una copia cifrada desde S3 y ensaya recuperarla en un PostgreSQL **aislado** con los roles del proyecto y una clave `BACKUP_KEY` válida. No apuntes `make restore` a la base real para hacer un ensayo: reemplaza su esquema.
+Comparar SHA-256 permite comprobar que el archivo llegó sin cambios. También necesitamos restaurarlo para saber si sirve para recuperar la base. Descarga una copia cifrada desde S3 y ensaya recuperarla en un PostgreSQL **aislado** con los roles del proyecto y una clave `BACKUP_KEY` válida. No apuntes `make restore` a la base real para hacer un ensayo: reemplaza su esquema.
 
-`make verify-backup` necesita crear y borrar una base temporal; no se debe ejecutar contra Supabase sin un entorno y permisos adecuados. Conserva evidencia del ensayo con conteos y tiempos, sin IDs, códigos ni secretos. Para recuperar el funcionamiento del MFA también necesitas la `TOTP_ENCRYPTION_KEY` original, custodiada por separado del bucket.
+El bloque usa `.env`; si guardaste las variables de respaldo en `.env.backup`, cárgalo con `set -a; . ./.env.backup; set +a` dentro del bloque después de cargar `.env`.
+
+Desde la carpeta principal del repositorio en EC2 usa el siguiente bloque, reemplazando `directory-FECHA.dump.enc` por el nombre exacto de la copia creada en el paso 8.3 y `NOMBRE_DEL_BUCKET_NUEVO` por tu bucket. Descarga el archivo conservando su nombre (el cifrado también comprueba ese nombre), crea un PostgreSQL 17 temporal en `127.0.0.1:55433`, restaura allí y valida que los factores MFA se puedan descifrar con la clave original, sin mostrarlos. El bloque usa una conexión de prueba en la misma EC2. No cambia el `.env` ni la base de Supabase. El puerto y el nombre de contenedor deben estar libres.
+
+```bash
+(
+set -e
+export RESTORE_TEST_PASSWORD="$(openssl rand -hex 24)"
+export RESTORE_TEST_ARCHIVE=directory-FECHA.dump.enc
+aws s3 cp "s3://NOMBRE_DEL_BUCKET_NUEVO/directory/$RESTORE_TEST_ARCHIVE" "/var/tmp/$RESTORE_TEST_ARCHIVE" --region us-east-1
+POSTGRES_PASSWORD="$RESTORE_TEST_PASSWORD" docker run -d \
+  --name eysd-restore-test \
+  -e POSTGRES_PASSWORD -e POSTGRES_DB=restore_check \
+  -p 127.0.0.1:55433:5432 postgres:17
+timeout 60 sh -c 'until docker exec eysd-restore-test pg_isready -U postgres -d restore_check >/dev/null 2>&1; do sleep 1; done'
+set -a
+. ./.env
+set +a
+export DATABASE_ADMIN_URL="postgresql://postgres:$RESTORE_TEST_PASSWORD@127.0.0.1:55433/restore_check?sslmode=disable"
+export DIRECTORY_APP_PASSWORD="$(openssl rand -hex 24)"
+.venv/bin/python -m directory.migrations.apply
+.venv/bin/python -m ops.backup.backup restore "/var/tmp/$RESTORE_TEST_ARCHIVE"
+.venv/bin/python - <<'PY'
+import os
+import psycopg
+from directory.app.mfa import Authenticator
+with psycopg.connect(os.environ['DATABASE_ADMIN_URL']) as conn:
+    keys = conn.execute('SELECT count(*) FROM directory.keys').fetchone()[0]
+    factors = conn.execute('SELECT encrypted_secret FROM directory.mfa_accounts').fetchall()
+    auth = Authenticator(os.environ['TOTP_ENCRYPTION_KEY'].encode())
+    for (encrypted_secret,) in factors:
+        auth.secret(encrypted_secret)
+    print(f'Registros restaurados: {keys}')
+    print(f'Factores MFA recuperados y descifrables: {len(factors)}')
+PY
+docker rm -fv eysd-restore-test >/dev/null
+)
+```
+
+Si termina correctamente, elimina únicamente el contenedor y el volumen temporales que acaba de crear. Si falla un paso, el bloque se detiene y deja el contenedor para diagnosticarlo; después de revisarlo se limpia con `docker rm -fv eysd-restore-test` antes de repetir el ensayo. La consulta muestra conteos, nunca IDs ni secretos. Conserva la salida como evidencia de recuperación.
+
+`make verify-backup` necesita crear y borrar una base temporal; no se debe ejecutar contra Supabase sin un entorno y permisos adecuados. Conserva evidencia del ensayo con conteos y tiempos, sin IDs, códigos ni secretos. Para que el autenticador vuelva a funcionar también necesitas la `TOTP_ENCRYPTION_KEY` original, guardada en un lugar seguro separado del bucket.
 
 Antes de marcar F4 como desplegada deben existir el bucket privado, una copia remota verificada, la programación diaria y una restauración ensayada. Los respaldos administrados por Supabase, si están configurados, son un mecanismo diferente del respaldo cifrado de este proyecto.

@@ -178,7 +178,9 @@ def _aws(action: str, *args: str) -> dict:
     region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
     command = [executable, "s3api", action, *args, "--region", region, "--output", "json", "--no-cli-pager"]
     try:
-        # Bandit B603: lista de argumentos, sin shell; solo AWS CLI y la API s3api.
+        # AWS CLI se ejecuta con una lista, sin shell: la región del entorno es un argumento.
+        # Las operaciones s3api vienen del código y bucket/prefijo se validan en sync_s3.
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
         result = subprocess.run(command, capture_output=True, check=False, timeout=300)  # nosec B603
     except subprocess.TimeoutExpired:
         raise BackupError(f"se agotó el tiempo de AWS S3: {action}") from None

@@ -19,8 +19,8 @@ jobs:
     env:
       PG_BIN: /usr/lib/postgresql/17/bin
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       # Ninguna contraseña en el repositorio: se generan en cada ejecución, se enmascaran en los registros y
@@ -66,8 +66,8 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - run: npm ci
@@ -77,8 +77,8 @@ jobs:
   sast:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: Bandit (falla con severidad baja o mayor)
@@ -93,8 +93,8 @@ jobs:
   dependencias:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - name: pip-audit con SBOM CycloneDX por componente
@@ -110,7 +110,7 @@ jobs:
         run: |
           npm audit --audit-level=low
           npm sbom --sbom-format cyclonedx --package-lock-only > ../sbom/frontend.cdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: sbom
           path: sbom/
@@ -118,7 +118,7 @@ jobs:
   secretos:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # todo el historial
       - name: gitleaks (historial y árbol)

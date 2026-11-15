@@ -8,12 +8,12 @@ Nuestro proyecto pone una capa de cifrado encima de Discord. Seguimos usando la 
 
 ## 2. Trasfondo teórico
 
-Estos son los conceptos que usamos para diseñar el sistema.
+Estos conceptos nos ayudaron a decidir cómo proteger los mensajes y las llaves.
 
 * **Cifrado de extremo a extremo (E2EE).** Solo quienes conversan pueden leer los mensajes; el servidor en medio solo ve bytes (Alatawi & Saxena, 2023; Park et al., 2023).
 * **Criptografía híbrida.** La criptografía de llave pública es lenta y la simétrica es rápida, así que se combinan. La simétrica (AES-256-GCM) cifra los mensajes y además detecta si alguien los modificó. La de llave pública sirve para identificarnos (firmas Ed25519) y para acordar una clave compartida (Diffie-Hellman sobre X25519). Cada llave hace una sola cosa: la de identidad solo firma (Stallings, 2017; Ferguson et al., 2010).
 * **Hash y derivación de claves.** SHA-256 sirve para la huella de verificación. HKDF saca varias claves independientes de un mismo secreto (Krawczyk & Eronen, 2010) y Argon2id vuelve lenta la fuerza bruta contra la contraseña maestra.
-* **Protocolos y *forward secrecy* (PFS).** Casi nunca se rompe la matemática; se ataca la forma en que se usa. Para pensar en eso usamos el modelo de Dolev y Yao (1983), donde el atacante controla la red. Un buen protocolo de sesión debe dar tres cosas a la vez: autenticación mutua, una clave de sesión y PFS, es decir, que si algún día roban la llave de identidad no se puedan leer las conversaciones viejas. Así funcionan SSH (RFC 4253) y TLS 1.3 (RFC 8446). Para que haya PFS las llaves temporales deben existir en **ambos** lados y destruirse al derivar la clave. También hay que evitar ataques como repetir mensajes (*replay*), reflejarlos o hacer que alguien firme algo sin contexto (Abadi & Needham, 1996; Krawczyk, 2003).
+* **Protocolos y *forward secrecy* (PFS).** No basta con elegir un algoritmo seguro: también importa cómo lo usamos. El modelo de Dolev y Yao (1983) nos permite pensar en un atacante que controla la red. Buscamos que ambos participantes se identifiquen, acuerden una clave y protejan sus conversaciones anteriores si más adelante se roba su llave de identidad. Esto último se llama PFS. Para lograrlo usamos llaves temporales en ambos lados y las eliminamos después de obtener las claves de sesión, siguiendo ideas de SSH y TLS 1.3. También revisamos qué pasa si alguien repite o cambia los mensajes del intercambio (Abadi & Needham, 1996; Krawczyk, 2003).
 * **Directorio de llaves y ataque de sustitución.** Hace falta un lugar donde publicar las llaves públicas. Si ese servidor se compromete, puede entregar la llave de un atacante y habría un *man-in-the-middle*. La publicación de llaves funciona como un tablón; la verificación fuera de banda permite detectar una sustitución (Park et al., 2023). En nuestra implementación, el mismo servicio también valida el segundo factor y guarda sus datos privados, separados de la consulta pública.
 * **Verificación fuera de banda.** La solución a la sustitución de llaves es comparar una huella de las llaves por otro canal (llamada, en persona, QR), como hacen Signal o WhatsApp (Naor et al., 2018; Alatawi & Saxena, 2023). Así no dependemos de confiar a ciegas en el primer contacto, como pasa con SSH.
 * **Autenticación multifactor (MFA).** Combina la contraseña con un código temporal de la app autenticadora. Usamos TOTP (RFC 6238), compatible con Microsoft Authenticator. Este control protege el acceso desde la aplicación; no cambia la clave que cifra los archivos locales ni evita por sí solo el phishing (NIST, 2025, SP 800-63B-4).
@@ -115,11 +115,11 @@ Al construir el directorio y las operaciones aparecieron requerimientos que la v
 
 ## 4. Diseño
 
-El diseño tiene dos partes: el **funcional** (lo que ve la persona) y el de **seguridad** (algoritmos y protocolos que cumplen los requerimientos de seguridad).
+Separamos el diseño en dos partes: cómo se usa la aplicación y cómo protege los mensajes.
 
 ### 4.1 Diseño funcional: interfaz y experiencia de usuario
 
-La interfaz es una página web independiente de Discord. El desbloqueo habitual pide la contraseña maestra y un código nuevo de Microsoft Authenticator. La sesión local dura 30 minutos por defecto (`CLIENT_SESSION_TTL`); al vencer se bloquea y descarta las llaves de conversación. Es un plazo absoluto, no un temporizador por inactividad. Cerrar solo la pestaña no detiene el cliente local. Si el directorio no responde, la identidad y el historial permanecen bloqueados.
+La interfaz es una página web independiente de Discord. El desbloqueo habitual pide la contraseña maestra y un código nuevo de Microsoft Authenticator. La sesión local dura 30 minutos por defecto (`CLIENT_SESSION_TTL`); al vencer se bloquea y descarta las llaves de conversación. Los 30 minutos se cuentan desde el desbloqueo, aunque la persona siga usando la app. Cerrar solo la pestaña no detiene el cliente local. Si el directorio no responde, la identidad y el historial permanecen bloqueados.
 
 Cada conversación muestra su estado:
 
@@ -149,7 +149,7 @@ Seguimos el patrón de SSH y TLS 1.3: **identidad de largo plazo que solo firma,
 
 #### 4.2.1 Arquitectura y límite de confianza
 
-El **dispositivo de cada persona** contiene el texto plano y los secretos: la interfaz muestra los mensajes y el cliente local gestiona las llaves. El **directorio** publica la asociación ID de Discord <-> llave pública de firma y valida el segundo factor por TLS 1.3 (RS6). PostgreSQL guarda también el secreto TOTP cifrado, hashes de recuperación y el estado necesario para impedir reutilizaciones; esos datos no se publican con las llaves. La clave `TOTP_ENCRYPTION_KEY` se configura fuera de la base. **Discord** solo transporta y guarda mensajes del protocolo y texto cifrado.
+En el **dispositivo de cada persona** quedan los mensajes legibles y las claves privadas: la interfaz muestra los mensajes y el cliente local gestiona las llaves. El **directorio**, desplegado en EC2 en Virginia del Norte (`us-east-1`) con PostgreSQL en Supabase, publica la asociación ID de Discord <-> llave pública de firma y valida el segundo factor por TLS 1.3 (RS6). PostgreSQL guarda también el secreto TOTP cifrado, hashes de recuperación y el estado necesario para impedir reutilizaciones; esos datos no se publican con las llaves. La clave `TOTP_ENCRYPTION_KEY` se configura fuera de la base. **Discord** transporta y guarda el intercambio para iniciar la conversación y los mensajes cifrados.
 
 Como el autor que muestra Discord siempre es un bot, no confiamos en él: el emisor y el receptor van dentro del mensaje y se autentican con el *handshake*. Cada cliente ignora lo que no va dirigido a su ID.
 
@@ -159,7 +159,7 @@ Como el autor que muestra Discord siempre es un bot, no confiamos en él: el emi
 
 #### 4.2.2 Registro y custodia de la identidad
 
-Al registrarse, el cliente genera el par Ed25519 en el dispositivo (RF1). La llave privada se cifra con Argon2id y la contraseña maestra (RS2) y nunca sale (RS1). En el directorio solo se publica la llave pública (RF2). Para registrar, cambiar o cancelar una llave, el directorio exige OAuth2 de Discord, un código TOTP y la prueba de posesión de la llave. El flujo Discord -> Authenticator entrega un token de registro de diez minutos y un solo uso para la operación. Al vincular el autenticador se muestran diez códigos de recuperación una sola vez; se guardan fuera del dispositivo. El QR se genera en el propio servicio.
+Al registrarse, el cliente genera el par Ed25519 en el dispositivo (RF1). La llave privada se cifra con Argon2id y la contraseña maestra (RS2) y nunca sale (RS1). En el directorio solo se publica la llave pública (RF2). Para registrar, cambiar o cancelar una llave, el directorio exige OAuth2 de Discord, un código TOTP y una firma que demuestra que la persona tiene la llave privada. El flujo Discord -> Authenticator entrega un token de registro de diez minutos y un solo uso para la operación. Al vincular el autenticador se muestran diez códigos de recuperación una sola vez; se guardan fuera del dispositivo. El QR se genera en el propio servicio.
 
 El desbloqueo habitual usa otro flujo, sin repetir OAuth2 ni guardar una autorización para la próxima vez:
 
@@ -170,7 +170,7 @@ El desbloqueo habitual usa otro flujo, sin repetir OAuth2 ni guardar una autoriz
 | 3. Segundo factor | El directorio verifica la firma con la llave registrada y comprueba el TOTP de seis dígitos. Rechaza códigos repetidos; cinco fallos bloquean el factor durante cinco minutos |
 | 4. Sesión local | Solo si la validación termina bien se abre el historial y comienza el plazo local de 30 minutos. Un fallo de red o de autenticación mantiene la identidad bloqueada |
 
-**Límite del MFA.** Una copia de `vault.json` y `store.enc`, junto con la contraseña correcta, se puede descifrar con otro programa. El segundo factor controla el cliente oficial; el servidor no custodia una clave necesaria para descifrar la bóveda. Crear o importar una identidad ya usa la autorización del registro, por eso no repite el desafío de desbloqueo. El modo `client.dev` usa servicios en memoria y no valida MFA. La configuración real con Authenticator está desplegada y probada en EC2, según la confirmación del equipo.
+**Qué protege el segundo factor.** Una copia de `vault.json` y `store.enc`, junto con la contraseña correcta, se puede descifrar con otro programa. El segundo factor limita el acceso desde nuestra aplicación. La bóveda, que guarda la identidad cifrada, sigue dependiendo de la contraseña. Crear o importar una identidad ya usa la autorización del registro, por eso no repite el desafío de desbloqueo. El modo `client.dev` usa servicios en memoria y no valida MFA. La configuración real con Authenticator está desplegada y probada en EC2, según la confirmación del equipo.
 
 <p align="center">
   <img src="img/flujo-registro.png" alt="Flujo de registro y custodia de la identidad" width="800" style="max-width: 100%; height: auto;" />
@@ -178,7 +178,7 @@ El desbloqueo habitual usa otro flujo, sin repetir OAuth2 ni guardar una autoriz
 
 #### 4.2.3 Establecimiento de sesión: *handshake* autenticado con PFS
 
-Antes de chatear, A y B intercambian tres mensajes por Discord. Sea `T` la transcripción: ids, `sid`, nonces `R_A` y `R_B`, llaves efímeras `epk_A` y `epk_B`, y la versión.
+Antes de chatear, A y B intercambian tres mensajes por Discord para acordar las claves. Llamamos `T` al conjunto de datos de ese intercambio: los IDs, el identificador de sesión (`sid`), los valores aleatorios de un solo uso (`R_A` y `R_B`), las llaves públicas temporales (`epk_A` y `epk_B`) y la versión. Las firmas comprueban que estos datos no hayan cambiado.
 
 | Paso | Qué pasa |
 |---|---|
@@ -187,15 +187,15 @@ Antes de chatear, A y B intercambian tres mensajes por Discord. Sea `T` la trans
 | **hs3** (A->B) | A verifica `σ_B` y `tag_B` (si fallan, aborta), deriva las mismas claves, responde con `σ_A` y `tag_A` y **destruye su llave efímera**. |
 | **Activa** | B verifica `σ_A` y `tag_A`. Si todo valida, la sesión queda activa en ambos lados (RF13). |
 
-Con HKDF se derivan tres claves independientes: `K_AB` (A->B), `K_BA` (B->A) y `K_conf` (confirmación). Todo lo aleatorio sale del CSPRNG del sistema (RS11).
+Con HKDF se derivan tres claves independientes: `K_AB` (A->B), `K_BA` (B->A) y `K_conf` (confirmación). Los valores aleatorios se generan con el generador criptográfico del sistema operativo (CSPRNG), en lugar de un generador común (RS11).
 
 **Por qué resiste los ataques** (RS12, RS13, RS15):
 
 * **Autenticación mutua:** las firmas cubren toda la transcripción, así que cambiar una llave efímera las invalida.
 * **PFS:** las llaves efímeras solo existen durante el *handshake*. Robar la identidad después no sirve para leer sesiones pasadas.
-* **Reflexión y oráculo de firma:** los roles usan contextos distintos (`ctx_ini ≠ ctx_resp`) y la llave de identidad solo firma con ese prefijo.
-* **Degradación:** hay una sola suite y la versión va dentro de lo firmado.
-* **Frescura:** nonces y `sid` evitan el *replay*; un intento pendiente caduca a los 5 minutos. Un `hs2`, `hs3` o `hs1` falso no cancela un intento legítimo en curso.
+* **Reflexión y uso indebido de firmas:** quien inicia y quien responde firman con prefijos distintos (`ctx_ini` y `ctx_resp`). Así una firma de un paso no sirve para otro.
+* **Degradación:** usamos una sola combinación de algoritmos y firmamos la versión para que no pueda cambiarse durante el intercambio.
+* **Repetición de mensajes:** los valores aleatorios de un solo uso (*nonces*) y el identificador de sesión (`sid`) ayudan a rechazar mensajes antiguos; un intento pendiente caduca a los 5 minutos. Un `hs2`, `hs3` o `hs1` falso no cancela un intento legítimo en curso.
 
 **Cola y reintentos.** Los mensajes escritos sin sesión esperan en una cola local cifrada (RF14). Si el otro no responde, el cliente destruye su llave efímera y reintenta con espera creciente (15, 30, 60 min…). Pasado el máximo, muestra "contacto no disponible".
 
@@ -205,7 +205,7 @@ Con HKDF se derivan tres claves independientes: `K_AB` (A->B), `K_BA` (B->A) y `
 
 #### 4.2.4 Protocolo de mensajería
 
-1. **Cifrado.** AES-256-GCM con la llave de su dirección, nonce de 96 bits del CSPRNG y como datos autenticados `sid ‖ emisor ‖ receptor ‖ ctr` (RF3, RS4, RS11).
+1. **Cifrado.** Usamos AES-256-GCM con una clave distinta para cada dirección y un valor aleatorio de 96 bits generado por el sistema. También comprobamos el identificador de sesión, el emisor, el receptor y el contador (`sid`, `emisor`, `receptor`, `ctr`), para detectar cambios en esos datos (RF3, RS4, RS11).
 2. **Envío.** Viaja por Discord como `E2EE1:{sid, ctr, nonce, ciphertext+tag}`. Hasta 900 bytes por mensaje; lo más largo se parte.
 3. **Recepción.** Se revisa que `sid` sea de una sesión activa y que `ctr` no se haya visto ni esté fuera de ventana (RS14). Luego se descifra verificando la etiqueta GCM; si no valida, se marca "no descifrable" (RF5, RF11, RS5).
 
@@ -215,12 +215,12 @@ No firmamos cada mensaje a propósito: una firma por mensaje serviría de prueba
 
 La sesión de conversación se renueva con un nuevo *handshake* a los 100 mensajes, a las 8 h o cuando la persona lo pida (RS9). El vencimiento de la sesión local autenticada (30 minutos por defecto) también destruye las sesiones de conversación; ambos plazos son controles distintos. Las claves anteriores se destruyen tras una ventana corta de gracia. Como consecuencia de la PFS, Discord guarda mensajes que ya nadie puede descifrar con esas claves; por eso el cliente guarda el historial **ya descifrado** en un almacén local cifrado con AES-256-GCM (clave derivada de la contraseña maestra).
 
-#### 4.2.6 Ceremonia de verificación
+#### 4.2.6 Comparación de huellas
 
-Las firmas no impiden que un directorio malicioso entregue una llave propia, así que añadimos la verificación (RS7). Ambos calculan `SHA-256(pk_A ‖ pk_B)` con las llaves ordenadas (RS8) y la muestran como 60 dígitos en grupos de cinco. La comparan **fuera de Discord**. Si coinciden, el cliente guarda "verificado" junto con un *pin* de la llave (RF7). Si después la llave cambia, se revoca la verificación, se aborta el *handshake* y se avisa (RF8). No hay botón de "continuar de todos modos".
+Las firmas no impiden que un directorio malicioso entregue una llave propia, así que añadimos la verificación (RS7). Ambos calculan `SHA-256(pk_A ‖ pk_B)` con las llaves ordenadas (RS8) y la muestran como 60 dígitos en grupos de cinco. La comparan **fuera de Discord**. Si coinciden, el cliente guarda "verificado" y una copia de la llave pública para detectar cambios; a esto lo llamamos *pin* (RF7). Si después la llave cambia, se revoca la verificación, se aborta el *handshake* y se avisa (RF8). No hay botón de "continuar de todos modos".
 
 <p align="center">
-  <img src="img/verificacion.png" alt="Ceremonia de verificación fuera de banda" width="800" style="max-width: 100%; height: auto;" />
+  <img src="img/verificacion.png" alt="Comparación de huellas por otro canal" width="800" style="max-width: 100%; height: auto;" />
 </p>
 
 #### 4.2.7 Análisis de ataques
@@ -233,7 +233,7 @@ Las firmas no impiden que un directorio malicioso entregue una llave propia, as�
 | *Replay* de *handshake* o mensajes | Nonces, `sid`, contador `ctr` y ventana (RS14); caducidad de intentos |
 | Reflexión | Roles asimétricos, ids firmados, claves por dirección (RS13, RS15) |
 | Oráculo de firma o descifrado | La identidad solo firma con prefijo de contexto (RS15); `sign_unlock` usa un contexto distinto al registro y al cambio de llave |
-| Repetición de TOTP o de un desbloqueo | Nonce de un solo uso con propósito `unlock`, firma ligada al ID y rechazo del paso TOTP ya usado; sin token persistente de desbloqueo |
+| Repetición de TOTP o de un desbloqueo | Desafío aleatorio de un solo uso para `unlock`, firma ligada al ID y rechazo del código TOTP ya aceptado; no se guarda una autorización para futuros desbloqueos |
 | Degradación | Suite única; versión en la transcripción firmada |
 | Suplantación (*misbinding*) | Ids de ambos dentro de la firma y del AAD |
 | Robo posterior de la llave de identidad | PFS (RS12). No protege sesiones **futuras** ni un dispositivo ya comprometido |
@@ -316,7 +316,7 @@ Todos los componentes de la sección 5.1 están implementados. El sistema integr
 | Área | Qué se implementó | Dónde |
 |---|---|---|
 | Certificados | CA de 5 años con la llave cifrada; certificado de 90 días (se renueva a los 60); CRL de 30 días; revocación | [ops/certs](../ops/certs/README.md) |
-| Copias de seguridad | `pg_dump` con rol de lectura y AES-256-GCM; subida a S3 con verificación y limpieza de 30 días. Ensayo de restauración local disponible; falta activar y comprobar la tarea diaria y la recuperación del despliegue real. RPO 24 h y RTO 30 min son objetivos | [ops/backup](../ops/backup/README.md) |
+| Copias de seguridad | `pg_dump` con rol de lectura y AES-256-GCM; subida a S3 con verificación y limpieza de 30 días. Copia real a S3 verificada y restaurada en PostgreSQL aislado: 2 registros y 1 factor MFA descifrable ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta observar una ejecución automática. RPO 24 h y RTO 30 min son objetivos | [ops/backup](../ops/backup/README.md) |
 | Registros y alertas | JSON con IDs seudonimizados, filtro de redacción, 90 días; alertas por acceso ajeno, firmas inválidas, enumeración y cambios de llave | [directory/README.md](../directory/README.md) |
 | Tarea diaria | Copia, purga de la base y retención de registros en un solo comando programable | `python -m ops.scheduled daily` |
 | Análisis de código | Bandit, Semgrep, pip-audit y npm audit con SBOM CycloneDX, y gitleaks, en CI; reportes antes y después | [ops/reports](../ops/reports/README.md) |
@@ -350,9 +350,9 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 | R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptación propuesta) |
 | R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptación propuesta) |
 
-**Medidas.** Son 25 restricciones verificables, cada una con su prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
+**Medidas.** Definimos 25 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
 
-**Decisión.** La evaluación propone seis riesgos residuales medios, sujetos a revisión y firma del equipo. El sistema sirve para la demostración con el directorio en EC2 y los clientes locales. El directorio, el análisis de código y el borrado local ya están implementados. Antes de ampliar el uso quedan el simulacro de incidentes, la verificación de las medidas en el alojamiento y los requisitos legales de C-24. La DPIA documenta las razones propuestas para aceptar esos riesgos.
+**Decisión.** Después de aplicar las medidas, proponemos aceptar seis riesgos que quedan en nivel medio. Esta decisión todavía requiere revisión y firma del equipo. El sistema sirve para la demostración con el directorio en EC2 y los clientes locales. El directorio, el análisis de código y el borrado local ya están implementados. Antes de ampliar el uso quedan el simulacro de incidentes, la verificación de las medidas en el alojamiento y los requisitos legales de C-24. La DPIA documenta las razones propuestas para aceptar esos riesgos.
 
 ### 6.2 Cumplimiento de la Ley 29733 y su reglamento
 
@@ -433,7 +433,7 @@ La clasificación se revisa cada vez que cambia un dato, finalidad o proveedor, 
 
 ## 7. Riesgos de una brecha y entidades afectadas
 
-La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la seguridad: qué pasa si falla cada componente y a quién afecta. La idea del diseño es que **ninguna brecha de un servicio expone el contenido**, porque solo el dispositivo ve texto plano. Lo más grave está en el dispositivo, la llave de identidad o el propio código.
+La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la seguridad: qué pasa si falla cada componente y a quién afecta. Separar los servicios y cifrar los mensajes busca limitar lo que se expone si uno falla. Esto tiene límites: un directorio alterado puede engañar a quien no verificó la huella, y un dispositivo infectado puede mostrar los mensajes. Por eso también revisamos las llaves y el código.
 
 ### 7.1 Escenarios de brecha
 
@@ -464,13 +464,13 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
 | **Institución académica** | Su nombre queda ligado al proyecto si hay brecha con datos reales | No usar datos de terceros hasta cerrar las condiciones de la DPIA |
 | **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
-| **Proveedores de alojamiento (AWS EC2 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de ambos proveedores, región del proyecto Supabase y destino de respaldos |
+| **Proveedores de alojamiento (AWS EC2 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de AWS y Supabase, región del proyecto Supabase y copias cifradas en S3 (`us-east-1`) |
 
 ### 7.3 Puntos únicos de falla
 
 Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es el robo o infección del dispositivo, S7 una dependencia maliciosa y S11 una página maliciosa contra la API local.
 
-* **La contraseña maestra** protege criptográficamente bóveda, historial, contactos y cola a la vez. El TOTP limita el desbloqueo desde la aplicación, pero no el descifrado de una copia con la contraseña.
+* **La contraseña maestra** protege con cifrado la bóveda, el historial, los contactos y los mensajes en espera. El TOTP limita el desbloqueo desde la aplicación, pero no el descifrado de una copia con la contraseña.
 * **El dispositivo desbloqueado** junta texto plano, claves de sesión y token de la API local (S4, S7, S11).
 * **El directorio** concentra la publicación de llaves y la validación del segundo factor. La huella limita la sustitución de llaves (S3), pero una caída también impide nuevos desbloqueos (S12).
 * **El autenticador y su recuperación** son necesarios para el acceso habitual. La clave `TOTP_ENCRYPTION_KEY` debe conservarse fuera de la instancia junto con un procedimiento para restaurarla sin publicarla.
@@ -480,7 +480,7 @@ Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es 
 
 ## 8. Recomendaciones de protección futura
 
-Medidas que **no hicimos ahora** pero que recomendamos. Se ordenan por horizonte y por riesgo reducido frente al esfuerzo.
+Estas mejoras quedan para después. Las agrupamos según cuándo sería razonable trabajarlas y qué riesgo ayudarían a reducir.
 
 ### 8.1 Antes de un uso real
 
@@ -490,7 +490,7 @@ Medidas que **no hicimos ahora** pero que recomendamos. Se ordenan por horizonte
 | Autenticación resistente al phishing (WebAuthn) y llaves protegidas por hardware | R3, R4, R11 | El MFA con TOTP ya existe, pero un código puede capturarse mediante phishing y la bóveda sigue dependiendo de la contraseña | Cambia el registro, la recuperación y la compatibilidad entre dispositivos |
 | Bloqueo por inactividad y mensajes con vida limitada | R3, R6 | Ya hay vencimiento absoluto de 30 minutos; falta medir inactividad y limitar la retención de mensajes | Requiere probar el comportamiento con usuarios |
 | Almacén de claves para seudonimización, CA y cifrado del TOTP | R5, R8, R10 | Una variable de entorno es tan segura como su servidor | Requiere integrar la gestión de secretos con el despliegue en EC2 |
-| Cadena de suministro más dura (*hashes* verificados, artefactos firmados) | S7 | Es el riesgo de mayor impacto y ninguna prueba funcional lo detecta | Pide infraestructura de publicación; el escaneo y el SBOM ya corren en CI |
+| Comprobar dependencias y firmar los archivos que distribuimos | S7 | Es el riesgo de mayor impacto y ninguna prueba funcional lo detecta | Pide infraestructura de publicación; el escaneo y el SBOM ya corren en CI |
 | Divulgación responsable de vulnerabilidades y pentests periódicos | S8, S10 | Quien encuentre un fallo debe saber cómo avisar | No tiene sentido sin usuarios reales |
 | Cumplimiento legal del uso real (banco de datos, edad mínima, contacto, GDPR si aplica) | R9, R12 | Son obligaciones, no mejoras | Fuera del alcance de una demo académica |
 
@@ -498,18 +498,18 @@ Medidas que **no hicimos ahora** pero que recomendamos. Se ordenan por horizonte
 
 El siguiente cambio de cifrado propuesto es una clave aleatoria adicional, distinta de la contraseña y del código TOTP. La bóveda necesitaría la contraseña y esa clave para descifrarse. EC2 conservaría la clave cifrada y la entregaría por HTTPS después de validar el autenticador; al bloquear o vencer la sesión, el cliente dejaría de conservarla en memoria. Así, copiar los archivos y conocer la contraseña no bastaría, y EC2 seguiría sin conocer la contraseña maestra ni la llave privada de mensajería.
 
-Esto requiere diseñar la migración de bóvedas y exportaciones, la custodia y recuperación de esa clave y la continuidad del servidor. Perderla sin respaldo podría impedir el acceso a los datos. También hay que resolver la autenticación inicial: no se puede exigir para entregar la clave una firma cuya llave privada todavía está dentro de la bóveda cerrada. Esta propuesta no está implementada; el MFA actual sigue siendo un control de acceso de la aplicación.
+Esto requiere diseñar la migración de bóvedas y exportaciones, la forma de guardar y recuperar esa clave, y qué hacer si el servidor deja de estar disponible. Perderla sin respaldo podría impedir el acceso a los datos. También hay que resolver la autenticación inicial: no se puede exigir para entregar la clave una firma cuya llave privada todavía está dentro de la bóveda cerrada. Esta propuesta no está implementada; el MFA actual sigue siendo un control de acceso de la aplicación.
 
 | Recomendación | Reduce | Por qué | Por qué no ahora |
 |---|---|---|---|
 | Clave aleatoria adicional custodiada por EC2 y liberada tras MFA | R3, R4 | Evitaría abrir una copia de la bóveda solo con la contraseña | Requiere rediseñar cifrado, exportaciones, autenticación inicial, migración y recuperación; introduce dependencia criptográfica del servidor |
-| *Double ratchet* (renovar claves por mensaje) | S4, S5 | Daría *post-compromise security* (Cohn-Gordon et al., 2016) | Es el cambio más grande al protocolo |
+| *Double ratchet* (renovar claves por mensaje) | S4, S5 | Ayudaría a recuperar la seguridad después de una filtración de claves (Cohn-Gordon et al., 2016) | Es el cambio más grande al protocolo |
 | Mensajes asíncronos con llaves previas (X3DH) | Limitación del *handshake* | Escribir a alguien desconectado | Reintroduce una llave de mediano plazo |
 | Transparencia de llaves (Melara et al., 2015) | R2, S3 | Un directorio que cambie una llave dejaría prueba pública | Es un componente complejo |
 | Protección de metadatos (relleno, un canal por par) | R1, S1 | Es la mayor exposición aceptada | Gasta ancho de banda y complica los canales |
 | Varios dispositivos con una llave cada uno | R11, S5 | Perder uno no obliga a rotar todo | Cambia el modelo de identidad |
 | Respaldo repartido de la identidad (Shamir, 1979) | R4 | Evita elegir entre "sin recuperación" y "el operador guarda una copia" | Flujo nuevo y difícil de explicar |
-| Continuidad de la validación MFA y pruebas de recuperación | R14, S12 | El directorio ya es necesario para volver a abrir el historial; una copia de la base no sirve sin la clave de cifrado del TOTP | Falta automatizar y medir la restauración en un entorno separado |
+| Continuidad de la validación MFA y pruebas de recuperación | R14, S12 | El directorio ya es necesario para volver a abrir el historial; una copia de la base no sirve sin la clave de cifrado del TOTP | Ya recuperamos una copia de S3 y desciframos su factor MFA; falta automatizar la prueba, medir el tiempo y probar el login del servicio recuperado |
 | Monitoreo y simulacros periódicos | S2, S9 | Un plan que nunca se ensaya falla cuando se necesita | Requiere un servicio con usuarios |
 
 ### 8.3 A largo plazo
@@ -529,9 +529,9 @@ Ninguna medida reemplaza a las otras: la seguridad se arma con capas, y cada una
 
 **Lo que salió bien**
 
-* **Separar el proyecto en módulos con contratos** (`crypto/`, `client/`, `frontend/` y `directory/`). Pudimos avanzar en paralelo y probar cada parte por separado, incluso con un Discord y un directorio simulados.
-* **Escribir las pruebas de los caminos de rechazo** (firma mala, etiqueta GCM mala, *replay*). Encontramos varios errores del protocolo antes de que llegaran a la interfaz.
-* **Distinguir el acceso de la aplicación del cifrado de los archivos.** El MFA limita el desbloqueo del cliente, pero no cambia la protección de una copia de la bóveda. La clave adicional custodiada por EC2 queda como siguiente paso y exige resolver la recuperación y la dependencia del servidor.
+* **Separar el proyecto en módulos con funciones definidas** (`crypto/`, `client/`, `frontend/` y `directory/`). Pudimos avanzar en paralelo y probar cada parte por separado, incluso con un Discord y un directorio simulados.
+* **Probar también los casos que deben fallar** (firma mala, etiqueta GCM mala, *replay*). Encontramos varios errores del protocolo antes de que llegaran a la interfaz.
+* **Entender la diferencia entre entrar a la aplicación y descifrar sus archivos.** El MFA limita el desbloqueo del cliente, pero no cambia la protección de una copia de la bóveda. La clave adicional custodiada por EC2 queda como siguiente paso y exige resolver la recuperación y la dependencia del servidor.
 * **Hacer la DPIA y la clasificación de datos al principio.** Nos obligó a decidir qué no guardar (IP, nombre, correo) y eso simplificó todo lo demás.
 
 **Lo que nos costó**

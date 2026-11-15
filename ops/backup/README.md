@@ -9,7 +9,7 @@ python -m ops.backup.backup restore D:/e2ee-backups/directory-20261031T225559Z.d
 
 ## Estado e instalación en EC2
 
-El código dispone de respaldo cifrado local y subida a S3 con verificación de tamaño y SHA-256 y limpieza remota de 30 días (19 casos de prueba de S3, TLS y carga del entorno). El ensayo de 2026-11-01 fue local; no acredita una tarea activa en Supabase o EC2. La integración S3 se valida con pruebas simuladas hasta ejecutar el ensayo en la cuenta real.
+El código dispone de respaldo cifrado local y subida a S3 con verificación de tamaño y SHA-256 y limpieza remota de 30 días (19 casos de prueba de S3, TLS y carga del entorno). El ensayo de 2026-11-01 fue local; no acredita una tarea activa en Supabase o EC2. La primera copia real a S3 fue confirmada por la salida del equipo ([evidencia](../reports/f4-s3-smoke.txt)). El equipo confirmó el crontab instalado y el servicio activo. La copia descargada de S3 se restauró en PostgreSQL 17 aislado: 2 registros y 1 factor MFA descifrable con la clave original. Falta observar una ejecución automática.
 
 El procedimiento operativo está en la [guía de EC2, sección 8](../../docs/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3). `make backup-remote` exige `BACKUP_S3_BUCKET`; `ENV_FILE=.env.backup` permite separar su configuración de la API. La clave TOTP y `BACKUP_KEY` no se suben al bucket.
 
@@ -17,7 +17,7 @@ El procedimiento operativo está en la [guía de EC2, sección 8](../../docs/des
 
 | Requisito | Cómo se cumple | Prueba |
 |---|---|---|
-| Programable; activación real pendiente | `make backup-remote` para S3; `python -m ops.scheduled daily` para mantenimiento completo. Instalar el trabajo en cron según la guía | Pruebas de la tarea con S3 simulado; falta evidencia de ejecución en EC2 |
+| Programada en EC2 | `make backup-remote` para S3; cron instalado y activo. `python -m ops.scheduled daily` corresponde al mantenimiento completo | Copia manual real verificada; primera ejecución automática pendiente de observar |
 | Cifrada | AES-256-GCM con `BACKUP_KEY` (32 bytes); el nombre del archivo va en los datos autenticados | `test_C12_copia_cifrada_sin_datos_en_claro`, `test_copia_alterada_o_clave_incorrecta_se_rechaza`, `test_renombrar_una_copia_vieja_se_detecta` |
 | Sin texto plano en disco | El volcado va de `pg_dump` a memoria y de memoria a `pg_restore` (stdin) | `test_C12_copia_cifrada_sin_datos_en_claro` |
 | Mínimo privilegio | `pg_dump` corre como `directory_backup` (solo `SELECT`); la contraseña va en `PGPASSWORD`, no en la línea de comandos | `test_rol_de_copias_es_de_solo_lectura` |

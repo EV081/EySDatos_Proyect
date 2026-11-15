@@ -2,40 +2,64 @@
 
 Cada persona ejecuta su cliente y su frontend en su computadora. El directorio está en EC2, Virginia del Norte (`us-east-1`), y PostgreSQL está en Supabase. Para preparar ese servidor está la [guía de EC2](despliegue-ec2.md).
 
-Los comandos siguientes se ejecutan desde la raíz del repositorio en Linux, macOS o WSL. Necesitas Git, Make, Python 3.12 y Node.js con npm (Next.js exige Node 20.9 o posterior). Instala también Microsoft Authenticator u otra app compatible con TOTP en tu celular.
+Esta guía parte de una computadora sin el proyecto instalado. Necesitas un directorio en EC2 ya preparado según la guía de EC2. Los comandos usan Bash en Ubuntu 22.04/24.04 o WSL Ubuntu; en macOS instala Git, Make y OpenSSL antes de continuar. En Windows usa WSL para seguir los mismos comandos. Instala Microsoft Authenticator u otra app compatible con TOTP en tu celular.
 
-## 1. Preparar el proyecto
+## 1. Instalar herramientas y descargar el proyecto
 
-Si todavía no tienes el repositorio:
+En Ubuntu o WSL Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y git make curl ca-certificates openssl xz-utils
+```
+
+Instala una versión con soporte a largo plazo (LTS) de Node.js desde la [página oficial](https://nodejs.org/en/download), seleccionando tu sistema y arquitectura, y sigue las instrucciones de instalación que muestra. Incluye npm. El frontend necesita Node 20.9 o posterior; elige una LTS vigente. Abre otra terminal después de instalarlo y comprueba:
+
+```bash
+git --version
+make --version
+node --version
+npm --version
+```
+
+Instala [uv](https://docs.astral.sh/uv/getting-started/installation/) y Python 3.12. Esto permite usar Ubuntu 22.04 sin cambiar su Python del sistema:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+"$HOME/.local/bin/uv" python install 3.12
+```
+
+Descarga el repositorio y crea el entorno con Python 3.12:
 
 ```bash
 git clone https://github.com/EV081/EySDatos_Proyect.git
 cd EySDatos_Proyect
+"$HOME/.local/bin/uv" venv --python 3.12 --seed .venv
+"$HOME/.local/bin/uv" pip install --python .venv/bin/python -r requirements.txt
+.venv/bin/python --version
 ```
 
-Crea el entorno e instala las dependencias de Python:
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-```
-
-Si ya tienes `.venv`, reutilízalo. `make frontend` instalará y compilará las dependencias de la interfaz.
+Desde este punto, ejecuta todos los comandos desde la raíz de `EySDatos_Proyect`. `make frontend` instalará y compilará las dependencias de la interfaz.
 
 ## 2. Preparar Discord y los certificados
 
-Cada participante necesita su propio bot, agregado al mismo servidor y canal privado del proyecto. Obtén su token en Discord Developer Portal y copia el ID del canal `#e2ee-relay`. El bot necesita ver el canal, enviar mensajes y leer el historial. Tu ID personal de Discord es distinto del ID del bot: usarás el personal al crear tu identidad.
+1. Crea o usa un servidor de Discord y un canal de texto privado para los participantes, por ejemplo `#e2ee-relay`.
+2. En [Discord Developer Portal](https://discord.com/developers/applications), crea una aplicación para tu bot. En **Bot**, genera su token y activa **Message Content Intent**. Cada participante usa un bot distinto.
+3. En **OAuth2 > URL Generator**, selecciona el alcance `bot` y los permisos **View Channels**, **Send Messages** y **Read Message History**. Abre la URL e invita tu bot al servidor. En los permisos del canal privado, da acceso a los dos bots.
+4. Activa el modo desarrollador en Discord, copia el ID del canal y tu ID personal con el menú contextual. El ID personal es distinto del ID del bot: usarás el personal al crear tu identidad.
+
+El token del bot se obtiene de tu aplicación; la aplicación OAuth del directorio se configura en el servidor según la guía de EC2.
 
 Pide al responsable del directorio estos datos:
 
 - URL HTTPS del directorio desplegado, incluido su puerto, normalmente `https://HOST_EC2:8443`.
 - `ca.pem` y `crl.pem` vigentes. Colócalos en `ops/certs/`.
 
-Importa `ca.pem` como autoridad de confianza para sitios web en el navegador que usarás para iniciar sesión con Discord. La librería de Python usa los archivos indicados en el `.env`; el navegador configura su confianza por separado. El nombre o IP de la URL debe figurar en el certificado del servidor. No necesitas la llave privada de la CA ni la del servidor.
+Importa `ca.pem` como autoridad de confianza para sitios web en el navegador que usarás para iniciar sesión con Discord. El cliente Python revisa los certificados con los archivos del `.env`. El navegador necesita que también instales la CA en su propia configuración. El certificado del servidor debe incluir el nombre o la IP de la URL. No necesitas la llave privada de la CA ni la del servidor.
 
 ## 3. Configurar tu `.env`
 
-El archivo `.env` va en la raíz del repositorio. Conserva el que ya tengas y ajusta los valores; no copies el `.env` de EC2. Para usar el servidor remoto basta esta configuración local:
+Crea un archivo `.env` en la carpeta principal del repositorio con `nano .env` o tu editor. Es una configuración propia de esta computadora. Pega el siguiente contenido y reemplaza los valores de ejemplo:
 
 ```dotenv
 DIRECTORY_URL=https://HOST_EC2:8443
@@ -52,17 +76,17 @@ CLIENT_SESSION_TTL=1800
 CLIENT_ALLOWED_ORIGIN=http://127.0.0.1:5173
 ```
 
-Sustituye todos los ejemplos por tus valores. Para generar `CLIENT_API_TOKEN`, ejecuta `openssl rand -hex 32` y copia el resultado a tu `.env`. Protege el archivo:
+Reemplaza los ejemplos por tus datos. Para generar `CLIENT_API_TOKEN`, ejecuta `openssl rand -hex 32` y copia el resultado a tu `.env`. Protege el archivo:
 
 ```bash
 chmod 600 .env
 ```
 
-No necesitas credenciales de PostgreSQL, `DISCORD_CLIENT_SECRET` ni `TOTP_ENCRYPTION_KEY` en la laptop para conectarte al directorio remoto. No definas `DIRECTORY_AUTH_TOKEN` si usarás el archivo: esa variable tiene prioridad sobre el token guardado.
+No necesitas credenciales de PostgreSQL, `DISCORD_CLIENT_SECRET` ni `TOTP_ENCRYPTION_KEY` en la laptop para conectarte al directorio en EC2. No definas `DIRECTORY_AUTH_TOKEN` si usarás el archivo: esa variable tiene prioridad sobre el token guardado.
 
 ## 4. Iniciar sesión con Discord y vincular Authenticator
 
-Este paso se usa antes de crear o importar una identidad y cuando necesites un token nuevo para operaciones sobre tu registro. Carga el `.env` en esta terminal; `make client` carga su propio entorno y no lo configura para los demás comandos:
+Haz este paso antes de crear o importar tu identidad. También sirve para obtener otro token cuando necesites cambiar tu registro. Carga el `.env` en esta terminal; `make client` carga su propio entorno y no lo configura para los demás comandos:
 
 ```bash
 set -a
@@ -74,10 +98,10 @@ set +a
 1. Se abre el navegador en `/auth/login`. Si no se abre, visita la URL que imprime el comando.
 2. Autoriza tu cuenta personal de Discord.
 3. La primera vez, en Authenticator elige agregar otra cuenta y escanea el QR. Si ya está vinculado, escribe un código nuevo de seis dígitos.
-4. Guarda los diez códigos de recuperación fuera del dispositivo; solo se muestran una vez al vincular el factor.
+4. Guarda los diez códigos de recuperación en un lugar seguro fuera de la computadora; solo se muestran una vez al vincular el factor.
 5. Copia el **token de registro** de la página y pégalo una sola vez en la terminal. Al pegarlo no se muestran caracteres. Presiona Enter.
 
-El comando guarda el token en `data/directory-token`. Dura diez minutos y permite una sola publicación; crea o importa la identidad antes de que venza. No confundas este token con `CLIENT_API_TOKEN` ni con el token del bot.
+El comando guarda el token en `data/directory-token`. Dura diez minutos y permite una sola publicación; crea o importa la identidad antes de que venza. Este token es distinto de `CLIENT_API_TOKEN` y del token del bot.
 
 ## 5. Levantar cliente y frontend
 
@@ -87,7 +111,7 @@ En una terminal, desde la raíz:
 make client
 ```
 
-Déjala abierta. La API local escucha en `http://127.0.0.1:8001`.
+Déjala abierta. El cliente recibe las peticiones del frontend en `http://127.0.0.1:8001`.
 
 En otra terminal, también desde la raíz:
 
@@ -102,7 +126,7 @@ Abre `http://127.0.0.1:5173`. Si la pantalla pide conexión, indica:
 | Dirección del cliente | `http://127.0.0.1:8001` |
 | Token | El `CLIENT_API_TOKEN` de tu `.env` |
 
-La dirección del cliente siempre es local; la dirección de EC2 se configura como `DIRECTORY_URL`, no en este formulario. No hace falta ejecutar `make directory` ni levantar PostgreSQL en tu laptop.
+La dirección del cliente siempre apunta a tu computadora; la dirección de EC2 se configura como `DIRECTORY_URL`, no en este formulario. No hace falta ejecutar `make directory` ni levantar PostgreSQL en tu laptop.
 
 ## 6. Crear la identidad y conversar
 
@@ -118,11 +142,11 @@ En la app verás el texto descifrado; en Discord aparecerán los mensajes del pr
 
 Si la identidad ya existe, ejecuta `make client` y `make frontend` y desbloquea con la contraseña maestra y un código **nuevo** de Authenticator. No necesitas repetir OAuth2 ni obtener otro token de registro para cada desbloqueo.
 
-La sesión local vence a los 30 minutos por defecto. Bloquearla o reiniciar el cliente exige validar de nuevo; cerrar solo la pestaña no detiene el cliente. Si EC2 no responde, no se habilita el historial. Para detener los procesos, usa `Ctrl+C` en ambas terminales.
+La aplicación se bloquea a los 30 minutos por defecto. Bloquearla o reiniciar el cliente exige validar de nuevo; cerrar solo la pestaña no detiene el cliente. Si EC2 no responde, no se habilita el historial. Para detener los procesos, usa `Ctrl+C` en ambas terminales.
 
-Si pierdes el autenticador, repite el inicio de sesión del paso 4 e introduce un código de recuperación en el formulario de MFA. Vincula el nuevo autenticador y guarda los nuevos códigos: los anteriores quedan invalidados. Sin autenticador ni códigos no hay restablecimiento automático. Estos códigos no recuperan la contraseña maestra.
+Si pierdes el autenticador, repite el inicio de sesión del paso 4 e introduce un código de recuperación en el formulario del segundo factor. Vincula el nuevo autenticador y guarda los nuevos códigos: los anteriores quedan invalidados. Si pierdes tanto el autenticador como los códigos, la app no puede recuperar automáticamente ese acceso. Estos códigos no recuperan la contraseña maestra.
 
-Antes de cancelar tu registro, exporta lo que necesites: la cancelación elimina el factor del servidor y no podrás validar el próximo desbloqueo habitual de los archivos que conserves. El MFA actual no cambia el cifrado de los archivos: una copia de la bóveda y la contraseña correcta permiten abrirla con otro programa.
+Antes de cancelar tu registro, exporta lo que necesites: la cancelación elimina el factor del servidor y no podrás validar el próximo desbloqueo habitual de los archivos que conserves. El segundo factor no cambia el cifrado de los archivos: una copia de la bóveda y la contraseña correcta permiten abrirla con otro programa.
 
 ## Problemas habituales
 
