@@ -37,6 +37,10 @@ class Password(BaseModel):
     password: str = Field(min_length=1, max_length=256)
 
 
+class UnlockRequest(Password):
+    mfa_code: str | None = Field(default=None, pattern=r"^[0-9]{6}$")
+
+
 class ExportRequest(BaseModel):
     password: str = Field(min_length=10, max_length=256)
 
@@ -106,8 +110,8 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
         return orchestrator.create_identity(body.discord_id, body.password, body.consent_version)
 
     @app.post("/identity/unlock", dependencies=[api])
-    def unlock(body: Password):
-        return orchestrator.unlock(body.password)
+    def unlock(body: UnlockRequest):
+        return orchestrator.unlock(body.password, body.mfa_code)
 
     @app.post("/identity/lock", status_code=204, dependencies=[api])
     def lock():

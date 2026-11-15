@@ -6,6 +6,7 @@ import type { MyData, Status } from '@/lib/types';
 
 interface Props {
   api: Api;
+  status: Status;
   open: boolean;
   onClose: () => void;
   /** La identidad cambió (llave nueva, registro cancelado o datos borrados): hay que releer el estado. */
@@ -17,7 +18,7 @@ type Action = 'rotate' | 'cancel' | 'wipe';
 const LOGIN_HINT = 'Si usas el directorio real, antes completa Discord y Microsoft Authenticator (python -m directory.client_lib.login): el token vale 10 minutos.';
 
 /** Derechos ARCO: acceso, rectificación, cancelación/oposición y borrado de los datos de este dispositivo. */
-export function PrivacyDialog({ api, open, onClose, onStatus }: Props) {
+export function PrivacyDialog({ api, status, open, onClose, onStatus }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const [data, setData] = useState<MyData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -150,7 +151,9 @@ export function PrivacyDialog({ api, open, onClose, onStatus }: Props) {
         letter="C·O"
         title="Cancelación y oposición: retirar mi consentimiento"
         action="cancel"
-        text="Borra tu registro del directorio de inmediato (de las copias de seguridad, en un máximo de 30 días). Nadie podrá volver a encontrarte para escribirte."
+        text={status.mfa_required
+          ? 'Borra tu registro del directorio de inmediato (de las copias de seguridad, en un máximo de 30 días). También elimina tu autenticador del servicio: aunque conserves archivos locales, no se podrá validar el próximo desbloqueo. Exporta lo que necesites antes de cancelar.'
+          : 'Borra tu registro del directorio de inmediato (de las copias de seguridad, en un máximo de 30 días). Nadie podrá volver a encontrarte para escribirte.'}
         confirm="Entiendo que esto no se puede deshacer."
         button="Cancelar mi registro"
         danger

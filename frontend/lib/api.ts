@@ -60,7 +60,8 @@ export class Api {
     this.request<Status>('POST', '/identity', { discord_id: discordId, password, consent_version: consentVersion });
   importIdentity = (discordId: string, vault: unknown, password: string, consentVersion: string) =>
     this.request<Status>('POST', '/identity/import', { discord_id: discordId, vault, password, consent_version: consentVersion });
-  unlock = (password: string) => this.request<Status>('POST', '/identity/unlock', { password });
+  unlock = (password: string, mfaCode?: string) =>
+    this.request<Status>('POST', '/identity/unlock', { password, ...(mfaCode ? { mfa_code: mfaCode } : {}) });
   lock = () => this.request<null>('POST', '/identity/lock');
   exportIdentity = (password: string) => this.request<{ vault: unknown }>('POST', '/identity/export', { password });
   conversations = () => this.request<Conversation[]>('GET', '/conversations');

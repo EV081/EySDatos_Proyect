@@ -19,7 +19,7 @@ from fastapi import Depends, FastAPI, Header, Path, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.concurrency import run_in_threadpool
 
-from crypto import SignatureError, verify_key_change, verify_registration
+from crypto import SignatureError, verify_key_change, verify_registration, verify_unlock
 
 from . import errors
 from .audit import AlertMonitor, Audit, setup_logging
@@ -30,7 +30,7 @@ from . import mfa_pages
 from .oauth import DiscordOAuth, OAuthError
 from .ratelimit import RateLimiter
 from .repo import REPLACED_KEY_RETENTION_DAYS, Repo
-from .schemas import DISCORD_ID, CancelKey, ChallengeRequest, PublishKey, b64d, b64e
+from .schemas import DISCORD_ID, CancelKey, ChallengeRequest, PublishKey, SessionChallenge, SessionVerify, b64d, b64e
 
 KEY_LEN, SIG_LEN, NONCE_LEN, TOKEN_LEN = 32, 64, 32, 32
 # La cancelación se firma como un "cambio de llave" hacia una llave nula, que nadie puede registrar.
@@ -168,6 +168,38 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
         page.delete_cookie(cookie_name, path="/auth/mfa", secure=secure_cookie,
                            httponly=True, samesite="strict")
         return page
+
+    # --- sesiones habituales: sin OAuth ni token de registro ---------------------------
+
+    @app.post("/v1/sessions/challenge", dependencies=[limit("session", settings.write_limit)])
+    def session_challenge(body: SessionChallenge):
+        # El ID ya se publica en /v1/keys; no entregar nonces para cuentas sin factor confirmado.
+        factor = repo.mfa_status(body.discord_id)
+        if repo.get_key(body.discord_id) is None or not factor or not factor["enabled"]:
+            raise ApiError(401)
+        nonce = secrets.token_bytes(NONCE_LEN)
+        repo.create_challenge(nonce, body.discord_id, "unlock", settings.challenge_ttl)
+        return JSONResponse({"nonce": b64e(nonce), "expires_in": settings.challenge_ttl}, headers=NO_STORE)
+
+    @app.post("/v1/sessions/verify", status_code=204, dependencies=[limit("session", settings.write_limit)])
+    def session_verify(body: SessionVerify):
+        nonce, signature = decode(body.nonce, NONCE_LEN), decode(body.signature, SIG_LEN)
+        if not repo.consume_challenge(nonce, body.discord_id, "unlock"):
+            raise ApiError(401)
+        public_key = repo.get_key(body.discord_id)
+        try:
+            if public_key is None:
+                raise SignatureError("sin llave")
+            verify_unlock(public_key, body.discord_id, nonce, signature)
+        except SignatureError:
+            audit.event("mfa_rechazado", logging.WARNING)
+            raise ApiError(401) from None
+        if not repo.verify_session_mfa(body.discord_id, public_key, body.code, authenticator):
+            audit.event("mfa_rechazado", logging.WARNING)
+            raise ApiError(401)
+        audit.event("sesion_local", ids={"id": body.discord_id})
+        # No expedir otro token, ni una autorización que pueda guardarse para el próximo desbloqueo.
+        return Response(status_code=204, headers=NO_STORE)
 
     # --- llaves -----------------------------------------------------------------------
 

@@ -50,3 +50,11 @@ class DirectoryUnavailable(ClientError):
     """El directorio no respondió o rechazó la operación sobre el propio registro."""
 
     status, code = 502, "directory_error"
+
+
+class MfaRequired(ClientError):
+    status, code = 403, "mfa_required"
+
+
+class MfaRejected(ClientError):
+    status, code = 401, "mfa_rejected"

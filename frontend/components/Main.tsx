@@ -126,7 +126,7 @@ export function Main({ api, status, onLocked, onOffline }: Props) {
         onPrivacy={() => setPrivacyOpen(true)}
       />
       {/* Tras cambiar la llave, cancelar o borrar, se relee el estado: sin identidad vuelve a la pantalla inicial. */}
-      <PrivacyDialog api={api} open={privacyOpen} onClose={() => setPrivacyOpen(false)} onStatus={onLocked} />
+      <PrivacyDialog api={api} status={status} open={privacyOpen} onClose={() => setPrivacyOpen(false)} onStatus={onLocked} />
     </section>
   );
 }

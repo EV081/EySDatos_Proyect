@@ -63,8 +63,14 @@ Al vincular se muestran diez códigos de recuperación una sola vez. Usar uno ob
 un nuevo QR antes de emitir un token; invalida el autenticador y todos los códigos de recuperación anteriores.
 La cancelación del registro también borra el factor y sus sesiones. Los registros de autenticación pendientes
 sin confirmar se purgan después de un día; las sesiones vencidas se borran con la tarea de mantenimiento.
-Esto protege la emisión del token del directorio; la contraseña maestra y el descifrado de la identidad
-siguen siendo locales.
+Además de proteger la emisión del token, `POST /v1/sessions/challenge` y `POST /v1/sessions/verify`
+validan cada desbloqueo habitual con un nonce de un solo uso, una firma de la llave registrada y TOTP.
+Comparten el contador de intentos y el último paso aceptado con el flujo OAuth: no se puede reutilizar
+un código en el otro flujo. La firma lleva un contexto propio (`directory session unlock`), por lo que
+no autoriza registrar, cambiar ni cancelar llaves. No se genera un token de sesión que pueda reutilizarse.
+La migración `004_session_mfa.sql` amplía los propósitos permitidos para los nonces.
+La contraseña maestra y el descifrado de la identidad siguen siendo locales; el MFA no cambia el cifrado
+de los archivos ni impide descifrar una copia robada si también se conoce su contraseña.
 
 ## TLS 1.3 (F2)
 
@@ -81,6 +87,7 @@ Los eventos van en JSON, uno por línea, a `AUDIT_LOG_DIR/audit.jsonl`. Las aler
 | `firma_invalida` | warning | `id` seudonimizado |
 | `mfa_rechazado` | warning | sin identificadores ni códigos |
 | `mfa_recuperacion` | info | `id` seudonimizado; nunca el código |
+| `sesion_local` | info | `id` seudonimizado; nunca contraseña, código ni firma |
 | `acceso_ajeno` | warning | `id` (quien intenta) y `objetivo`, seudonimizados |
 | `limite` | warning | `grupo` de rutas (sin IP) |
 | `mantenimiento` | info/error | resultado de la tarea diaria |

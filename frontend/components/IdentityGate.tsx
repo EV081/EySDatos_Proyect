@@ -18,6 +18,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
   const [id, setId] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [accepted, setAccepted] = useState(false);
 
@@ -28,8 +29,10 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
       onStatus(await action());
       setPass('');
       setPass2('');
+      setMfaCode('');
     } catch (err) {
       setError(errorMessage(err));
+      setMfaCode('');
       setFails((n) => n + 1);
     } finally {
       setBusy(false);
@@ -88,7 +91,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
 
   const unlock = (e: FormEvent) => {
     e.preventDefault();
-    void run(() => api.unlock(pass));
+    void run(() => api.unlock(pass, status.mfa_required ? mfaCode : undefined));
   };
 
   return (
@@ -96,11 +99,24 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
       <h1><span className="rd">Identidad</span></h1>
       {status.vault_exists ? (
         <form onSubmit={unlock}>
-          <p className="muted">Ingresa tu contraseña maestra para abrir tu identidad.</p>
+          <p className="muted">{status.mfa_required
+            ? 'Ingresa tu contraseña maestra y un código nuevo de Microsoft Authenticator para abrir tu identidad.'
+            : 'Ingresa tu contraseña maestra para abrir tu identidad.'}</p>
           <label>
             Contraseña maestra
             <input type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} required autoFocus />
           </label>
+          {status.mfa_required && <>
+            <label>
+              Código de Microsoft Authenticator
+              <input name="mfa_code" type="text" inputMode="numeric" autoComplete="one-time-code"
+                pattern="[0-9]{6}" minLength={6} maxLength={6} value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required />
+            </label>
+            <p className="hint">Necesitas conexión con el directorio. La sesión se bloqueará al vencer.
+              Si todavía no vinculaste la app o necesitas recuperar el autenticador, completa el inicio
+              de sesión con Discord mediante <code>python -m directory.client_lib.login</code>.</p>
+          </>}
           <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Desbloquear</button>
         </form>
       ) : mode === 'create' ? (

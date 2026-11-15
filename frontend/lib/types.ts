@@ -25,6 +25,8 @@ export interface Status {
   vault_exists: boolean;
   discord_id: string | null;
   public_key: string | null;
+  mfa_required?: boolean;
+  session_expires_at?: number | null;
 }
 
 export interface FingerprintInfo {

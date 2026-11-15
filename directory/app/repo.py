@@ -126,6 +126,33 @@ class Repo:
         return {"enabled": row[0], "recovery_codes_remaining": row[1],
                 "created_at": row[2].isoformat()} if row else None
 
+    def verify_session_mfa(self, discord_id: str, public_key: bytes, code: str,
+                           authenticator: Authenticator) -> bool:
+        """Segundo factor del desbloqueo habitual, con el mismo bloqueo y antirreplay que OAuth.
+
+        El llamante ya verificó la firma de un nonce de un solo uso. Revalidamos la llave bajo bloqueo
+        para rechazar una identidad que haya sido reemplazada mientras se comprobaba la firma.
+        """
+        with self._pool.connection() as conn, conn.transaction():
+            account = conn.execute("SELECT encrypted_secret, enabled, last_step, failed_attempts, "
+                                   "locked_until > now() FROM mfa_accounts WHERE discord_id = %s FOR UPDATE",
+                                   (discord_id,)).fetchone()
+            current = conn.execute("SELECT public_key FROM keys WHERE discord_id = %s FOR SHARE",
+                                   (discord_id,)).fetchone()
+            if (account is None or not account[1] or account[4] or current is None
+                    or not hmac.compare_digest(bytes(current[0]), public_key)):
+                return False
+            step = authenticator.matching_step(account[0], code, account[2])
+            if step is None:
+                failures = account[3] + 1 if account[4] is None else 1
+                conn.execute("UPDATE mfa_accounts SET failed_attempts = %s, locked_until = "
+                             "CASE WHEN %s >= 5 THEN now() + interval '5 minutes' ELSE NULL END "
+                             "WHERE discord_id = %s", (failures, failures, discord_id))
+                return False
+            conn.execute("UPDATE mfa_accounts SET last_step = %s, failed_attempts = 0, locked_until = NULL "
+                         "WHERE discord_id = %s", (step, discord_id))
+            return True
+
     # --- prueba de posesión ---------------------------------------------------------
 
     def create_challenge(self, nonce: bytes, discord_id: str, purpose: str, ttl: int) -> None:

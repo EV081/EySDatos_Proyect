@@ -80,6 +80,55 @@ paths:
         "400": {$ref: "#/components/responses/BadRequest"}
         "401": {description: Código o sesión rechazados; no se emite token}
         "429": {$ref: "#/components/responses/TooMany"}
+  /v1/sessions/challenge:
+    post:
+      summary: Entrega un nonce exclusivo para desbloquear una identidad local registrada con MFA
+      description: No requiere token de registro. El nonce vence en dos minutos y solo puede usarse una vez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [discord_id]
+              properties:
+                discord_id: {$ref: "#/components/schemas/DiscordId"}
+      responses:
+        "200":
+          description: Desafío de desbloqueo, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce: {$ref: "#/components/schemas/B64"}
+                  expires_in: {type: integer}
+        "401": {$ref: "#/components/responses/Rejected"}
+        "429": {$ref: "#/components/responses/TooMany"}
+  /v1/sessions/verify:
+    post:
+      summary: Valida la firma de la llave registrada y un código TOTP nuevo para desbloquear localmente
+      description: |
+        Exige firma sign_unlock del nonce, ligada al ID y a la llave registrada. No acepta firmas de registro
+        o cambio de llave. Comparte bloqueo de intentos y antirreplay TOTP con el flujo de Discord.
+        No acepta códigos de recuperación ni emite un token reutilizable. No recibe la contraseña maestra.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [discord_id, nonce, signature, code]
+              properties:
+                discord_id: {$ref: "#/components/schemas/DiscordId"}
+                nonce: {$ref: "#/components/schemas/B64"}
+                signature: {$ref: "#/components/schemas/B64"}
+                code: {type: string, pattern: "^[0-9]{6}$"}
+      responses:
+        "204": {description: Verificación completada, no-store}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Rejected"}
+        "429": {$ref: "#/components/responses/TooMany"}
   /v1/challenge:
     post:
       summary: Entrega un nonce de 32 bytes para la prueba de posesión (2 min, un solo uso)

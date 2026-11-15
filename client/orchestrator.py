@@ -13,7 +13,7 @@ from pathlib import Path
 
 from crypto import (
     CryptoError, DecryptError, Identity, Initiator, KdfParams, ReplayError,
-    Responder, SidCache, VaultError, WireError, decode, encode, fingerprint, sign_key_change, sign_registration,
+    Responder, SidCache, VaultError, WireError, decode, encode, fingerprint, sign_key_change, sign_registration, sign_unlock,
 )
 from crypto.constants import CLOCK_SKEW, HANDSHAKE_TTL, MAX_PLAINTEXT
 from crypto.encoding import b64d, b64e
@@ -23,6 +23,7 @@ from crypto.wire import Hs1, Hs2, Hs3, Msg
 from .errors import (
     BadPassword, Conflict, DirectoryUnavailable, KeyChanged, Locked, LoginRequired, NotFound, PeerUnavailable,
     TooManyAttempts,
+    MfaRequired, MfaRejected,
 )
 from .ports import DirectoryPort, DiscordPort
 from .privacy import NOTICE_VERSION
@@ -37,6 +38,7 @@ PREVIOUS_SESSION_GRACE = 60  # segundos que sigue descifrando la sesión anterio
 MAX_SEEN = 5000
 MAX_UNLOCK_FAILURES = 5
 UNLOCK_BLOCK_SECONDS = 30
+DEFAULT_SESSION_TTL = 30 * 60
 
 
 def _digits(text: str) -> str:
@@ -93,10 +95,15 @@ class _Peer:
 
 class Orchestrator:
     def __init__(self, data_dir, directory: DirectoryPort, discord: DiscordPort, clock=time.time,
-                 kdf: KdfParams | None = None):
+                 kdf: KdfParams | None = None, session_ttl: int = DEFAULT_SESSION_TTL):
         self._dir = Path(data_dir)
         self._directory, self._discord, self._clock = directory, discord, clock
         self._kdf = kdf or KdfParams()
+        if session_ttl <= 0:
+            raise ValueError("session_ttl debe ser positivo")
+        self._mfa_required = getattr(directory, "requires_mfa", True)
+        self._session_ttl = session_ttl
+        self._session_expires_at: float | None = None
         self._vault_file = VaultFile(self._dir)
         self._lock = threading.RLock()
         self._identity: Identity | None = None
@@ -113,13 +120,18 @@ class Orchestrator:
 
     @property
     def unlocked(self) -> bool:
-        return self._identity is not None
+        with self._lock:
+            if self._session_expires_at is not None and self._clock() >= self._session_expires_at:
+                self.lock()
+            return self._identity is not None
 
     def status(self) -> dict:
         with self._lock:
             return {"unlocked": self.unlocked, "vault_exists": self._vault_file.exists(),
                     "discord_id": self._my_id if self.unlocked else None,
-                    "public_key": b64e(self._identity.public_key) if self.unlocked else None}
+                    "public_key": b64e(self._identity.public_key) if self.unlocked else None,
+                    "mfa_required": self._mfa_required,
+                    "session_expires_at": self._session_expires_at}
 
     def _require_consent(self, consent_version: str) -> None:
         """Publicar el ID de Discord y la llave en el directorio exige haber aceptado el aviso vigente."""
@@ -153,13 +165,23 @@ class Orchestrator:
             self._replay_backlog()
             return self.status()
 
-    def unlock(self, password: str) -> dict:
+    def unlock(self, password: str, mfa_code: str | None = None) -> dict:
         with self._lock:
             if self.unlocked:
                 return self.status()
             if not self._vault_file.exists():
                 raise NotFound("no hay una identidad en este dispositivo")
+            if self._mfa_required and not mfa_code:
+                raise MfaRequired("ingresa el código de Microsoft Authenticator")
             discord_id, identity = self._check_password(password)
+            if self._mfa_required:
+                try:
+                    self._directory.authenticate_session(discord_id, mfa_code,
+                                                         lambda nonce: sign_unlock(identity, discord_id, nonce))
+                except Exception as exc:
+                    if getattr(exc, "status", None) in (400, 401, 403, 404, 429):
+                        raise MfaRejected("código rechazado; espera al siguiente o revisa la vinculación") from None
+                    raise DirectoryUnavailable("no se pudo validar el autenticador; la identidad sigue bloqueada") from None
             self._open(identity, discord_id)
             self._replay_backlog()
             return self.status()
@@ -175,6 +197,7 @@ class Orchestrator:
             self._contacts.clear()
             self._doc = {}
             self._identity = self._store = self._my_id = None
+            self._session_expires_at = None
 
     def export_identity(self, new_password: str) -> bytes:
         with self._lock:
@@ -284,6 +307,7 @@ class Orchestrator:
 
     def _open(self, identity: Identity, discord_id: str) -> None:
         self._identity, self._my_id = identity, discord_id
+        self._session_expires_at = self._clock() + self._session_ttl if self._mfa_required else None
         self._store = EncryptedStore(self._dir, identity.store_key)
         self._doc = self._store.load()
         self._doc.setdefault("history", {})
@@ -327,7 +351,7 @@ class Orchestrator:
             raise PeerUnavailable("no se pudo publicar la llave en el directorio") from None
 
     def _need_identity(self) -> Identity:
-        if self._identity is None:
+        if not self.unlocked:
             raise Locked("desbloquea la identidad con tu contraseña maestra")
         return self._identity
 
@@ -587,7 +611,7 @@ class Orchestrator:
     def on_discord_message(self, text: str) -> None:
         """Punto de entrada desde Discord. Nada de lo que llega se asume confiable."""
         with self._lock:
-            if self._identity is None:
+            if not self.unlocked:
                 return
             try:
                 obj = decode(text)
@@ -691,7 +715,7 @@ class Orchestrator:
     def tick(self) -> None:
         """Se llama cada pocos segundos: caduca intentos, reintenta, rota y destruye sesiones viejas."""
         with self._lock:
-            if self._identity is None:
+            if not self.unlocked:
                 return
             now = self._clock()
             for discord_id, peer in list(self._peers.items()):

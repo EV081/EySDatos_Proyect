@@ -21,7 +21,8 @@ def _build():
     directory = DirectoryClient(os.environ["DIRECTORY_URL"], public_ca=public_ca,
                                 ca_file=os.environ.get("DIRECTORY_CA_FILE") or None if not public_ca else None)
     discord = DiscordAdapter(token=os.environ["DISCORD_TOKEN"], channel_id=int(os.environ["DISCORD_CHANNEL_ID"]))
-    orchestrator = Orchestrator(os.environ.get("CLIENT_DATA_DIR", "./data"), directory, discord)
+    orchestrator = Orchestrator(os.environ.get("CLIENT_DATA_DIR", "./data"), directory, discord,
+                                session_ttl=int(os.environ.get("CLIENT_SESSION_TTL", "1800")))
     token = os.environ.get("CLIENT_API_TOKEN") or secrets.token_urlsafe(32)
     if "CLIENT_API_TOKEN" not in os.environ:
         print(f"CLIENT_API_TOKEN (generado para esta ejecución): {token}")
