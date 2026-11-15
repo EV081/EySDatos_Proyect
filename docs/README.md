@@ -170,7 +170,7 @@ El desbloqueo habitual usa otro flujo, sin repetir OAuth2 ni guardar una autoriz
 | 3. Segundo factor | El directorio verifica la firma con la llave registrada y comprueba el TOTP de seis dígitos. Rechaza códigos repetidos; cinco fallos bloquean el factor durante cinco minutos |
 | 4. Sesión local | Solo si la validación termina bien se abre el historial y comienza el plazo local de 30 minutos. Un fallo de red o de autenticación mantiene la identidad bloqueada |
 
-**Qué protege el segundo factor.** Una copia de `vault.json` y `store.enc`, junto con la contraseña correcta, se puede descifrar con otro programa. El segundo factor limita el acceso desde nuestra aplicación. La bóveda, que guarda la identidad cifrada, sigue dependiendo de la contraseña. Crear o importar una identidad ya usa la autorización del registro, por eso no repite el desafío de desbloqueo. El modo `client.dev` usa servicios en memoria y no valida MFA. La configuración real con Authenticator está desplegada y probada en EC2, según la confirmación del equipo.
+**Qué protege el segundo factor.** Una copia de `vault.json` y `store.enc`, junto con la contraseña correcta, se puede descifrar con otro programa. El segundo factor limita el acceso desde nuestra aplicación. La bóveda, que guarda la identidad cifrada, sigue dependiendo de la contraseña. Crear o importar una identidad ya usa la autorización del registro, por eso no repite el desafío de desbloqueo. El modo `client.dev` usa servicios en memoria y no valida MFA. La configuración real con Authenticator está desplegada y probada en EC2.
 
 <p align="center">
   <img src="img/flujo-registro.png" alt="Flujo de registro y custodia de la identidad" width="800" style="max-width: 100%; height: auto;" />
@@ -335,9 +335,9 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 
 | ID | Riesgo | Inicial | Residual |
 |---|---|---|---|
-| R1 | Metadatos expuestos a Discord y al canal | Alto | Medio (aceptación propuesta) |
-| R2 | Sustitución de llaves por un directorio malicioso | Alto | Medio (aceptación propuesta) |
-| R3 | Robo o infección del dispositivo | Alto | Medio (aceptación propuesta) |
+| R1 | Metadatos expuestos a Discord y al canal | Alto | Medio (aceptado por el equipo) |
+| R2 | Sustitución de llaves por un directorio malicioso | Alto | Medio (aceptado por el equipo) |
+| R3 | Robo o infección del dispositivo | Alto | Medio (aceptado por el equipo) |
 | R4 | Contraseña maestra débil o perdida | Medio | Bajo |
 | R5 | Brecha de la base de datos del directorio | Medio | Bajo |
 | R6 | Conservación excesiva o borrado incompleto | Alto | Bajo |
@@ -345,14 +345,14 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 | R8 | Datos personales en los registros | Medio | Bajo |
 | R9 | Incumplimiento legal | Medio | Bajo |
 | R10 | Filtración del token del bot | Medio | Bajo |
-| R11 | Robo de la llave de identidad | Alto | Medio (aceptación propuesta) |
+| R11 | Robo de la llave de identidad | Alto | Medio (aceptado por el equipo) |
 | R12 | Personas menores de edad | Medio | Bajo |
-| R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptación propuesta) |
-| R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptación propuesta) |
+| R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptado por el equipo) |
+| R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptado por el equipo) |
 
 **Medidas.** Definimos 25 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
 
-**Decisión.** Después de aplicar las medidas, proponemos aceptar seis riesgos que quedan en nivel medio. Esta decisión todavía requiere revisión y firma del equipo. El sistema sirve para la demostración con el directorio en EC2 y los clientes locales. El directorio, el análisis de código y el borrado local ya están implementados. Antes de ampliar el uso quedan el simulacro de incidentes, la verificación de las medidas en el alojamiento y los requisitos legales de C-24. La DPIA documenta las razones propuestas para aceptar esos riesgos.
+**Decisión.** El equipo revisó y aprobó la DPIA, y aceptó seis riesgos residuales de nivel medio por las razones del paso 6. Los correos de ambos integrantes se consignan como firma en el paso 7. El directorio está desplegado en EC2; los clientes se ejecutan localmente. El análisis de código, el borrado local y el MFA están implementados; el MFA está desplegado y probado con Microsoft Authenticator. Antes de ampliar el uso quedan el simulacro de incidentes, las comprobaciones operativas del alojamiento y los requisitos de C-24.
 
 ### 6.2 Cumplimiento de la Ley 29733 y su reglamento
 
