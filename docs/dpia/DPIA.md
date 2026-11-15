@@ -1,7 +1,7 @@
 # Evaluación de Impacto en la Protección de Datos (DPIA)
 
 **Sistema:** mensajería cifrada de extremo a extremo sobre Discord
-**Versión:** 1.2 (pendiente de firma) · **Elaborada:** 2026-10-25 · **Actualizada:** 2026-11-14 · **Formato:** plantilla de 7 pasos (ICO), adaptada a la Ley 29733 y su reglamento (DS 016-2024-JUS)
+**Versión:** 1.3 (pendiente de firma) · **Elaborada:** 2026-10-25 · **Actualizada:** 2026-11-14 · **Formato:** plantilla de 7 pasos (ICO), adaptada a la Ley 29733 y su reglamento (DS 016-2024-JUS)
 
 > **Estado de las medidas.** Se distingue entre implementación comprobable en el repositorio y configuración del entorno desplegado. Una prueba local no acredita que la misma medida esté activada en EC2. El equipo debe revisar las evidencias operativas, el simulacro y los riesgos residuales antes de firmar la evaluación.
 
@@ -34,14 +34,14 @@
 
 ![Flujo de datos entre el dispositivo, el directorio en EC2 y Discord](../img/dpia-tratamiento.png)
 
-El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL corre en un contenedor dentro de esa misma instancia. El cliente y el frontend siguen en el dispositivo de cada persona. El MFA del registro y del desbloqueo habitual está desplegado y probado con Microsoft Authenticator, según la confirmación del equipo. El destino de las copias de seguridad queda pendiente de confirmar en el inventario de alojamiento.
+El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL está alojado en Supabase, en el proyecto elegido por el equipo; la región de ese proyecto debe registrarse por separado de la de EC2. El cliente y el frontend siguen en el dispositivo de cada persona. El MFA del registro y del desbloqueo habitual está desplegado y probado con Microsoft Authenticator, según la confirmación del equipo. El destino de las copias de seguridad queda pendiente de confirmar en el inventario de alojamiento.
 
 | Etapa | Qué ocurre | Dónde |
 |---|---|---|
 | **Recolección** | La persona escribe su ID de Discord y acepta el aviso de privacidad. El dispositivo genera la llave de identidad; solo la llave **pública** y el ID se publican. OAuth2 y TOTP autorizan el registro; el secreto del factor se guarda cifrado y los códigos de recuperación como hashes. | Dispositivo -> directorio |
 | **Almacenamiento** | Llave privada y datos locales: cifrados con AES-256-GCM bajo una clave derivada de la contraseña maestra (Argon2id). Directorio: base de datos con ID, llave pública y fechas. Discord: ciphertext. | Dispositivo; directorio; Discord |
 | **Uso** | Cifrar, firmar y descifrar mensajes y verificar contactos en el dispositivo. El directorio valida la firma de desbloqueo y el TOTP antes de que el cliente abra el historial. | Dispositivo; directorio para autenticación |
-| **Compartición** | Con otros usuarios (llave pública, por diseño) y con Discord (ciphertext y metadatos, por necesidad técnica). El proveedor del alojamiento del directorio también procesa los datos necesarios para prestar ese servicio; la base PostgreSQL comparte la instancia en `us-east-1` y el destino de los respaldos queda por confirmar. | No aplica |
+| **Compartición** | Con otros usuarios (llave pública, por diseño) y con Discord (ciphertext y metadatos, por necesidad técnica). El proveedor del alojamiento del directorio también procesa los datos necesarios para prestar ese servicio; la base PostgreSQL está en Supabase, separada de EC2 y el destino de los respaldos queda por confirmar. | No aplica |
 | **Destrucción** | Llaves de sesión y llaves efímeras: se destruyen al rotar o bloquear. El resto, según la tabla de retención (2.2). | Dispositivo; directorio |
 
 **Fuentes de datos:** la propia persona (ID, mensajes) y el dispositivo (llaves generadas). El ID de Discord se vincula con su cuenta mediante OAuth2 (`identify`), sin pedir nada más.
@@ -79,7 +79,7 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 **Categorías especiales:** el sistema no las recoge ni puede leerlas; solo podrían aparecer dentro de los mensajes, que solo ven las personas que conversan.
 **Volumen y frecuencia:** demostración con 2 usuarios; uso real previsto de decenas. Un registro por persona; los mensajes dependen de ellas.
 **Personas afectadas:** usuarios de la aplicación y sus contactos (que solo se publican mediante registro con OAuth2, prueba de posesión y consentimiento: ver R7).
-**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio y PostgreSQL se alojan en la misma instancia AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). Queda pendiente confirmar el destino de las copias de seguridad.
+**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio se aloja en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL se aloja en Supabase. La región de Supabase queda pendiente de confirmar y no se deduce de la región de EC2. Queda pendiente confirmar el destino de las copias de seguridad.
 
 ### 2.3 Contexto
 
@@ -121,7 +121,7 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 * **¿Hay otra forma de lograrlo?** Usar Signal o similar da mejor protección, pero el objetivo es proteger conversaciones **dentro de Discord**. Se descartó intercambiar llaves a mano por ser inusable; el directorio es el compromiso, y la ceremonia de verificación fuera de banda impide que el directorio pueda sustituir llaves sin que se detecte.
 * **Prevención de usos adicionales (*function creep*):** el directorio solo guarda lo que está en la tabla 2.2; las finalidades se limitan a las de 2.4; no se hace analítica ni publicidad; si el aviso cambia, sube la versión y hay que volver a aceptarlo (evidencia: `client/privacy.py`).
 * **Calidad y minimización:** no se piden nombre, correo, teléfono, avatar ni nombre de usuario; el directorio no registra direcciones IP (C-05 implementada en la aplicación; revisar registros del alojamiento). El cliente nunca envía contenido al directorio.
-* **Información a las personas:** resumen del aviso (versión 1.3) visible antes de aceptar (evidencia: `frontend/components/IdentityGate.tsx`); el texto completo, con los elementos que exige la Ley 29733, está en [`privacidad/aviso-de-privacidad.md`](../privacidad/aviso-de-privacidad.md) y se publica dentro de la aplicación (evidencia: `frontend/test/notice.test.ts`).
+* **Información a las personas:** resumen del aviso (versión 1.4) visible antes de aceptar (evidencia: `frontend/components/IdentityGate.tsx`); el texto completo, con los elementos que exige la Ley 29733, está en [`privacidad/aviso-de-privacidad.md`](../privacidad/aviso-de-privacidad.md) y se publica dentro de la aplicación (evidencia: `frontend/test/notice.test.ts`).
 * **Derechos (ARCO y portabilidad):**
 
 | Derecho | Cómo se atiende | Estado |
@@ -133,8 +133,8 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 | Portabilidad | Exportar la identidad cifrada a otro dispositivo (RF12) | Prueba: `test_RF12_exportar_e_importar_en_otro_dispositivo` |
 | Borrado local de datos | "Borrar mis datos de este dispositivo" (o al cancelar): borra `vault.json` y `store.enc` con la contraseña maestra | Implementado: `POST /identity/delete-local`; `test_borrado_local_*` |
 
-* **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. AWS presta el alojamiento del directorio y PostgreSQL en una instancia EC2 en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL corre en un contenedor de esa instancia. Se deben revisar las condiciones de tratamiento y los accesos de administración, y confirmar el destino de los respaldos. El cifrado E2EE no elimina el tratamiento de los identificadores por estos proveedores.
-* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio y la base PostgreSQL también tratan identificadores, llaves públicas, fechas y datos privados de autenticación en Estados Unidos, en la región `us-east-1` de AWS. Esto constituye otro flujo internacional de datos personales; se deben revisar las garantías aplicables y documentar además el destino de los respaldos.
+* **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. AWS presta el alojamiento del directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y Supabase presta el alojamiento de PostgreSQL. El directorio se conecta a la base con el rol de aplicación y verificación TLS. Se deben revisar las condiciones de tratamiento y los accesos de administración, y confirmar el destino de los respaldos. El cifrado E2EE no elimina el tratamiento de los identificadores por estos proveedores.
+* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio trata identificadores y datos de autenticación en Estados Unidos (`us-east-1`). Supabase almacena los registros y datos privados de autenticación en la región configurada para su proyecto; esa región debe confirmarse y documentarse para evaluar el flujo internacional completo. Esto constituye otro flujo internacional de datos personales; se deben revisar las garantías aplicables y documentar además el destino de los respaldos.
 
 ---
 
@@ -186,9 +186,9 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 | **C-07** | El directorio solo se sirve por TLS 1.3 con una CA propia y el cliente rechaza un certificado inválido sin ofrecer continuar | `directory/tests/test_tls.py` (otra CA, vencido, otro nombre, revocado, TLS 1.2); `ops/certs/README.md` | Infraestructura | Implementada |
 | **C-08** | La aplicación usa un rol de base de datos sin permisos de DDL ni de propietario y solo consultas parametrizadas; *rate-limit* anti-enumeración | `directory/migrations/apply.py`; `test_C08_*` (rol sin DDL, inyección) y `test_acceso_ajeno.py` | Directorio | Implementada |
 | **C-09** | Los registros de auditoría no contienen texto, llaves, tokens ni IDs en claro (los IDs se seudonimizan con HMAC y una clave que se rota cada 90 días) | `crypto/pseudonym.py`; `test_C09_registros_reales_sin_datos_personales_ni_secretos` (recorre los flujos y revisa el archivo real) y `test_C09_filtro_de_redaccion_como_segunda_barrera` | Auditoría | Implementada |
-| **C-10** | Retención: registros 90 días; llaves reemplazadas 90 días; copias de seguridad 30 días con rotación; registro del directorio hasta su cancelación | `python -m ops.scheduled daily`; `test_C10_*` (registros, llaves reemplazadas y copias) | Operaciones | Implementada |
+| **C-10** | Retención: registros 90 días; llaves reemplazadas 90 días; copias de seguridad 30 días con rotación; registro del directorio hasta su cancelación | `python -m ops.scheduled daily`; `test_C10_*` (registros, llaves reemplazadas y copias) | Operaciones | Implementada en código; activación y evidencia del entorno real pendientes |
 | **C-11** | Existe un endpoint que cancela el registro de una persona (firmado con su llave) y la borra en el directorio de inmediato y de las copias en un máximo de 30 días | `test_C11_*` en `directory/tests/` (borrado inmediato); `test_C10_rotacion_de_30_dias` (copias) | Directorio y respaldos | Implementada |
-| **C-12** | Las copias de seguridad están cifradas, fuera del servidor del directorio, con restauración probada | `ops/backup/backup.py`; `test_C12_*` (cifrado, restauración probada); RPO 24 h / RTO 30 min en `ops/backup/README.md` | Respaldos | Implementada |
+| **C-12** | Las copias de seguridad están cifradas, fuera del servidor del directorio, con restauración probada | `ops/backup/backup.py`; `test_C12_*` (cifrado, restauración probada); RPO 24 h / RTO 30 min en `ops/backup/README.md` | Respaldos | Implementada en código; activación y evidencia del entorno real pendientes |
 | **C-13** | Los secretos (token del bot, credenciales OAuth y `TOTP_ENCRYPTION_KEY`) están en variables de entorno; el repositorio no contiene secretos; el token de la API local solo se envía a `127.0.0.1`/`localhost` | gitleaks (historial y árbol) en CI sin hallazgos (Implementada, `ops/reports/despues/`); `test/conn.test.ts` del frontend, que solo admite `127.0.0.1`/`localhost` (probado) | Operaciones y cliente | Implementada |
 | **C-14** | Antes de publicar una llave, la persona acepta el aviso de privacidad vigente (casilla desmarcada, finalidades declaradas); se registra la versión y la fecha y el directorio las conserva | Pruebas de `client/` (probado); `test_C14_guarda_version_y_fecha_del_aviso` en `directory/tests/` (probado) | Cliente y directorio | Implementada |
 | **C-15** | El aviso de privacidad completo cumple los elementos de la Ley 29733 y se muestra antes de aceptar; sube de versión si cambia | `frontend/test/notice.test.ts` (secciones exigidas, versión igual en documento, frontend y cliente, coherencia de plazos con esta DPIA); la prueba e2e comprueba que se publica en la aplicación | Privacidad | Implementada |
@@ -272,7 +272,7 @@ Las medidas se escriben como **restricciones verificables** (C-xx): cada una se 
 | Acción | Responsable | Restricción | Para cuándo |
 |---|---|---|---|
 | Validar TLS, accesos de administración, registros, retención, copias externas y restauración en el despliegue | Infraestructura | C-05 a C-13 | Antes de ampliar el uso |
-| Confirmar el destino de los respaldos y revisar las condiciones de AWS; EC2 y PostgreSQL ya están ubicados en `us-east-1` | Equipo | C-24 | Antes de ampliar el uso |
+| Confirmar la región del proyecto Supabase y el destino de respaldos; revisar las condiciones de AWS y Supabase | Equipo | C-24 | Antes de ampliar el uso |
 | Ensayar recuperación del autenticador y restauración conjunta de la base y `TOTP_ENCRYPTION_KEY`, sin saltarse el factor | Equipo | C-25, R14 | Antes de ampliar el uso |
 | Realizar y registrar el simulacro del plan de incidentes | Equipo | C-19 | Antes de la entrega |
 | Firma de cancelación con contexto propio en `crypto/` | Criptografía y cliente | C-11 | Antes de ampliar el uso |

@@ -39,7 +39,7 @@ digraph G {{
   subgraph cluster_remoto {{
     label=<<b>Servicios remotos (no confiables)</b>>; labeljust=l; labelloc=b; style="rounded,filled,dashed";
     color="{ROJO}"; fillcolor="{ROJO_F}"; fontcolor="{ROJO}"; penwidth=1.6;
-    dir [label=<<b>Directorio de llaves</b><br/>ID y llave pública; datos privados de MFA<br/>TOTP cifrado + hashes de recuperación>, color="{ROJO}", fillcolor="white"];
+    dir [label=<<b>Directorio de llaves</b><br/>API de llaves y verificación de MFA<br/>PostgreSQL alojado en Supabase>, color="{ROJO}", fillcolor="white"];
     dis [label=<<b>Discord</b><br/>un bot por persona, canal privado<br/>solo ve texto cifrado y metadatos>, color="{ROJO}", fillcolor="white"];
     {{ rank=same; dir; dis; }}
   }}
@@ -99,14 +99,18 @@ DPIA = f"""
 digraph G {{
   rankdir=TB;
   {BASE}
-  local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>Texto plano en memoria<br/>vault.json y store.enc cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
-  ec2 [label=<<b>AWS EC2: us-east-1</b><br/>Virginia del Norte, Estados Unidos<br/>Directorio + PostgreSQL en contenedor<br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación>, color="{ROJO}", fillcolor="{ROJO_F}"];
-  discord [label=<<b>Discord</b><br/>Canal privado con bots<br/>Texto cifrado + metadatos<br/>No recibe llaves privadas>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>vault.json y store.enc cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
+  ec2 [label=<<b>Directorio en AWS EC2</b><br/>Virginia del Norte: us-east-1<br/>Registro, consultas y validación MFA<br/>Clave de cifrado TOTP fuera de la base>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  discord [label=<<b>Discord</b><br/>Canal privado con bots<br/>Texto cifrado + metadatos>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  base [label=<<b>PostgreSQL en Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación<br/>Región del proyecto por confirmar>, shape=cylinder, color="{ROJO}", fillcolor="{ROJO_F}"];
   copias [label=<<b>Registros y respaldos</b><br/>Auditoría: IDs seudonimizados, 90 días<br/>Copias cifradas: 30 días<br/>Clave TOTP: respaldo separado<br/>Destino externo por comprobar>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
   {{ rank=same; ec2; discord; }}
-  local -> ec2 [label="TLS 1.3\\nregistro, ARCO y desbloqueo con MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  {{ rank=same; base; copias; }}
+  local -> ec2 [label="TLS 1.3\\nregistro, ARCO y desbloqueo MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
   local -> discord [label="handshake y mensajes cifrados", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
-  ec2 -> copias [label="operación del servicio", color="{NARANJA}", fontcolor="{NARANJA}"];
+  ec2 -> base [label="PostgreSQL + TLS\\nrol de mínimos permisos", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  ec2 -> copias [label="auditoría del servicio", color="{NARANJA}", fontcolor="{NARANJA}"];
+  base -> copias [label="copias cifradas", color="{NARANJA}", fontcolor="{NARANJA}"];
 }}
 """
 

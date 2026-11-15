@@ -1,8 +1,9 @@
 # Atajos (Linux/macOS/WSL; en Windows, ejecutar los comandos equivalentes con .venv\Scripts\python).
 PY ?= .venv/bin/python
 CLIENT_PORT ?= 8001
+ENV_FILE ?= .env
 
-.PHONY: dev db certs directory client frontend test scan backup verify-backup restore daily trazabilidad
+.PHONY: dev db certs directory client frontend test scan backup backup-remote verify-backup restore daily trazabilidad
 
 dev:            ## dos clientes en memoria, sin Discord ni directorio reales
 	$(PY) -m client.dev
@@ -31,16 +32,19 @@ scan:           ## make scan ETIQUETA=despues
 	$(PY) -m ops.scan $(or $(ETIQUETA),actual)
 
 backup:
-	set -a; . ./.env; set +a; $(PY) -m ops.backup.backup create
+	set -e; set -a; . "$(abspath $(ENV_FILE))"; set +a; $(PY) -m ops.backup.backup create
+
+backup-remote:
+	set -e; set -a; . "$(abspath $(ENV_FILE))"; set +a; $(PY) -m ops.backup.backup create-remote
 
 verify-backup:
-	set -a; . ./.env; set +a; $(PY) -m ops.backup.backup verify
+	set -e; set -a; . "$(abspath $(ENV_FILE))"; set +a; $(PY) -m ops.backup.backup verify
 
 restore:        ## make restore ARCHIVO=/ruta/directory-....dump.enc
-	set -a; . ./.env; set +a; $(PY) -m ops.backup.backup restore $(ARCHIVO)
+	set -e; set -a; . "$(abspath $(ENV_FILE))"; set +a; $(PY) -m ops.backup.backup restore $(ARCHIVO)
 
 daily:
-	$(PY) -m ops.scheduled daily --env .env
+	$(PY) -m ops.scheduled daily --env "$(abspath $(ENV_FILE))"
 
 trazabilidad:
 	$(PY) -m ops.trazabilidad

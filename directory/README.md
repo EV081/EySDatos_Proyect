@@ -4,7 +4,7 @@ Asocia IDs de Discord con llaves públicas de firma Ed25519. Nunca ve llaves pri
 
 ## Ejecución y despliegue
 
-Sigue la [guía de EC2](../docs/despliegue-ec2.md) para configurar PostgreSQL, los certificados, las migraciones y el directorio. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/ejecucion-local.md).
+Sigue la [guía de EC2](../docs/despliegue-ec2.md) para conectar PostgreSQL en Supabase, preparar los certificados, aplicar las migraciones y levantar el directorio en EC2. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/ejecucion-local.md).
 
 `directory.serve` arranca sin el registro de acceso de uvicorn, que escribiría la IP y la ruta con el ID de Discord en claro (C-05, C-09). Si se usa `uvicorn` a mano, `--no-access-log` es obligatorio.
 

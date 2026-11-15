@@ -1,6 +1,6 @@
 # Aviso de privacidad
 
-**Versión:** 1.3
+**Versión:** 1.4
 **Vigente desde:** 2026-11-14
 
 Este aviso te explica, en lenguaje claro, qué datos tuyos trata esta aplicación de mensajería cifrada, para qué, quién los recibe y cómo ejercer tus derechos, según la Ley N.° 29733 de Protección de Datos Personales y su reglamento.
@@ -57,14 +57,14 @@ Tu ID de Discord, tu llave pública y la vinculación de una app autenticadora s
 - **Otras personas usuarias:** ven tu ID de Discord y tu llave pública cuando te buscan.
 - **Discord:** recibe tus mensajes **ya cifrados** y los metadatos (quién escribe, a quién, cuándo y de qué tamaño). Discord es un responsable independiente de su propia plataforma.
 - **Las personas que operan el directorio:** acceden a lo que está en el directorio, con permisos mínimos.
-- **Proveedor de alojamiento:** el directorio y PostgreSQL se alojan en una instancia Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL corre en un contenedor dentro de esa instancia. El destino de los respaldos queda pendiente de documentar.
+- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. La región del proyecto Supabase debe confirmarse y documentarse. El destino de los respaldos queda pendiente de documentar.
 - **Autoridades:** solo si una orden válida lo exige, y únicamente con los datos que realmente conservamos en el directorio y sus registros, descritos en este aviso. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
 
 No vendemos ni cedemos tus datos a otras personas o empresas.
 
 ## Transferencias internacionales
 
-Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio y la base PostgreSQL se alojan en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL corre en un contenedor dentro de la instancia. Por tanto, tu ID de Discord, llave pública, fechas y datos privados de autenticación también se tratan en Estados Unidos. El destino de los respaldos queda pendiente de documentar. Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
+Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; la región del proyecto Supabase debe confirmarse antes de ampliar el uso con datos de terceros. El destino de los respaldos queda pendiente de documentar. Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
 
 ## Cuánto tiempo conservamos tus datos
 

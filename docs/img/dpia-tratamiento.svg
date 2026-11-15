@@ -1,70 +1,93 @@
 <?xml version='1.0' encoding='utf-8'?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 556.00 483.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
-<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 461.67)">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 733.00 475.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 453.42)">
 <title>G</title>
-<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-461.67 534.68,-461.67 534.68,21.6 -21.6,21.6" />
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-453.42 711.68,-453.42 711.68,21.6 -21.6,21.6" />
 
 <g id="node1" class="node">
 <title>local</title>
-<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" d="M337.18,-440.07C337.18,-440.07 164.38,-440.07 164.38,-440.07 158.38,-440.07 152.38,-434.07 152.38,-428.07 152.38,-428.07 152.38,-386.79 152.38,-386.79 152.38,-380.79 158.38,-374.79 164.38,-374.79 164.38,-374.79 337.18,-374.79 337.18,-374.79 343.18,-374.79 349.18,-380.79 349.18,-386.79 349.18,-386.79 349.18,-428.07 349.18,-428.07 349.18,-434.07 343.18,-440.07 337.18,-440.07" />
-<text xml:space="preserve" text-anchor="start" x="175.4" y="-421.03" font-family="Noto Sans" font-weight="bold" font-size="12.00">Dispositivo de la persona</text>
-<text xml:space="preserve" text-anchor="start" x="185.15" y="-409.03" font-family="Noto Sans" font-size="12.00">Frontend + cliente local</text>
-<text xml:space="preserve" text-anchor="start" x="181.78" y="-397.03" font-family="Noto Sans" font-size="12.00">Texto plano en memoria</text>
-<text xml:space="preserve" text-anchor="start" x="166.78" y="-385.03" font-family="Noto Sans" font-size="12.00">vault.json y store.enc cifrados</text>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" d="M514.05,-431.82C514.05,-431.82 341.25,-431.82 341.25,-431.82 335.25,-431.82 329.25,-425.82 329.25,-419.82 329.25,-419.82 329.25,-390.54 329.25,-390.54 329.25,-384.54 335.25,-378.54 341.25,-378.54 341.25,-378.54 514.05,-378.54 514.05,-378.54 520.05,-378.54 526.05,-384.54 526.05,-390.54 526.05,-390.54 526.05,-419.82 526.05,-419.82 526.05,-425.82 520.05,-431.82 514.05,-431.82" />
+<text xml:space="preserve" text-anchor="start" x="352.27" y="-412.78" font-family="Noto Sans" font-weight="bold" font-size="12.00">Dispositivo de la persona</text>
+<text xml:space="preserve" text-anchor="start" x="362.02" y="-400.78" font-family="Noto Sans" font-size="12.00">Frontend + cliente local</text>
+<text xml:space="preserve" text-anchor="start" x="343.65" y="-388.78" font-family="Noto Sans" font-size="12.00">vault.json y store.enc cifrados</text>
 </g>
 
 <g id="node2" class="node">
 <title>ec2</title>
-<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M239.55,-271.29C239.55,-271.29 12,-271.29 12,-271.29 6,-271.29 0,-265.29 0,-259.29 0,-259.29 0,-206.01 0,-206.01 0,-200.01 6,-194.01 12,-194.01 12,-194.01 239.55,-194.01 239.55,-194.01 245.55,-194.01 251.55,-200.01 251.55,-206.01 251.55,-206.01 251.55,-259.29 251.55,-259.29 251.55,-265.29 245.55,-271.29 239.55,-271.29" />
-<text xml:space="preserve" text-anchor="start" x="71.03" y="-252.25" font-family="Noto Sans" font-weight="bold" font-size="12.00">AWS EC2: us-east-1</text>
-<text xml:space="preserve" text-anchor="start" x="29.03" y="-240.25" font-family="Noto Sans" font-size="12.00">Virginia del Norte, Estados Unidos</text>
-<text xml:space="preserve" text-anchor="start" x="14.4" y="-228.25" font-family="Noto Sans" font-size="12.00">Directorio + PostgreSQL en contenedor</text>
-<text xml:space="preserve" text-anchor="start" x="39.53" y="-216.25" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas y aviso</text>
-<text xml:space="preserve" text-anchor="start" x="15.53" y="-204.25" font-family="Noto Sans" font-size="12.00">TOTP cifrado + hashes de recuperación</text>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M415.05,-275.04C415.05,-275.04 194.25,-275.04 194.25,-275.04 188.25,-275.04 182.25,-269.04 182.25,-263.04 182.25,-263.04 182.25,-221.76 182.25,-221.76 182.25,-215.76 188.25,-209.76 194.25,-209.76 194.25,-209.76 415.05,-209.76 415.05,-209.76 421.05,-209.76 427.05,-215.76 427.05,-221.76 427.05,-221.76 427.05,-263.04 427.05,-263.04 427.05,-269.04 421.05,-275.04 415.05,-275.04" />
+<text xml:space="preserve" text-anchor="start" x="239.02" y="-256" font-family="Noto Sans" font-weight="bold" font-size="12.00">Directorio en AWS EC2</text>
+<text xml:space="preserve" text-anchor="start" x="226.27" y="-244" font-family="Noto Sans" font-size="12.00">Virginia del Norte: us-east-1</text>
+<text xml:space="preserve" text-anchor="start" x="202.27" y="-232" font-family="Noto Sans" font-size="12.00">Registro, consultas y validación MFA</text>
+<text xml:space="preserve" text-anchor="start" x="196.65" y="-220" font-family="Noto Sans" font-size="12.00">Clave de cifrado TOTP fuera de la base</text>
 </g>
 
 <g id="edge1" class="edge">
 <title>local-&gt;ec2</title>
-<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M164.27,-367.15C153.78,-359.13 144.3,-349.72 137.28,-338.79 127.03,-322.85 123.18,-302.68 122.23,-284.28" />
-<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="161.99,-369.83 172.18,-372.73 166.03,-364.11 161.99,-369.83" />
-<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="125.73,-284.24 122.04,-274.31 118.73,-284.38 125.73,-284.24" />
-<text xml:space="preserve" text-anchor="middle" x="234.03" y="-328.34" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">TLS 1.3</text>
-<text xml:space="preserve" text-anchor="middle" x="234.03" y="-312.59" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">registro, ARCO y desbloqueo con MFA</text>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M364.9,-371.17C353.7,-363.02 343.03,-353.45 334.9,-342.54 322.96,-326.52 315.69,-305.74 311.28,-287.35" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="362.6,-373.83 372.83,-376.59 366.55,-368.05 362.6,-373.83" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="314.74,-286.8 309.23,-277.76 307.9,-288.27 314.74,-286.8" />
+<text xml:space="preserve" text-anchor="middle" x="420.77" y="-332.09" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">TLS 1.3</text>
+<text xml:space="preserve" text-anchor="middle" x="420.77" y="-316.34" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">registro, ARCO y desbloqueo MFA</text>
 </g>
 
 <g id="node3" class="node">
 <title>discord</title>
-<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M452.05,-265.29C452.05,-265.29 299.5,-265.29 299.5,-265.29 293.5,-265.29 287.5,-259.29 287.5,-253.29 287.5,-253.29 287.5,-212.01 287.5,-212.01 287.5,-206.01 293.5,-200.01 299.5,-200.01 299.5,-200.01 452.05,-200.01 452.05,-200.01 458.05,-200.01 464.05,-206.01 464.05,-212.01 464.05,-212.01 464.05,-253.29 464.05,-253.29 464.05,-259.29 458.05,-265.29 452.05,-265.29" />
-<text xml:space="preserve" text-anchor="start" x="353.27" y="-246.25" font-family="Noto Sans" font-weight="bold" font-size="12.00">Discord</text>
-<text xml:space="preserve" text-anchor="start" x="310.52" y="-234.25" font-family="Noto Sans" font-size="12.00">Canal privado con bots</text>
-<text xml:space="preserve" text-anchor="start" x="301.9" y="-222.25" font-family="Noto Sans" font-size="12.00">Texto cifrado + metadatos</text>
-<text xml:space="preserve" text-anchor="start" x="305.65" y="-210.25" font-family="Noto Sans" font-size="12.00">No recibe llaves privadas</text>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M627.92,-269.04C627.92,-269.04 475.38,-269.04 475.38,-269.04 469.38,-269.04 463.38,-263.04 463.38,-257.04 463.38,-257.04 463.38,-227.76 463.38,-227.76 463.38,-221.76 469.38,-215.76 475.38,-215.76 475.38,-215.76 627.92,-215.76 627.92,-215.76 633.92,-215.76 639.92,-221.76 639.92,-227.76 639.92,-227.76 639.92,-257.04 639.92,-257.04 639.92,-263.04 633.92,-269.04 627.92,-269.04" />
+<text xml:space="preserve" text-anchor="start" x="529.15" y="-250" font-family="Noto Sans" font-weight="bold" font-size="12.00">Discord</text>
+<text xml:space="preserve" text-anchor="start" x="486.4" y="-238" font-family="Noto Sans" font-size="12.00">Canal privado con bots</text>
+<text xml:space="preserve" text-anchor="start" x="477.77" y="-226" font-family="Noto Sans" font-size="12.00">Texto cifrado + metadatos</text>
 </g>
 
 <g id="edge2" class="edge">
 <title>local-&gt;discord</title>
-<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M309.63,-366.54C319.24,-358.18 328.44,-348.83 335.77,-338.79 349.1,-320.55 358.55,-297.34 364.91,-277.36" />
-<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="307.67,-363.62 302.2,-372.69 312.14,-369.01 307.67,-363.62" />
-<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="368.18,-278.63 367.69,-268.05 361.47,-276.62 368.18,-278.63" />
-<text xml:space="preserve" text-anchor="middle" x="432.83" y="-320.46" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">handshake y mensajes cifrados</text>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M482.75,-370.61C493.31,-362.39 503.58,-352.93 511.65,-342.54 525.7,-324.46 535.5,-300.77 541.88,-281.09" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="480.93,-367.61 474.97,-376.37 485.09,-373.23 480.93,-367.61" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="545.16,-282.34 544.72,-271.75 538.46,-280.31 545.16,-282.34" />
+<text xml:space="preserve" text-anchor="middle" x="609.83" y="-324.21" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">handshake y mensajes cifrados</text>
 </g>
 
 <g id="node4" class="node">
-<title>copias</title>
-<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M250.05,-96.6C250.05,-101.93 194.35,-106.26 125.78,-106.26 57.2,-106.26 1.5,-101.93 1.5,-96.6 1.5,-96.6 1.5,-9.66 1.5,-9.66 1.5,-4.33 57.2,0 125.78,0 194.35,0 250.05,-4.33 250.05,-9.66 250.05,-9.66 250.05,-96.6 250.05,-96.6" />
-<path fill="none" stroke="#b45309" stroke-width="1.6" d="M250.05,-96.6C250.05,-91.27 194.35,-86.94 125.78,-86.94 57.2,-86.94 1.5,-91.27 1.5,-96.6" />
-<text xml:space="preserve" text-anchor="start" x="62.03" y="-72.73" font-family="Noto Sans" font-weight="bold" font-size="12.00">Registros y respaldos</text>
-<text xml:space="preserve" text-anchor="start" x="15.9" y="-60.73" font-family="Noto Sans" font-size="12.00">Auditoría: IDs seudonimizados, 90 días</text>
-<text xml:space="preserve" text-anchor="start" x="59.78" y="-48.73" font-family="Noto Sans" font-size="12.00">Copias cifradas: 30 días</text>
-<text xml:space="preserve" text-anchor="start" x="38.4" y="-36.73" font-family="Noto Sans" font-size="12.00">Clave TOTP: respaldo separado</text>
-<text xml:space="preserve" text-anchor="start" x="35.03" y="-24.73" font-family="Noto Sans" font-size="12.00">Destino externo por comprobar</text>
+<title>base</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M249.3,-89.85C249.3,-94.35 193.43,-98.01 124.65,-98.01 55.87,-98.01 0,-94.35 0,-89.85 0,-89.85 0,-16.41 0,-16.41 0,-11.91 55.87,-8.25 124.65,-8.25 193.43,-8.25 249.3,-11.91 249.3,-16.41 249.3,-16.41 249.3,-89.85 249.3,-89.85" />
+<path fill="none" stroke="#b42318" stroke-width="1.6" d="M249.3,-89.85C249.3,-85.35 193.43,-81.69 124.65,-81.69 55.87,-81.69 0,-85.35 0,-89.85" />
+<text xml:space="preserve" text-anchor="start" x="50.4" y="-66.73" font-family="Noto Sans" font-weight="bold" font-size="12.00">PostgreSQL en Supabase</text>
+<text xml:space="preserve" text-anchor="start" x="38.4" y="-54.73" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas y aviso</text>
+<text xml:space="preserve" text-anchor="start" x="14.4" y="-42.73" font-family="Noto Sans" font-size="12.00">TOTP cifrado + hashes de recuperación</text>
+<text xml:space="preserve" text-anchor="start" x="26.77" y="-30.73" font-family="Noto Sans" font-size="12.00">Región del proyecto por confirmar</text>
 </g>
 
 <g id="edge3" class="edge">
+<title>ec2-&gt;base</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M265.45,-200.62C239.08,-173.18 204.06,-136.75 175.54,-107.08" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="262.58,-202.68 272.03,-207.46 267.62,-197.83 262.58,-202.68" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="178.44,-105.04 168.98,-100.25 173.39,-109.89 178.44,-105.04" />
+<text xml:space="preserve" text-anchor="middle" x="300.94" y="-163.31" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">PostgreSQL + TLS</text>
+<text xml:space="preserve" text-anchor="middle" x="300.94" y="-147.56" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">rol de mínimos permisos</text>
+</g>
+
+<g id="node5" class="node">
+<title>copias</title>
+<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M609.92,-96.6C609.92,-101.93 554.22,-106.26 485.65,-106.26 417.08,-106.26 361.38,-101.93 361.38,-96.6 361.38,-96.6 361.38,-9.66 361.38,-9.66 361.38,-4.33 417.08,0 485.65,0 554.22,0 609.92,-4.33 609.92,-9.66 609.92,-9.66 609.92,-96.6 609.92,-96.6" />
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M609.92,-96.6C609.92,-91.27 554.22,-86.94 485.65,-86.94 417.08,-86.94 361.38,-91.27 361.38,-96.6" />
+<text xml:space="preserve" text-anchor="start" x="421.9" y="-72.73" font-family="Noto Sans" font-weight="bold" font-size="12.00">Registros y respaldos</text>
+<text xml:space="preserve" text-anchor="start" x="375.77" y="-60.73" font-family="Noto Sans" font-size="12.00">Auditoría: IDs seudonimizados, 90 días</text>
+<text xml:space="preserve" text-anchor="start" x="419.65" y="-48.73" font-family="Noto Sans" font-size="12.00">Copias cifradas: 30 días</text>
+<text xml:space="preserve" text-anchor="start" x="398.27" y="-36.73" font-family="Noto Sans" font-size="12.00">Clave TOTP: respaldo separado</text>
+<text xml:space="preserve" text-anchor="start" x="394.9" y="-24.73" font-family="Noto Sans" font-size="12.00">Destino externo por comprobar</text>
+</g>
+
+<g id="edge4" class="edge">
 <title>ec2-&gt;copias</title>
-<path fill="none" stroke="#b45309" stroke-width="1.6" d="M125.78,-193.57C125.78,-171.95 125.78,-144.31 125.78,-119.35" />
-<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="129.28,-119.39 125.78,-109.39 122.28,-119.39 129.28,-119.39" />
-<text xml:space="preserve" text-anchor="middle" x="182.03" y="-147.56" font-family="Noto Sans" font-size="11.00" fill="#b45309">operación del servicio</text>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M338.84,-209.08C350.35,-198.01 363.18,-185.47 374.65,-173.76 392.8,-155.24 412.16,-134.67 429.54,-115.89" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="432.05,-118.33 436.26,-108.6 426.91,-113.58 432.05,-118.33" />
+<text xml:space="preserve" text-anchor="middle" x="456.2" y="-155.44" font-family="Noto Sans" font-size="11.00" fill="#b45309">auditoría del servicio</text>
+</g>
+
+<g id="edge5" class="edge">
+<title>base-&gt;copias</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M249.9,-53.13C281.68,-53.13 315.99,-53.13 348.33,-53.13" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="348.2,-56.63 358.2,-53.13 348.2,-49.63 348.2,-56.63" />
+<text xml:space="preserve" text-anchor="middle" x="305.34" y="-61.43" font-family="Noto Sans" font-size="11.00" fill="#b45309">copias cifradas</text>
 </g>
 </g>
 </svg></svg>

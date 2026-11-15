@@ -1,6 +1,6 @@
 # Política de privacidad
 
-**Versión:** 1.3
+**Versión:** 1.4
 **Vigente desde:** 2026-11-14
 
 Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
@@ -22,6 +22,8 @@ Es la ley peruana que protege tus datos personales: cualquier información que s
 ## Quién es responsable de tus datos
 
 El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
+
+El directorio se aloja en AWS EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase. La región de la base y el destino de las copias deben constar en el inventario de alojamiento del equipo.
 
 ## Los principios que seguimos
 

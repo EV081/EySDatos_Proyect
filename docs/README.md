@@ -288,7 +288,7 @@ El sistema protege el contenido, no el patrón de comunicación. Además:
 
 ### 5.7 Implementación lograda
 
-Todos los componentes de la sección 5.1 están implementados. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL en un contenedor dentro de la misma instancia; cada cliente cifra y descifra en su propio dispositivo.
+Todos los componentes de la sección 5.1 están implementados. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL alojado en Supabase; cada cliente cifra y descifra en su propio dispositivo.
 
 | Componente | Qué hace | Pruebas automáticas |
 |---|---|---|
@@ -316,7 +316,7 @@ Todos los componentes de la sección 5.1 están implementados. El sistema integr
 | Área | Qué se implementó | Dónde |
 |---|---|---|
 | Certificados | CA de 5 años con la llave cifrada; certificado de 90 días (se renueva a los 60); CRL de 30 días; revocación | [ops/certs](../ops/certs/README.md) |
-| Copias de seguridad | `pg_dump` con un rol de solo lectura, AES-256-GCM sin texto plano en disco, fuera del repositorio, rotación de 30 días y restauración probada. RPO 24 h, RTO 30 min | [ops/backup](../ops/backup/README.md) |
+| Copias de seguridad | `pg_dump` con rol de lectura y AES-256-GCM; subida a S3 con verificación y limpieza de 30 días. Ensayo de restauración local disponible; falta activar y comprobar la tarea diaria y la recuperación del despliegue real. RPO 24 h y RTO 30 min son objetivos | [ops/backup](../ops/backup/README.md) |
 | Registros y alertas | JSON con IDs seudonimizados, filtro de redacción, 90 días; alertas por acceso ajeno, firmas inválidas, enumeración y cambios de llave | [directory/README.md](../directory/README.md) |
 | Tarea diaria | Copia, purga de la base y retención de registros en un solo comando programable | `python -m ops.scheduled daily` |
 | Análisis de código | Bandit, Semgrep, pip-audit y npm audit con SBOM CycloneDX, y gitleaks, en CI; reportes antes y después | [ops/reports](../ops/reports/README.md) |
@@ -366,7 +366,7 @@ El sistema se hace en Perú y trata datos de personas identificables, así que a
 | Calidad | Plazos de conservación definidos; la persona puede corregir su llave |
 | Seguridad | E2EE, cifrado en reposo, accesos mínimos, auditoría y plan de incidentes |
 | Disposición de recurso | El aviso indica cómo ejercer derechos y reclamar ante la ANPD |
-| Nivel de protección adecuado | Discord recibe texto cifrado y metadatos; EC2 en `us-east-1` trata también los datos privados de MFA. El cifrado no sustituye la revisión de las garantías del alojamiento |
+| Nivel de protección adecuado | Discord recibe texto cifrado y metadatos; EC2 en `us-east-1` valida el MFA y Supabase conserva sus datos privados cifrados y el estado de autenticación. El cifrado no sustituye la revisión de las garantías del alojamiento |
 
 **Derechos.** El aviso informa y la app facilita acceso, rectificación, cancelación y oposición, más portabilidad (exportar la identidad). No hay decisiones automatizadas.
 
@@ -464,7 +464,7 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
 | **Institución académica** | Su nombre queda ligado al proyecto si hay brecha con datos reales | No usar datos de terceros hasta cerrar las condiciones de la DPIA |
 | **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
-| **Proveedor de alojamiento (AWS EC2)** | Un incidente suyo afecta al directorio | Revisar accesos, respaldos y condiciones del alojamiento en Estados Unidos (`us-east-1`) |
+| **Proveedores de alojamiento (AWS EC2 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de ambos proveedores, región del proyecto Supabase y destino de respaldos |
 
 ### 7.3 Puntos únicos de falla
 
@@ -474,7 +474,7 @@ Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es 
 * **El dispositivo desbloqueado** junta texto plano, claves de sesión y token de la API local (S4, S7, S11).
 * **El directorio** concentra la publicación de llaves y la validación del segundo factor. La huella limita la sustitución de llaves (S3), pero una caída también impide nuevos desbloqueos (S12).
 * **El autenticador y su recuperación** son necesarios para el acceso habitual. La clave `TOTP_ENCRYPTION_KEY` debe conservarse fuera de la instancia junto con un procedimiento para restaurarla sin publicarla.
-* **El directorio y PostgreSQL comparten la instancia EC2.** Una caída o compromiso del servidor puede afectar a ambos; separar procesos en contenedores no los independiza del servidor.
+* **El directorio depende de EC2 y de Supabase.** Una caída de cualquiera puede impedir la validación del segundo factor. Un compromiso de EC2 puede exponer las credenciales con las que se accede a la base de Supabase, aunque los servicios estén separados.
 * **Directorio y copias en el mismo servidor** convertirían una brecha en pérdida total; por eso las copias van cifradas y fuera.
 * **Un mismo operador para el servidor y el bot** vería metadatos y datos del directorio, pero nunca el contenido.
 

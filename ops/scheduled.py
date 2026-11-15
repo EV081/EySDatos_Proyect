@@ -19,7 +19,10 @@ def load_env(path: str | Path) -> None:
     for line in Path(path).read_text(encoding="utf-8").splitlines():
         key, sep, value = line.partition("=")
         if sep and not key.strip().startswith("#"):
-            os.environ.setdefault(key.strip(), value.strip())
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+                value = value[1:-1]
+            os.environ.setdefault(key.strip(), value)
 
 
 def daily() -> int:
@@ -31,6 +34,11 @@ def daily() -> int:
     try:
         path = backup.create(os.environ["BACKUP_DATABASE_URL"], backup.load_key(), Path(os.environ["BACKUP_DIR"]))
         summary["copia"] = path.name
+        bucket = os.environ.get("BACKUP_S3_BUCKET", "").strip()
+        if bucket:
+            uri, deleted = backup.sync_s3(path, bucket, os.environ.get("BACKUP_S3_PREFIX", "directory"))
+            summary["copia_remota"] = uri
+            summary["remotas_rotadas"] = deleted
         summary["copias_rotadas"] = len(backup.rotate(Path(os.environ["BACKUP_DIR"])))
     except Exception as exc:
         failures += 1

@@ -1,6 +1,6 @@
 # Ejecutar la aplicación en tu computadora
 
-Cada persona ejecuta su cliente y su frontend en su computadora. El directorio y PostgreSQL ya están en EC2, Virginia del Norte (`us-east-1`). Para preparar ese servidor está la [guía de EC2](despliegue-ec2.md).
+Cada persona ejecuta su cliente y su frontend en su computadora. El directorio está en EC2, Virginia del Norte (`us-east-1`), y PostgreSQL está en Supabase. Para preparar ese servidor está la [guía de EC2](despliegue-ec2.md).
 
 Los comandos siguientes se ejecutan desde la raíz del repositorio en Linux, macOS o WSL. Necesitas Git, Make, Python 3.12 y Node.js con npm (Next.js exige Node 20.9 o posterior). Instala también Microsoft Authenticator u otra app compatible con TOTP en tu celular.
 
