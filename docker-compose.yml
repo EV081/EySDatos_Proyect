@@ -1,6 +1,5 @@
 # Postgres del directorio de llaves (F1). En local el directorio corre con `make directory` en el host; ver directory/README.md.
-# Para un servidor: `docker compose --profile deploy up -d directory` levanta solo el directorio, con la base en Supabase
-# (docs/despliegue-ec2.md) o en el `db` de al lado (docs/despliegue-directorio.md).
+# Para un servidor: `docker compose --profile deploy up -d directory` levanta solo el directorio.
 # El puerto se publica solo en 127.0.0.1 y en 55432 para no chocar con un Postgres local.
 services:
   db:
@@ -32,6 +31,7 @@ services:
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?define DISCORD_CLIENT_SECRET en .env}
       DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?define DISCORD_REDIRECT_URI en .env}
       PSEUDONYM_KEY: ${PSEUDONYM_KEY:?define PSEUDONYM_KEY en .env}
+      TOTP_ENCRYPTION_KEY: ${TOTP_ENCRYPTION_KEY:?define TOTP_ENCRYPTION_KEY en .env}
       AUDIT_LOG_DIR: /var/log/directory
       ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
     ports:

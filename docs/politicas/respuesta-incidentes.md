@@ -1,17 +1,21 @@
 # Plan de respuesta a incidentes
 
-**Versión 1.1, 1 de noviembre de 2026** (1.0: 31 de octubre; la 1.1 agrega lo aprendido en INC-2026-01, anexo C). Cumple la restricción C-19 de la DPIA. Sigue la estructura de NIST SP 800-61 rev. 3 (2025), que integra la respuesta a incidentes en las funciones del CSF 2.0: **Gobernar, Identificar y Proteger** (preparación), **Detectar**, **Responder** y **Recuperar**, con mejora continua. Se ajusta a la Ley N.° 29733 y su reglamento (DS 016-2024-JUS): **notificar a la ANPD dentro de las 48 horas desde que se conoce la brecha** y avisar a las personas afectadas cuando el impacto es alto. Lo que sigue no es asesoría legal: el texto vigente se verifica antes de un uso real.
+**Versión 1.2, 14 de noviembre de 2026.** Actualiza el alcance al directorio desplegado en AWS EC2, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. La restricción C-19 de la DPIA queda pendiente de completar con el simulacro y la validación operativa.
+
+**Alcance.** Directorio en EC2 y PostgreSQL en un contenedor de la misma instancia, ubicada en Virginia del Norte, Estados Unidos (`us-east-1`); respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. El destino de las copias queda pendiente de confirmar en el inventario del alojamiento. No se incluyen IP, credenciales ni tokens en este documento.
+
+**Regla de notificación.** Se evalúan los supuestos de los artículos 34 a 36 del [reglamento de la Ley 29733, DS 016-2024-JUS](https://www.gob.pe/institucion/anpd/normas-legales/6554453-n-016-2024-jus). Se documenta todo incidente; no se presume que todos tengan las mismas obligaciones de comunicación. La sección 5 fija los criterios.
 
 ## 1. Gobernar: roles y contactos
 
 | Rol | Quién | Responsabilidad |
 |---|---|---|
-| Coordinador del incidente | Farid (suplente: Elmer) | Declara el incidente, asigna tareas, lleva la bitácora y decide la notificación |
-| Responsable técnico de criptografía y cliente | Elmer (suplente: Farid) | Evalúa el impacto en el protocolo, en el cliente y en las llaves de las personas |
-| Responsable técnico de infraestructura | Farid | Directorio, base de datos, TLS, copias, registros y bots |
+| Coordinación del incidente | Integrante de turno del equipo; el otro actúa como suplente | Declara el incidente, asigna tareas, lleva la bitácora y decide la notificación |
+| Responsable técnico de criptografía y cliente | Área de cliente y criptografía | Evalúa el impacto en el protocolo, en el cliente y en las llaves de las personas |
+| Responsable técnico de infraestructura | Área de infraestructura | Directorio, base de datos, TLS, copias, registros y bots |
 | Contacto con la ANPD y con las personas afectadas | El responsable del banco de datos (el equipo) | Envía las notificaciones y responde consultas |
 
-**Contactos:** ANPD (Autoridad Nacional de Protección de Datos Personales, Ministerio de Justicia y Derechos Humanos), por su mesa de partes virtual. Discord: Trust & Safety, para la revocación de bots o los abusos de la plataforma. El correo del equipo y el domicilio se completan antes de un uso real (pendiente en el aviso de privacidad).
+**Contactos:** ANPD (Autoridad Nacional de Protección de Datos Personales, Ministerio de Justicia y Derechos Humanos), por su mesa de partes virtual. Discord: Trust & Safety, para la revocación de bots o los abusos de la plataforma. Contactos del equipo: [elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe) y [farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe). Para AWS, usar el canal de soporte de la cuenta. El equipo administra PostgreSQL en el contenedor de la instancia EC2. Antes del simulacro, confirmar que ambos integrantes pueden acceder a esos canales desde un equipo seguro.
 
 ## 2. Identificar y Proteger: preparación
 
@@ -27,6 +31,9 @@ Lo que ya existe y que este plan usa:
 | Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6); GitGuardian revisa el repositorio público en GitHub |
 | Alerta de cambio de llave a los contactos | Cliente (RF8) |
 | Inventario de datos y riesgos | DPIA y secciones 6.4 y 7 del informe |
+| Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`), con PostgreSQL en un contenedor de la misma instancia. Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado; confirmar el destino de respaldos |
+
+**Validación del despliegue pendiente de registrar:** comprobar TLS, permisos IAM, acceso de administración restringido, programación de copias, restauración y retención. Los scripts y pruebas del repositorio no demuestran que estén configurados en EC2. La llave privada de la CA y la clave de los respaldos se custodian fuera de la instancia.
 
 ## 3. Detectar: fuentes y clasificación
 
@@ -41,17 +48,19 @@ Lo que ya existe y que este plan usa:
 | **Medio** | Hay un intento detectado sin exposición confirmada | Alerta de enumeración, `acceso_ajeno` aislado, dependencia vulnerable sin explotación conocida | Antes de 24 h |
 | **Bajo** | Hay una indisponibilidad sin exposición | S12 | Siguiente día hábil |
 
-**Reloj legal:** el plazo de 48 horas para la ANPD corre desde que el equipo **conoce** la brecha de datos personales, no desde que termina la investigación. La primera entrada de la bitácora registra la fecha y hora de ese momento (T0).
+**Referencias de escenarios:** S1 a S12 corresponden a la tabla 7.1 del informe.
+
+**Reloj legal:** cuando el incidente cumple los supuestos de notificación, el plazo máximo de 48 horas corre desde que el equipo **conoce o tiene constancia** del incidente, no desde que termina la investigación. La primera entrada de la bitácora registra la fecha y hora de ese momento (T0).
 
 ## 4. Responder
 
 ### 4.1 Pasos generales
 
 1. **Declarar** el incidente: abrir la bitácora (plantilla en el anexo A) con T0, quién lo detectó y la severidad inicial.
-2. **Preservar la evidencia antes de tocar nada:** copiar `logs/` y la última copia de seguridad a un medio aparte y calcular el SHA-256 de cada archivo. No borrar registros mientras dure el incidente (se suspende la purga de 90 días para esos archivos).
+2. **Preservar evidencia sin retrasar la contención urgente:** copiar registros y calcular SHA-256; guardar fecha, origen y custodio. En EC2, preservar el estado y los registros relevantes en un destino con acceso restringido y separado de la instancia afectada; crear una instantánea si corresponde. No copiar secretos a la bitácora pública ni borrar evidencia. Documentar el plazo excepcional de conservación y eliminarla al cerrar su finalidad.
 3. **Contener** según la guía del escenario (4.2).
 4. **Evaluar el impacto:** qué datos, de cuántas personas, desde cuándo, y si el riesgo para ellas es alto. Usar el inventario de la DPIA y las entidades afectadas de la sección 7.2 del informe.
-5. **Notificar** (sección 5) si hubo una brecha de datos personales.
+5. **Decidir y registrar las comunicaciones** de la sección 5 según los datos y derechos afectados, aunque todavía falte parte de la investigación.
 6. **Erradicar y recuperar** (sección 6).
 7. **Cerrar** con la revisión posterior (sección 7).
 
@@ -59,36 +68,46 @@ Lo que ya existe y que este plan usa:
 
 | Escenario | Contener | Erradicar y recuperar | ¿Notificar a la ANPD? |
 |---|---|---|---|
-| **S2 / S9: brecha de la base o de las copias** | Detener el directorio; cambiar las contraseñas de los roles de Postgres; revocar el acceso del atacante | Restaurar desde la última copia verificada en un servidor limpio (`backup restore`); rotar `BACKUP_KEY` y `PSEUDONYM_KEY`; revisar los registros por cambios de llave en la ventana del incidente | **Sí**: ID de Discord, llave y fechas son datos personales |
-| **S3: el directorio sustituye llaves** (alertas de `cambio_de_llave` no reconocidos o reportes de personas) | Detener el directorio; avisar por el canal del proyecto (fuera del directorio) que **nadie inicie conversaciones con contactos sin verificar** | Comparar las llaves con la última copia previa al incidente; restaurar las legítimas; pedir a las personas afectadas que repitan la verificación | **Sí**, si se confirma una sustitución |
-| **Fuga de `server.key` o de la llave de la CA** | Certificado: `pki revoke <serial>` + `pki issue`, y distribuir `crl.pem`. CA: detener el directorio | CA: crear una nueva (`pki init` en otra carpeta), distribuir el nuevo `ca.pem` por un canal confiable y revisar si hubo emisiones no autorizadas | Solo si se usó para interceptar datos |
-| **S6: fuga del token de un bot** | Developer Portal → *Reset Token*; quitar el bot del servidor si hay abuso | Actualizar `DISCORD_TOKEN`; revisar el canal por mensajes inyectados (el protocolo los rechaza) | En general no: solo hay texto cifrado y metadatos. Evaluar si se descargaron metadatos de muchas personas |
-| **Secreto publicado en el repositorio** (alerta de GitGuardian o de gitleaks) | Determinar qué protege el secreto y si se usa en otro lado; si protege algo real, rotarlo **antes** de tocar el repositorio | Sacar el secreto del código (variables de entorno, `secrets` de GitHub o generación por ejecución); agregar una regla de gitleaks si no lo detectó; no reescribir el historial publicado salvo que el secreto siga vigente y no se pueda rotar | No, salvo que el secreto diera acceso a datos personales. Ejemplo real: INC-2026-01 (anexo C) |
+| **EC2 o cuenta AWS comprometida** | Desde un equipo seguro, restringir la instancia mediante sus grupos de seguridad y revocar las credenciales de administración comprometidas. Aislar sin destruir evidencia | Revisar IAM, accesos, volúmenes y cambios de configuración; recrear la instancia desde una base limpia y restaurar una copia verificada. Revisar también el contenedor PostgreSQL, sus volúmenes persistentes y sus credenciales: comparte la instancia comprometida | Evaluar datos y derechos afectados con la sección 5; el alojamiento remoto no cambia los plazos |
+| **S2 / S9: brecha de la base o de las copias** | Detener el directorio; cambiar las contraseñas de los roles de Postgres; revocar el acceso del atacante | Restaurar desde la última copia verificada en un servidor limpio (`backup restore`); rotar `BACKUP_KEY` y `PSEUDONYM_KEY`; revisar los registros por cambios de llave en la ventana del incidente | Evaluar art. 34.1: ID, llave y fechas son datos personales; documentar volumen, sensibilidad y perjuicio |
+| **S3: el directorio sustituye llaves** (alertas de `cambio_de_llave` no reconocidos o reportes de personas) | Detener el directorio; avisar por el canal del proyecto (fuera del directorio) que **nadie inicie conversaciones con contactos sin verificar** | Comparar las llaves con la última copia previa al incidente; restaurar las legítimas; pedir a las personas afectadas que repitan la verificación | Evaluar art. 34.1 y avisar a las personas según 34.3 si afecta sus derechos |
+| **Fuga de `server.key` o de la llave de la CA** | Certificado: `pki revoke <serial>` + `pki issue`, y distribuir `crl.pem`. CA: detener el directorio | CA: crear una nueva (`pki init` en otra carpeta), distribuir el nuevo `ca.pem` por un canal confiable y revisar si hubo emisiones no autorizadas | Evaluar el acceso posible y los datos afectados; no esperar a demostrar cada lectura si ya se conoce el incidente |
+| **S6: fuga del token de un bot** | Developer Portal -> *Reset Token*; quitar el bot del servidor si hay abuso | Actualizar `DISCORD_TOKEN`; revisar el canal por mensajes inyectados (el protocolo los rechaza) | Evaluar también los metadatos personales: el cifrado del contenido no excluye la obligación de comunicar |
+| **Secreto publicado en el repositorio** (alerta de GitGuardian o de gitleaks) | Determinar qué protege el secreto y si se usa en otro lado; si protege algo real, rotarlo **antes** de tocar el repositorio | Sacar el secreto del código (variables de entorno, `secrets` de GitHub o generación por ejecución); agregar una regla de gitleaks si no lo detectó; no reescribir el historial publicado salvo que el secreto siga vigente y no se pueda rotar | Evaluar si el secreto daba acceso a datos personales y registrar el resultado, incluso si no corresponde notificación |
 | **Fuga del `.env`** (secretos del servidor) | Rotar **todo** lo del calendario de la política de uso seguro | Revisar el historial de git (gitleaks), los registros y los accesos a la base | Si hay indicios de acceso a la base, tratar como S2 |
-| **S5 / S4: la llave o el dispositivo de una persona** | La persona cancela su registro o publica una llave nueva desde otro dispositivo; sus contactos reciben la alerta | La persona crea una identidad nueva y repite las verificaciones | El dispositivo es de la persona: el equipo la asiste. Notificar si el origen fue una falla del sistema |
-| **S7 / S8: dependencia maliciosa o defecto del protocolo** | Retirar la versión afectada; avisar a las personas que bloqueen la aplicación hasta actualizar | Corregir, agregar una prueba que reproduzca el defecto, publicar una versión nueva y pedir rotar las sesiones (las sesiones viejas se descartan al rotar) | **Sí**, si pudo exponer contenido o llaves |
+| **S5 / S4: la llave o el dispositivo de una persona** | La persona cancela su registro o publica una llave nueva desde otro dispositivo; sus contactos reciben la alerta | La persona crea una identidad nueva y repite las verificaciones | Asistir a la persona; evaluar el tratamiento bajo responsabilidad del equipo y los criterios de la sección 5, sin descartar el incidente solo por ocurrir en un dispositivo personal |
+| **S7 / S8: dependencia maliciosa o defecto del protocolo** | Retirar la versión afectada; avisar a las personas que bloqueen la aplicación hasta actualizar | Corregir, agregar una prueba que reproduzca el defecto, publicar una versión nueva y pedir rotar las sesiones (las sesiones viejas se descartan al rotar) | Evaluar los datos, las personas y los derechos afectados conforme al art. 34 |
 | **Enumeración o `acceso_ajeno`** | Bajar los límites de solicitudes; bloquear el origen en el firewall si persiste | Revisar si algún intento tuvo éxito (cambios de llave en la ventana) | No, salvo que haya tenido éxito |
 
 ## 5. Notificación
 
-**A la ANPD, dentro de las 48 h desde T0:**
+### 5.1 Decisión y plazos
 
-* Descripción del incidente y fecha y hora de inicio, de detección (T0) y de contención.
-* Categorías y número aproximado de personas y de registros afectados (por ejemplo, "N IDs de Discord con su llave pública y fechas").
-* Consecuencias probables para las personas.
-* Medidas adoptadas y propuestas, incluidas las que reducen el daño.
-* Datos de contacto del responsable.
+| Destinatario | Cuándo corresponde | Plazo y evidencia |
+|---|---|---|
+| ANPD | Art. 34.1: exposición de grandes volúmenes por cantidad o tipo, gran número de personas, datos sensibles o perjuicio evidente a otros derechos o libertades | Máximo 48 horas desde conocimiento o constancia. Registrar envío y acuse; resolver internamente el incidente no elimina la obligación |
+| Personas afectadas | Art. 34.3: el incidente afecta a la persona en otros derechos | Dentro de las 48 horas, sin dilación indebida, en lenguaje claro. Evaluar la excepción del art. 34.4 si no hubo esa afectación y las medidas lo superaron totalmente |
+| Centro Nacional de Seguridad Digital (CNSD) | Art. 34.5: incidente de datos personales en o mediante el entorno digital | Incluir la comunicación en la respuesta junto con la de la ANPD; registrar el canal y el acuse |
+| Responsable del tratamiento | Art. 36: aviso del encargado cuando conoce un incidente | De forma inmediata; documentar cuándo informó el proveedor |
+| AWS o Discord | Cuando el incidente requiere contención o asistencia de su servicio | Abrir un caso por un canal de soporte verificado; conservar el identificador |
 
-Si a las 48 h todavía faltan datos, **se notifica igual** con lo que se sabe y se completa después. Notificar tarde es una infracción aparte.
+La coordinación deja por escrito la decisión de notificar o no, los hechos y el artículo aplicado. Todo incidente se documenta conforme al art. 35. No se espera al resultado final de la investigación para iniciar las comunicaciones obligatorias. Si una comunicación supera el plazo, se registran y comunican los motivos y el sustento de la demora.
 
-**A las personas afectadas, cuando el riesgo para ellas es alto** (por ejemplo, una sustitución de llaves o la exposición de contenido): en lenguaje claro, por un medio que no dependa del sistema afectado. El aviso dice qué pasó, qué datos se expusieron, qué hizo el equipo y **qué deben hacer** (verificar de nuevo a sus contactos, cambiar la contraseña maestra, crear una identidad nueva).
+### 5.2 Contenido y canal
 
-**A Discord**, si el incidente involucra el abuso de su plataforma o de los bots.
+La notificación incluye:
+
+* Naturaleza del incidente, fecha y hora del conocimiento (T0), categorías de datos y número aproximado de personas afectadas.
+* Consecuencias probables y medidas adoptadas o propuestas para reducir el daño.
+* Contactos del equipo: elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
+* Información todavía desconocida y cómo se completará, sin inventar cantidades ni afirmar que el cifrado elimina todo riesgo.
+
+Se usa el canal oficial vigente de la ANPD y del CNSD, verificado al enviar, y se guarda el acuse. A las personas se les escribe por un medio que no dependa del componente comprometido: qué pasó, qué datos afecta y qué deben hacer (bloquear la aplicación, renovar credenciales o verificar de nuevo sus contactos). No incluir llaves, tokens ni datos de terceros en mensajes públicos.
 
 ## 6. Recuperar
 
-* Restaurar el servicio desde un estado limpio: copia verificada (`backup verify`), secretos rotados y certificado nuevo.
-* Confirmar que el servicio funciona: la CI en verde, `discord_adapter.check` y `discord_adapter.smoke` sin problemas, y una consulta de llave por HTTPS con la CA nueva.
+* En EC2, reconstruir desde una base limpia, revisar IAM y grupos de seguridad y recrear el contenedor PostgreSQL con un volumen verificado. La recuperación debe comprobar tanto el directorio como la base, porque comparten la instancia. Restaurar el servicio desde un estado limpio: copia verificada (`backup verify`), secretos rotados y certificado nuevo.
+* Confirmar que el servicio funciona: la CI en verde, `discord_adapter.check` y `discord_adapter.smoke` sin problemas, y una consulta de llave por HTTPS con la CA vigente, renovada si se comprometió.
 * Vigilar con más atención (revisar las alertas cada hora) durante 7 días.
 * La cancelación que pidió una persona afectada se aplica también a las copias, a más tardar en 30 días (rotación).
 
@@ -119,8 +138,10 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 | Evidencia preservada (archivo y SHA-256) | |
 | Acciones de contención (hora y quién) | |
 | ¿Brecha de datos personales? ¿Cuántas personas? | |
-| Notificación a la ANPD (hora y medio) | Límite: T0 + 48 h |
-| Aviso a las personas afectadas (hora y medio) | |
+| Decisión ANPD: supuesto del art. 34.1, hora, medio y acuse | Si corresponde: límite T0 + 48 h |
+| Comunicación CNSD: hora, medio y acuse | Evaluar art. 34.5 |
+| Aviso a las personas: criterio, hora, medio y acuse | Evaluar arts. 34.3 y 34.4 |
+| Recursos de EC2, base y respaldos afectados | Identificadores en registro privado, sin credenciales |
 | Recuperación confirmada (hora) | |
 | Revisión posterior (fecha y enlace) | |
 
@@ -145,7 +166,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 | Contención y erradicación | 18:54, commit `f91eb27`: la CI genera tres contraseñas aleatorias por ejecución (`openssl rand`), las enmascara en los registros (`::add-mask::`) y levanta Postgres en un paso en lugar de como servicio |
 | Notificación a la ANPD | No corresponde (sin datos personales) |
 | Recuperación confirmada | Run 41364404833 de la CI: las pruebas pasan con las contraseñas aleatorias; gitleaks sin hallazgos |
-| Cierre en GitGuardian | *Resolve → Secret revoked* |
+| Cierre en GitGuardian | *Resolve -> Secret revoked* |
 
 **Revisión posterior.**
 
@@ -156,8 +177,13 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 | Acción | Responsable | Estado |
 |---|---|---|
-| Contraseñas aleatorias por ejecución en la CI | Farid | ✔ `f91eb27` |
-| Regla `password-en-configuracion` en `.gitleaks.toml`, probada con un canario (detecta valores fijos; ignora vacíos, `${{ secrets.* }}` y `${VAR}`) | Farid | ✔ `f91eb27` |
-| Registrar el hallazgo en la clasificación de `ops/reports/README.md` | Farid | ✔ |
-| Política 2.2: ni siquiera las credenciales de prueba o de CI se escriben en archivos versionados | Farid | ✔ versión 1.1 |
-| No reescribir el historial: el valor ya no protege nada y la rama es compartida | Ambos | Decidido |
+| Contraseñas aleatorias por ejecución en la CI | Operaciones | Completado `f91eb27` |
+| Regla `password-en-configuracion` en `.gitleaks.toml`, probada con un canario (detecta valores fijos; ignora vacíos, `${{ secrets.* }}` y `${VAR}`) | Operaciones | Completado `f91eb27` |
+| Registrar el hallazgo en la clasificación de `ops/reports/README.md` | Operaciones | Completado |
+| Política 2.2: ni siquiera las credenciales de prueba o de CI se escriben en archivos versionados | Operaciones | Completado versión 1.1 |
+| No reescribir el historial: el valor ya no protege nada y la rama es compartida | Equipo | Decidido |
+
+## Referencias
+
+* Autoridad Nacional de Protección de Datos Personales. (2024). [Decreto Supremo N.° 016-2024-JUS, reglamento de la Ley 29733](https://www.gob.pe/institucion/anpd/normas-legales/6554453-n-016-2024-jus), arts. 34 a 36.
+* NIST. (2025). *Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile* (SP 800-61 Rev. 3). https://doi.org/10.6028/NIST.SP.800-61r3

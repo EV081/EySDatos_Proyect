@@ -52,6 +52,7 @@ export interface DirectoryRecord {
   key_changed_at: string | null;
   consent_version: string;
   consent_at: string | null;
+  mfa?: { enabled: boolean; recovery_codes_remaining: number; created_at: string } | null;
   replaced_keys: { public_key: string; replaced_at: string | null; delete_after: string | null }[];
 }
 

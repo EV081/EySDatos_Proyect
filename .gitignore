@@ -230,3 +230,10 @@ ops/certs/private/
 data/
 backups/
 logs/
+
+# Despliegue y pruebas remotas (no forman parte de la entrega)
+docs/despliegue-*.md
+docs/prueba-remota-*.md
+render.yaml
+docs/github.txt
+docs/img/excalidraw/

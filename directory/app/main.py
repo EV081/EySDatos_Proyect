@@ -3,8 +3,8 @@
 Arranque: `uvicorn --factory directory.app.main:create_app_from_env --host 127.0.0.1 --port 8000`.
 
 Publicar, cambiar o cancelar una llave exige dos cosas a la vez:
-* **OAuth2 con Discord** (`/auth/login`): demuestra que quien publica controla ese ID. El directorio emite un
-  token de registro de 10 minutos, de un solo uso y ligado a ese ID; solo el dueño modifica su registro.
+* **OAuth2 con Discord** (`/auth/login`) y **TOTP** (`/auth/mfa/verify`): control del ID y del autenticador.
+  Solo tras ambos pasos se emite un token de registro de 10 minutos, de un solo uso y ligado a ese ID.
 * **Prueba de posesión**: firma `verify_registration` sobre un nonce de un solo uso entregado por `/v1/challenge`.
 """
 import contextlib
@@ -12,10 +12,12 @@ import html
 import logging
 import secrets
 from datetime import timedelta
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 from fastapi import Depends, FastAPI, Header, Path, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.concurrency import run_in_threadpool
 
 from crypto import SignatureError, verify_key_change, verify_registration
 
@@ -23,6 +25,8 @@ from . import errors
 from .audit import AlertMonitor, Audit, setup_logging
 from .config import Settings
 from .errors import ApiError
+from .mfa import Authenticator
+from . import mfa_pages
 from .oauth import DiscordOAuth, OAuthError
 from .ratelimit import RateLimiter
 from .repo import REPLACED_KEY_RETENTION_DAYS, Repo
@@ -48,6 +52,9 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
     limiter = limiter or RateLimiter()
     oauth = DiscordOAuth(settings.discord_client_id, settings.discord_client_secret,
                          settings.discord_redirect_uri, http)
+    authenticator = Authenticator(settings.totp_encryption_key)
+    secure_cookie = urlsplit(settings.discord_redirect_uri).scheme == "https"
+    cookie_name = "__Secure-directory_mfa" if secure_cookie else "directory_mfa"
     audit = Audit(settings.pseudonymizer.pseudonym, monitor or AlertMonitor(webhook_url=settings.alert_webhook_url))
 
     @contextlib.asynccontextmanager
@@ -116,12 +123,51 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
         except OAuthError:
             logging.getLogger(__name__).warning("oauth callback failed: discord did not confirm account")
             return _page("No se pudo iniciar sesión", "Discord no confirmó la cuenta. Vuelve a intentarlo.", 400)
+        session, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+        ciphertext, enrolling = repo.start_mfa(discord_id, session.encode("ascii"), csrf.encode("ascii"),
+                                              authenticator.new_secret())
+        page = mfa_pages.verification(csrf, authenticator, discord_id, ciphertext if enrolling else None)
+        page.set_cookie(cookie_name, session, max_age=300, httponly=True, secure=secure_cookie,
+                        samesite="strict", path="/auth/mfa")
+        return page
+
+    @app.post("/auth/mfa/verify", dependencies=[limit("mfa", settings.write_limit)])
+    async def verify_mfa(request: Request):
+        # Formulario pequeño, sin multipart ni secretos en la URL. El token CSRF está ligado a la cookie.
+        if request.headers.get("content-type", "").split(";")[0] != "application/x-www-form-urlencoded":
+            raise ApiError(400)
+        body = bytearray()
+        async for chunk in request.stream():
+            body.extend(chunk)
+            if len(body) > 1024:
+                raise ApiError(400)
+        try:
+            form = parse_qs(body.decode("ascii"), max_num_fields=2, strict_parsing=True)
+            csrf, code = form["csrf"][0], form["code"][0].strip()
+            session = request.cookies.get(cookie_name, "")
+            if len(csrf) != 43 or len(session) != 43 or len(code) > 35:
+                raise ValueError
+            csrf_bytes, session_bytes = csrf.encode("ascii"), session.encode("ascii")
+        except (UnicodeError, ValueError, KeyError):
+            raise ApiError(400) from None
         token = secrets.token_bytes(TOKEN_LEN)
-        repo.create_token(token, discord_id, settings.token_ttl)
+        result = await run_in_threadpool(repo.verify_mfa, session_bytes, csrf_bytes, code,
+                                         authenticator, token, settings.token_ttl)
+        if result is None:
+            audit.event("mfa_rechazado", logging.WARNING)
+            return mfa_pages.verification(csrf, authenticator, error=True)
+        discord_id, recovery_codes, reset_secret = result
+        if reset_secret:
+            audit.event("mfa_recuperacion", ids={"id": discord_id})
+            page = mfa_pages.verification(csrf, authenticator, discord_id, reset_secret)
+            page.set_cookie(cookie_name, session, max_age=300, httponly=True, secure=secure_cookie,
+                            samesite="strict", path="/auth/mfa")
+            return page
         audit.event("login", ids={"id": discord_id})
-        return _page("Token de registro",
-                     "Pégalo en tu cliente. Vale 10 minutos y una sola publicación. No lo compartas.",
-                     200, token=b64e(token))
+        page = mfa_pages.success(b64e(token), recovery_codes)
+        page.delete_cookie(cookie_name, path="/auth/mfa", secure=secure_cookie,
+                           httponly=True, samesite="strict")
+        return page
 
     # --- llaves -----------------------------------------------------------------------
 
@@ -184,6 +230,7 @@ def create_app(settings: Settings, repo: Repo | None = None, http: httpx.Client 
             "discord_id": discord_id, "public_key": b64e(record["public_key"]),
             "registered_at": _iso(record["registered_at"]), "key_changed_at": _iso(record["key_changed_at"]),
             "consent_version": record["consent_version"], "consent_at": _iso(record["consent_at"]),
+            "mfa": repo.mfa_status(discord_id),
             "replaced_keys": [{"public_key": b64e(k["public_key"]), "replaced_at": _iso(k["replaced_at"]),
                                "delete_after": _iso(k["replaced_at"] + retention)}
                               for k in repo.replaced_keys(discord_id)],

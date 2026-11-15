@@ -2,12 +2,16 @@
 en cada ejecución. Si no hay Postgres, se saltan. OAuth2 de Discord se simula con httpx.MockTransport."""
 import os
 import re
+import time
 from pathlib import Path
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlsplit, urlunsplit
 
 import httpx
 import psycopg
 import pytest
+import pyotp
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from psycopg import sql
 
@@ -15,6 +19,7 @@ from crypto import Identity, Pseudonymizer, sign_registration
 from crypto.pseudonym import generate_key
 from directory.app.config import Settings
 from directory.app.main import create_app
+from directory.app.mfa import Authenticator
 from directory.app.repo import Repo
 from directory.app.schemas import b64e
 from directory.migrations.apply import apply
@@ -22,7 +27,7 @@ from directory.migrations.apply import apply
 ALICE, BOB, MALLORY = "111111111111111111", "222222222222222222", "333333333333333333"
 CONSENT = "1.0"
 TEST_DB = "directory_test"
-TABLES = ("challenges", "auth_tokens", "oauth_states", "replaced_keys", "keys")
+TABLES = ("mfa_sessions", "mfa_accounts", "challenges", "auth_tokens", "oauth_states", "replaced_keys", "keys")
 
 
 def _env(name: str) -> str | None:
@@ -116,7 +121,8 @@ def discord():
 def settings(urls):
     return Settings(database_url=urls["app"], discord_client_id="cid", discord_client_secret="secret",
                     discord_redirect_uri="http://127.0.0.1:8000/auth/callback",
-                    pseudonymizer=Pseudonymizer(generate_key()), write_limit=1000, lookup_limit=1000)
+                    pseudonymizer=Pseudonymizer(generate_key()), totp_encryption_key=Fernet.generate_key(),
+                    write_limit=1000, lookup_limit=1000)
 
 
 @pytest.fixture
@@ -124,6 +130,8 @@ def make_api(settings, repo, discord):
     def build(**overrides) -> TestClient:
         s = Settings(**{**settings.__dict__, **overrides})
         app = create_app(s, repo=repo, http=httpx.Client(transport=httpx.MockTransport(discord)))
+        app.state.test_authenticator = Authenticator(s.totp_encryption_key)
+        app.state.test_repo = repo
         return TestClient(app, raise_server_exceptions=False, follow_redirects=False)
     return build
 
@@ -134,11 +142,20 @@ def api(make_api):
 
 
 def login(api: TestClient, discord_id: str) -> str:
-    """Recorre /auth/login y /auth/callback como lo haría el navegador; devuelve el token de registro."""
+    """OAuth y TOTP completo. Avanza el reloj TOTP simulado para no reutilizar códigos entre logins."""
     redirect = api.get("/auth/login")
     assert redirect.status_code == 302
     state = parse_qs(urlsplit(redirect.headers["location"]).query)["state"][0]
     page = api.get("/auth/callback", params={"code": f"code-{discord_id}", "state": state})
+    assert page.status_code == 200, page.text
+    csrf = re.search(r'name="csrf" value="([A-Za-z0-9_-]+)"', page.text).group(1)
+    with api.app.state.test_repo._pool.connection() as conn:
+        ciphertext, last_step = conn.execute("SELECT encrypted_secret, last_step FROM mfa_accounts "
+                                             "WHERE discord_id = %s", (discord_id,)).fetchone()
+    now = max(time.time(), (last_step + 1) * 30 + 1)
+    secret = api.app.state.test_authenticator.secret(ciphertext)
+    with patch("directory.app.mfa.time", return_value=now):
+        page = api.post("/auth/mfa/verify", data={"csrf": csrf, "code": pyotp.TOTP(secret).at(now)})
     assert page.status_code == 200, page.text
     return re.search(r"<pre[^>]*>([A-Za-z0-9_-]+)</pre>", page.text).group(1)
 

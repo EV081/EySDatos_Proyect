@@ -14,7 +14,7 @@ interface Props {
 
 type Action = 'rotate' | 'cancel' | 'wipe';
 
-const LOGIN_HINT = 'Si usas el directorio real, antes inicia sesión con Discord (python -m directory.client_lib.login): vale 10 minutos.';
+const LOGIN_HINT = 'Si usas el directorio real, antes completa Discord y Microsoft Authenticator (python -m directory.client_lib.login): el token vale 10 minutos.';
 
 /** Derechos ARCO: acceso, rectificación, cancelación/oposición y borrado de los datos de este dispositivo. */
 export function PrivacyDialog({ api, open, onClose, onStatus }: Props) {
@@ -110,6 +110,10 @@ export function PrivacyDialog({ api, open, onClose, onStatus }: Props) {
                 <dt>Registrado</dt><dd>{formatDate(dir.registered_at)}</dd>
                 <dt>Último cambio de llave</dt><dd>{formatDate(dir.key_changed_at)}</dd>
                 <dt>Aviso aceptado</dt><dd>Versión {dir.consent_version}, el {formatDate(dir.consent_at)}</dd>
+                {dir.mfa && <>
+                  <dt>Microsoft Authenticator</dt><dd>{dir.mfa.enabled ? 'Activado' : 'Pendiente de confirmar'}</dd>
+                  <dt>Códigos de recuperación</dt><dd>{dir.mfa.recovery_codes_remaining} disponibles</dd>
+                </>}
                 <dt>Llaves anteriores</dt>
                 <dd>
                   {dir.replaced_keys.length === 0

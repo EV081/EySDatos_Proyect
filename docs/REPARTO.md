@@ -26,7 +26,7 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 | E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | ✔ (falta completar domicilio y correo del equipo antes de un uso real) |
 | E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | ✔ (16 pruebas) |
 | E8 | Riesgos de una brecha y entidades afectadas (informe, sección 7) y recomendaciones futuras (sección 8) | ✔ |
-| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer) | ○ |
+| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer; informe, sección 9) | ◐ borrador, falta que Elmer lo ajuste |
 
 ### Farid — Directorio, Discord, operaciones y herramientas
 

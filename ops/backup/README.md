@@ -18,9 +18,13 @@ python -m ops.backup.backup restore D:/e2ee-backups/directory-20261031T225559Z.d
 | Fuera del servidor | `BACKUP_DIR` en otro disco o recurso de red; el script se niega a escribir dentro del repositorio | `test_destino_dentro_del_repositorio_se_rechaza` |
 | Restauración probada | `verify` restaura en una base aparte y compara; además, la restauración real deja la app funcionando con sus permisos mínimos | `test_C12_restauracion_probada`, `test_C12_restaurar_recupera_el_servicio_tras_perder_datos` |
 | Rotación de 30 días | Se borran las copias de más de 30 días: una cancelación (C-11) desaparece de las copias en ese plazo | `test_C10_rotacion_de_30_dias` |
-| Minimización | No se copian los datos efímeros (state de OAuth2, tokens, nonces) | `test_no_se_copian_datos_efimeros` |
+| Minimización | No se copian los datos efímeros (state de OAuth2, tokens, nonces y sesiones MFA) | `test_no_se_copian_datos_efimeros` |
 
 **Custodia de `BACKUP_KEY`:** se guarda fuera del servidor del directorio (gestor de contraseñas del responsable). Una copia sin su clave no sirve, y la clave sin las copias tampoco. Si la clave se filtra: generar una nueva, hacer una copia nueva y borrar las anteriores (ver el plan de incidentes).
+
+Las copias incluyen el secreto TOTP ya cifrado y los hashes de recuperación. Para recuperar el servicio
+también hace falta la misma `TOTP_ENCRYPTION_KEY`, custodiada por separado del respaldo. Las sesiones
+MFA pendientes no se restauran: la persona debe iniciar de nuevo el flujo de Discord.
 
 ## Objetivos
 

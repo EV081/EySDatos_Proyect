@@ -24,7 +24,8 @@ def dest(tmp_path_factory):
 @pytest.fixture
 def seeded(database):
     with psycopg.connect(database["admin"], autocommit=True) as conn:
-        conn.execute("TRUNCATE directory.keys, directory.replaced_keys, directory.auth_tokens CASCADE")
+        conn.execute("TRUNCATE directory.keys, directory.replaced_keys, directory.auth_tokens, "
+                     "directory.mfa_accounts CASCADE")
         for uid in (ALICE, BOB):
             conn.execute("INSERT INTO directory.keys (discord_id, public_key, consent_version) VALUES (%s, %s, '1.0')",
                          (uid, os.urandom(32)))
@@ -32,6 +33,12 @@ def seeded(database):
                      (ALICE, os.urandom(32)))
         conn.execute("INSERT INTO directory.auth_tokens (token_hash, discord_id, expires_at) "
                      "VALUES (%s, %s, now() + interval '1 hour')", (os.urandom(32), ALICE))
+        conn.execute("INSERT INTO directory.mfa_accounts (discord_id, encrypted_secret, enabled) "
+                     "VALUES (%s, %s, true)", (ALICE, "encrypted-test-factor"))
+        conn.execute("INSERT INTO directory.mfa_sessions "
+                     "(session_hash, csrf_hash, discord_id, enrolling, expires_at) "
+                     "VALUES (%s, %s, %s, false, now() + interval '5 minutes')",
+                     (os.urandom(32), os.urandom(32), ALICE))
     return database
 
 
@@ -64,6 +71,9 @@ def test_no_se_copian_datos_efimeros(seeded, key, dest):
     backup.restore(path, key, seeded["admin"])
     with psycopg.connect(seeded["admin"]) as conn:
         assert conn.execute("SELECT count(*) FROM directory.auth_tokens").fetchone()[0] == 0
+        assert conn.execute("SELECT count(*) FROM directory.mfa_sessions").fetchone()[0] == 0
+        assert conn.execute("SELECT encrypted_secret, enabled FROM directory.mfa_accounts").fetchone() == (
+            "encrypted-test-factor", True)
 
 
 def test_copia_alterada_o_clave_incorrecta_se_rechaza(seeded, key, dest):

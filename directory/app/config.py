@@ -2,6 +2,8 @@
 import os
 from dataclasses import dataclass
 
+from cryptography.fernet import Fernet
+
 from crypto import Pseudonymizer
 
 
@@ -12,6 +14,7 @@ class Settings:
     discord_client_secret: str
     discord_redirect_uri: str
     pseudonymizer: Pseudonymizer
+    totp_encryption_key: bytes
     token_ttl: int = 600       # token de registro emitido tras OAuth2: 10 min, un solo uso
     challenge_ttl: int = 120   # nonce de la prueba de posesión
     oauth_state_ttl: int = 600
@@ -22,12 +25,15 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
+        totp_key = os.environ["TOTP_ENCRYPTION_KEY"].encode("ascii")
+        Fernet(totp_key)  # Fallar al arrancar si falta o es inválida; nunca omitir el segundo factor.
         return cls(
             database_url=os.environ["DATABASE_URL"],
             discord_client_id=os.environ["DISCORD_CLIENT_ID"],
             discord_client_secret=os.environ["DISCORD_CLIENT_SECRET"],
             discord_redirect_uri=os.environ["DISCORD_REDIRECT_URI"],
             pseudonymizer=Pseudonymizer.from_env("PSEUDONYM_KEY"),
+            totp_encryption_key=totp_key,
             audit_log_dir=os.environ.get("AUDIT_LOG_DIR", "logs"),
             alert_webhook_url=os.environ.get("ALERT_WEBHOOK_URL") or None,
         )

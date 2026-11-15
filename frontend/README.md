@@ -34,7 +34,7 @@ make frontend                                    # http://127.0.0.1:5173
 # abrir: http://127.0.0.1:5173/?api=http://127.0.0.1:8001&token=<CLIENT_API_TOKEN>
 ```
 
-El frontend no cambia con Discord: sigue mostrando el texto plano que le entrega el cliente. En `#e2ee-relay` solo se ven `hs1`, `hs2`, `hs3` (llaves públicas y firmas) y luego `E2EE1:…` ilegible (AES-256-GCM en base64url). La dirección del cliente solo puede ser `127.0.0.1`/`localhost` (ver `lib/conn.ts`), aunque el directorio esté desplegado en otro servidor ([despliegue](../docs/despliegue-directorio.md)).
+El frontend no cambia con Discord: sigue mostrando el texto plano que le entrega el cliente. En `#e2ee-relay` solo se ven `hs1`, `hs2`, `hs3` (llaves públicas y firmas) y luego `E2EE1:…` ilegible (AES-256-GCM en base64url). La dirección del cliente solo puede ser `127.0.0.1`/`localhost` (ver `lib/conn.ts`), aunque el directorio esté desplegado en otro servidor.
 
 ## Pruebas
 

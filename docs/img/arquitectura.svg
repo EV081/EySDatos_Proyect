@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 866.00 359.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 337.14)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-337.14 844.75,-337.14 844.75,21.6 -21.6,21.6" />
+<g id="clust1" class="cluster">
+<title>cluster_local</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" stroke-dasharray="5,2" d="M20,-191.53C20,-191.53 719,-191.53 719,-191.53 725,-191.53 731,-197.53 731,-203.53 731,-203.53 731,-295.54 731,-295.54 731,-301.54 725,-307.54 719,-307.54 719,-307.54 20,-307.54 20,-307.54 14,-307.54 8,-301.54 8,-295.54 8,-295.54 8,-203.53 8,-203.53 8,-197.53 14,-191.53 20,-191.53" />
+<text xml:space="preserve" text-anchor="start" x="16" y="-292.19" font-family="Noto Sans" font-weight="bold" font-size="13.00" fill="#0f7b55">Tu dispositivo (confiable)</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_remoto</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" stroke-dasharray="5,2" d="M41,-8C41,-8 477,-8 477,-8 483,-8 489,-14 489,-20 489,-20 489,-92.03 489,-92.03 489,-98.03 483,-104.03 477,-104.03 477,-104.03 41,-104.03 41,-104.03 35,-104.03 29,-98.03 29,-92.03 29,-92.03 29,-20 29,-20 29,-14 35,-8 41,-8" />
+<text xml:space="preserve" text-anchor="start" x="37" y="-19.4" font-family="Noto Sans" font-weight="bold" font-size="13.00" fill="#b42318">Servicios remotos (no confiables)</text>
+</g>
+
+<g id="node1" class="node">
+<title>front</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M160.15,-256.8C160.15,-256.8 27.85,-256.8 27.85,-256.8 21.85,-256.8 15.85,-250.8 15.85,-244.8 15.85,-244.8 15.85,-227.52 15.85,-227.52 15.85,-221.52 21.85,-215.52 27.85,-215.52 27.85,-215.52 160.15,-215.52 160.15,-215.52 166.15,-215.52 172.15,-221.52 172.15,-227.52 172.15,-227.52 172.15,-244.8 172.15,-244.8 172.15,-250.8 166.15,-256.8 160.15,-256.8" />
+<text xml:space="preserve" text-anchor="start" x="66.62" y="-237.76" font-family="Noto Sans" font-weight="bold" font-size="12.00">Frontend</text>
+<text xml:space="preserve" text-anchor="start" x="30.25" y="-225.76" font-family="Noto Sans" font-size="12.00">muestra el texto plano</text>
+</g>
+
+<g id="node2" class="node">
+<title>cli</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M469.15,-262.8C469.15,-262.8 270.85,-262.8 270.85,-262.8 264.85,-262.8 258.85,-256.8 258.85,-250.8 258.85,-250.8 258.85,-221.52 258.85,-221.52 258.85,-215.52 264.85,-209.52 270.85,-209.52 270.85,-209.52 469.15,-209.52 469.15,-209.52 475.15,-209.52 481.15,-215.52 481.15,-221.52 481.15,-221.52 481.15,-250.8 481.15,-250.8 481.15,-256.8 475.15,-262.8 469.15,-262.8" />
+<text xml:space="preserve" text-anchor="start" x="332.88" y="-243.76" font-family="Noto Sans" font-weight="bold" font-size="12.00">Cliente local</text>
+<text xml:space="preserve" text-anchor="start" x="293.88" y="-231.76" font-family="Noto Sans" font-size="12.00">llaves, cifrado y handshake</text>
+<text xml:space="preserve" text-anchor="start" x="273.25" y="-219.76" font-family="Noto Sans" font-size="12.00">(texto plano solo en el dispositivo)</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>front-&gt;cli</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M185.12,-236.16C204.58,-236.16 225.45,-236.16 245.91,-236.16" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="185.14,-232.66 175.14,-236.16 185.14,-239.66 185.14,-232.66" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="245.82,-239.66 255.82,-236.16 245.82,-232.66 245.82,-239.66" />
+<text xml:space="preserve" text-anchor="middle" x="215.5" y="-260.21" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">API local</text>
+<text xml:space="preserve" text-anchor="middle" x="215.5" y="-244.46" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">(127.0.0.1)</text>
+</g>
+
+<g id="node3" class="node">
+<title>boveda</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M722.9,-266.13C722.9,-269.8 684.85,-272.79 638,-272.79 591.15,-272.79 553.1,-269.8 553.1,-266.13 553.1,-266.13 553.1,-206.19 553.1,-206.19 553.1,-202.52 591.15,-199.53 638,-199.53 684.85,-199.53 722.9,-202.52 722.9,-206.19 722.9,-206.19 722.9,-266.13 722.9,-266.13" />
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M722.9,-266.13C722.9,-262.46 684.85,-259.47 638,-259.47 591.15,-259.47 553.1,-262.46 553.1,-266.13" />
+<text xml:space="preserve" text-anchor="start" x="593" y="-243.76" font-family="Noto Sans" font-weight="bold" font-size="12.00">Bóveda cifrada</text>
+<text xml:space="preserve" text-anchor="start" x="572.75" y="-231.76" font-family="Noto Sans" font-size="12.00">llave privada + historial</text>
+<text xml:space="preserve" text-anchor="start" x="567.5" y="-219.76" font-family="Noto Sans" font-size="12.00">Argon2id + AES-256-GCM</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>cli-&gt;boveda</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M481.75,-236.16C501.3,-236.16 520.84,-236.16 540.38,-236.16" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="540.13,-239.66 550.13,-236.16 540.13,-232.66 540.13,-239.66" />
+</g>
+
+<g id="node4" class="node">
+<title>dir</title>
+<path fill="white" stroke="#b42318" stroke-width="1.6" d="M210.78,-96.03C210.78,-96.03 49.22,-96.03 49.22,-96.03 43.22,-96.03 37.22,-90.03 37.22,-84.03 37.22,-84.03 37.22,-54.75 37.22,-54.75 37.22,-48.75 43.22,-42.75 49.22,-42.75 49.22,-42.75 210.78,-42.75 210.78,-42.75 216.78,-42.75 222.78,-48.75 222.78,-54.75 222.78,-54.75 222.78,-84.03 222.78,-84.03 222.78,-90.03 216.78,-96.03 210.78,-96.03" />
+<text xml:space="preserve" text-anchor="start" x="71.5" y="-76.99" font-family="Noto Sans" font-weight="bold" font-size="12.00">Directorio de llaves</text>
+<text xml:space="preserve" text-anchor="start" x="51.62" y="-64.99" font-family="Noto Sans" font-size="12.00">ID de Discord / llave pública</text>
+<text xml:space="preserve" text-anchor="start" x="74.88" y="-52.99" font-family="Noto Sans" font-size="12.00">solo datos públicos</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>cli-&gt;dir</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M289.45,-203.77C265.58,-192.74 240.07,-179.14 218.5,-163.53 196.03,-147.27 174.51,-124.84 158.32,-106.06" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="287.89,-206.91 298.44,-207.83 290.76,-200.52 287.89,-206.91" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="161.05,-103.87 151.92,-98.48 155.7,-108.38 161.05,-103.87" />
+<text xml:space="preserve" text-anchor="middle" x="289.75" y="-153.08" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">TLS 1.3 + CA propia</text>
+<text xml:space="preserve" text-anchor="middle" x="289.75" y="-137.33" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">registro y consulta de llaves</text>
+</g>
+
+<g id="node5" class="node">
+<title>dis</title>
+<path fill="white" stroke="#b42318" stroke-width="1.6" d="M469.15,-96.03C469.15,-96.03 270.85,-96.03 270.85,-96.03 264.85,-96.03 258.85,-90.03 258.85,-84.03 258.85,-84.03 258.85,-54.75 258.85,-54.75 258.85,-48.75 264.85,-42.75 270.85,-42.75 270.85,-42.75 469.15,-42.75 469.15,-42.75 475.15,-42.75 481.15,-48.75 481.15,-54.75 481.15,-54.75 481.15,-84.03 481.15,-84.03 481.15,-90.03 475.15,-96.03 469.15,-96.03" />
+<text xml:space="preserve" text-anchor="start" x="347.5" y="-76.99" font-family="Noto Sans" font-weight="bold" font-size="12.00">Discord</text>
+<text xml:space="preserve" text-anchor="start" x="273.25" y="-64.99" font-family="Noto Sans" font-size="12.00">un bot por persona, canal privado</text>
+<text xml:space="preserve" text-anchor="start" x="275.88" y="-52.99" font-family="Noto Sans" font-size="12.00">solo ve texto cifrado y metadatos</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>cli-&gt;dis</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M370,-196.65C370,-170.22 370,-135.28 370,-108.86" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="366.5,-196.63 370,-206.63 373.5,-196.63 366.5,-196.63" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="373.5,-109.07 370,-99.07 366.5,-109.07 373.5,-109.07" />
+<text xml:space="preserve" text-anchor="middle" x="422.5" y="-153.08" font-family="Noto Sans" font-size="11.00" fill="#b45309">handshake (hs1-hs3)</text>
+<text xml:space="preserve" text-anchor="middle" x="422.5" y="-137.33" font-family="Noto Sans" font-size="11.00" fill="#b45309">y mensajes cifrados</text>
+</g>
+
+<g id="node6" class="node">
+<title>nota</title>
+<polygon fill="#f4f5f7" stroke="#475467" stroke-width="1.6" points="817.15,-95.28 516.85,-95.28 516.85,-43.5 823.15,-43.5 823.15,-89.28 817.15,-95.28" />
+<polyline fill="none" stroke="#475467" stroke-width="1.6" points="817.15,-95.28 817.15,-89.28" />
+<polyline fill="none" stroke="#475467" stroke-width="1.6" points="823.15,-89.28 817.15,-89.28" />
+<text xml:space="preserve" text-anchor="middle" x="670" y="-75.24" font-family="Noto Sans" font-size="12.00" fill="#475467">Las llaves privadas permanecen en el dispositivo.</text>
+<text xml:space="preserve" text-anchor="middle" x="670" y="-57.99" font-family="Noto Sans" font-size="12.00" fill="#475467">Lo que viaja es público o está cifrado.</text>
+</g>
+
+</g>
+</svg></svg>

@@ -1,0 +1,84 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 873.00 342.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 320.62)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-320.62 851.6,-320.62 851.6,21.6 -21.6,21.6" />
+<g id="clust1" class="cluster">
+<title>cluster_local</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" stroke-dasharray="5,2" d="M20,-191.51C20,-191.51 763,-191.51 763,-191.51 769,-191.51 775,-197.51 775,-203.51 775,-203.51 775,-279.02 775,-279.02 775,-285.02 769,-291.02 763,-291.02 763,-291.02 20,-291.02 20,-291.02 14,-291.02 8,-285.02 8,-279.02 8,-279.02 8,-203.51 8,-203.51 8,-197.51 14,-191.51 20,-191.51" />
+<text xml:space="preserve" text-anchor="start" x="16" y="-275.67" font-family="Noto Sans" font-weight="bold" font-size="13.00" fill="#0f7b55">Tu dispositivo</text>
+</g>
+<g id="clust3" class="cluster">
+<title>cluster_dir</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" stroke-dasharray="5,2" d="M255,-8C255,-8 810,-8 810,-8 816,-8 822,-14 822,-20 822,-20 822,-112.01 822,-112.01 822,-118.01 816,-124.01 810,-124.01 810,-124.01 255,-124.01 255,-124.01 249,-124.01 243,-118.01 243,-112.01 243,-112.01 243,-20 243,-20 243,-14 249,-8 255,-8" />
+<text xml:space="preserve" text-anchor="start" x="251" y="-108.66" font-family="Noto Sans" font-weight="bold" font-size="13.00" fill="#b42318">Directorio</text>
+</g>
+
+<g id="node1" class="node">
+<title>a</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M193.65,-248.53C193.65,-248.53 28.35,-248.53 28.35,-248.53 22.35,-248.53 16.35,-242.53 16.35,-236.53 16.35,-236.53 16.35,-219.25 16.35,-219.25 16.35,-213.25 22.35,-207.25 28.35,-207.25 28.35,-207.25 193.65,-207.25 193.65,-207.25 199.65,-207.25 205.65,-213.25 205.65,-219.25 205.65,-219.25 205.65,-236.53 205.65,-236.53 205.65,-242.53 199.65,-248.53 193.65,-248.53" />
+<text xml:space="preserve" text-anchor="start" x="43.12" y="-229.49" font-family="Noto Sans" font-weight="bold" font-size="12.00">1. Contraseña maestra</text>
+<text xml:space="preserve" text-anchor="start" x="30.75" y="-217.49" font-family="Noto Sans" font-size="12.00">la eliges al crear la identidad</text>
+</g>
+
+<g id="node2" class="node">
+<title>b</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M455.02,-248.53C455.02,-248.53 288.98,-248.53 288.98,-248.53 282.98,-248.53 276.98,-242.53 276.98,-236.53 276.98,-236.53 276.98,-219.25 276.98,-219.25 276.98,-213.25 282.98,-207.25 288.98,-207.25 288.98,-207.25 455.02,-207.25 455.02,-207.25 461.02,-207.25 467.02,-213.25 467.02,-219.25 467.02,-219.25 467.02,-236.53 467.02,-236.53 467.02,-242.53 461.02,-248.53 455.02,-248.53" />
+<text xml:space="preserve" text-anchor="start" x="291.38" y="-229.49" font-family="Noto Sans" font-weight="bold" font-size="12.00">2. Se genera el par Ed25519</text>
+<text xml:space="preserve" text-anchor="start" x="295.12" y="-217.49" font-family="Noto Sans" font-size="12.00">llave privada + llave pública</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>a-&gt;b</title>
+<path fill="none" stroke="#475467" stroke-width="1.6" d="M206.33,-227.89C225.53,-227.89 244.73,-227.89 263.93,-227.89" />
+<polygon fill="#475467" stroke="#475467" stroke-width="1.6" points="263.8,-231.39 273.8,-227.89 263.8,-224.39 263.8,-231.39" />
+</g>
+
+<g id="node3" class="node">
+<title>c</title>
+<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M766.77,-251.11C766.77,-253.96 719.81,-256.27 662,-256.27 604.19,-256.27 557.23,-253.96 557.23,-251.11 557.23,-251.11 557.23,-204.67 557.23,-204.67 557.23,-201.82 604.19,-199.51 662,-199.51 719.81,-199.51 766.77,-201.82 766.77,-204.67 766.77,-204.67 766.77,-251.11 766.77,-251.11" />
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M766.77,-251.11C766.77,-248.26 719.81,-245.95 662,-245.95 604.19,-245.95 557.23,-248.26 557.23,-251.11" />
+<text xml:space="preserve" text-anchor="start" x="571.62" y="-229.49" font-family="Noto Sans" font-weight="bold" font-size="12.00">3. Se guarda la privada cifrada</text>
+<text xml:space="preserve" text-anchor="start" x="573.12" y="-217.49" font-family="Noto Sans" font-size="12.00">Argon2id + salt -&gt; AES-256-GCM</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>b-&gt;c</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M467.76,-227.89C492.22,-227.89 518.8,-227.89 544.22,-227.89" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="544.17,-231.39 554.17,-227.89 544.17,-224.39 544.17,-231.39" />
+<text xml:space="preserve" text-anchor="middle" x="512.12" y="-236.19" font-family="Noto Sans" font-size="11.00" fill="#b45309">nunca sale</text>
+</g>
+
+<g id="node4" class="node">
+<title>d</title>
+<path fill="white" stroke="#b42318" stroke-width="1.6" d="M480.53,-79.27C480.53,-79.27 263.47,-79.27 263.47,-79.27 257.47,-79.27 251.47,-73.27 251.47,-67.27 251.47,-67.27 251.47,-37.99 251.47,-37.99 251.47,-31.99 257.47,-25.99 263.47,-25.99 263.47,-25.99 480.53,-25.99 480.53,-25.99 486.53,-25.99 492.53,-31.99 492.53,-37.99 492.53,-37.99 492.53,-67.27 492.53,-67.27 492.53,-73.27 486.53,-79.27 480.53,-79.27" />
+<text xml:space="preserve" text-anchor="start" x="307.12" y="-60.23" font-family="Noto Sans" font-weight="bold" font-size="12.00">4. Prueba de posesión</text>
+<text xml:space="preserve" text-anchor="start" x="285.38" y="-48.23" font-family="Noto Sans" font-size="12.00">firma un nonce de un solo uso</text>
+<text xml:space="preserve" text-anchor="start" x="265.88" y="-36.23" font-family="Noto Sans" font-size="12.00">+ vínculo OAuth2 con el ID de Discord</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>b-&gt;d</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M372,-206.68C372,-178.69 372,-127.6 372,-92.19" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="375.5,-92.34 372,-82.34 368.5,-92.34 375.5,-92.34" />
+<text xml:space="preserve" text-anchor="middle" x="460.88" y="-153.06" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">llave pública + prueba de posesión</text>
+<text xml:space="preserve" text-anchor="middle" x="460.88" y="-137.31" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">por TLS 1.3</text>
+</g>
+
+<g id="node5" class="node">
+<title>e</title>
+<path fill="white" stroke="#b42318" stroke-width="1.6" d="M814.27,-82.6C814.27,-86.27 772.02,-89.26 720,-89.26 667.98,-89.26 625.73,-86.27 625.73,-82.6 625.73,-82.6 625.73,-22.66 625.73,-22.66 625.73,-18.99 667.98,-16 720,-16 772.02,-16 814.27,-18.99 814.27,-22.66 814.27,-22.66 814.27,-82.6 814.27,-82.6" />
+<path fill="none" stroke="#b42318" stroke-width="1.6" d="M814.27,-82.6C814.27,-78.93 772.02,-75.94 720,-75.94 667.98,-75.94 625.73,-78.93 625.73,-82.6" />
+<text xml:space="preserve" text-anchor="start" x="658.12" y="-60.23" font-family="Noto Sans" font-weight="bold" font-size="12.00">5. Registro guardado</text>
+<text xml:space="preserve" text-anchor="start" x="654.38" y="-48.23" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas</text>
+<text xml:space="preserve" text-anchor="start" x="640.12" y="-36.23" font-family="Noto Sans" font-size="12.00">y versión del aviso aceptado</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>d-&gt;e</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M493.22,-52.63C532.17,-52.63 575,-52.63 612.86,-52.63" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="612.54,-56.13 622.54,-52.63 612.54,-49.13 612.54,-56.13" />
+<text xml:space="preserve" text-anchor="middle" x="559.12" y="-60.93" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">si la firma es válida</text>
+</g>
+</g>
+</svg></svg>

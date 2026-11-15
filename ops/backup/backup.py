@@ -34,7 +34,7 @@ from psycopg.conninfo import conninfo_to_dict
 
 MAGIC = b"E2EEBAK1"
 RETENTION_DAYS = 30
-EPHEMERAL = ("oauth_states", "auth_tokens", "challenges")
+EPHEMERAL = ("oauth_states", "auth_tokens", "challenges", "mfa_sessions")
 NAME = re.compile(r"^directory-(\d{8}T\d{6}Z)\.dump\.enc$")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

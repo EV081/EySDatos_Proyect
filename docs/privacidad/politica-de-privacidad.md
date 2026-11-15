@@ -1,13 +1,15 @@
 # Política de privacidad
 
-**Versión:** 1.1
-**Vigente desde:** 2026-11-13
+**Versión:** 1.2
+**Vigente desde:** 2026-11-14
 
 Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
 
 ## Resumen en un minuto
 
-- Solo guardamos en el directorio tu **ID de Discord**, tu **llave pública** y algunas **fechas**. Nada más.
+- Publicamos tu **ID de Discord**, tu **llave pública** y algunas **fechas**. Para la autenticación guardamos
+  además un secreto TOTP cifrado, hashes de recuperación y el estado necesario para limitar intentos y evitar
+  códigos repetidos. Estos datos de autenticación son privados y se eliminan al cancelar el registro.
 - **No podemos leer tus mensajes.** Se cifran en tu dispositivo y solo la otra persona puede descifrarlos.
 - Tienes cuatro derechos principales, llamados **derechos ARCO**: **A**cceso, **R**ectificación, **C**ancelación y **O**posición.
 - Pedirlos es **gratis** y puedes hacerlo cuando quieras.
@@ -27,7 +29,8 @@ La ley establece reglas básicas, llamadas principios. Así las cumplimos:
 
 - **Legalidad:** usamos tus datos solo de formas permitidas por la ley. No compramos datos ni los obtenemos con engaños.
 - **Consentimiento:** solo publicamos tus datos si marcas la casilla de aceptación. La casilla viene desmarcada y puedes retirar tu permiso cuando quieras.
-- **Finalidad:** tus datos sirven solo para que otras personas te encuentren y puedan escribirte de forma cifrada. No los usamos para publicidad, perfiles ni estadísticas.
+- **Finalidad:** tus datos sirven para que otras personas te encuentren y puedan escribirte de forma cifrada,
+  y para proteger tu registro con verificación en dos pasos. No los usamos para publicidad, perfiles ni estadísticas.
 - **Proporcionalidad:** pedimos lo mínimo. No te pedimos nombre, correo, teléfono, foto ni dirección.
 - **Calidad:** tus datos deben ser correctos. Si tu llave cambia, puedes actualizarla.
 - **Seguridad:** ciframos tus mensajes de extremo a extremo, tu llave privada queda protegida con tu contraseña maestra y el directorio usa conexiones protegidas y permisos mínimos.

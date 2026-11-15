@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 551.00 455.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 433.17)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-433.17 529.15,-433.17 529.15,21.6 -21.6,21.6" />
+
+<g id="node1" class="node">
+<title>local</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" d="M351.17,-411.57C351.17,-411.57 178.38,-411.57 178.38,-411.57 172.38,-411.57 166.38,-405.57 166.38,-399.57 166.38,-399.57 166.38,-358.29 166.38,-358.29 166.38,-352.29 172.38,-346.29 178.38,-346.29 178.38,-346.29 351.17,-346.29 351.17,-346.29 357.17,-346.29 363.17,-352.29 363.17,-358.29 363.17,-358.29 363.17,-399.57 363.17,-399.57 363.17,-405.57 357.17,-411.57 351.17,-411.57" />
+<text xml:space="preserve" text-anchor="start" x="189.4" y="-392.53" font-family="Noto Sans" font-weight="bold" font-size="12.00">Dispositivo de la persona</text>
+<text xml:space="preserve" text-anchor="start" x="199.15" y="-380.53" font-family="Noto Sans" font-size="12.00">Frontend + cliente local</text>
+<text xml:space="preserve" text-anchor="start" x="195.77" y="-368.53" font-family="Noto Sans" font-size="12.00">Texto plano en memoria</text>
+<text xml:space="preserve" text-anchor="start" x="180.77" y="-356.53" font-family="Noto Sans" font-size="12.00">vault.json y store.enc cifrados</text>
+</g>
+
+<g id="node2" class="node">
+<title>ec2</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M239.55,-242.79C239.55,-242.79 12,-242.79 12,-242.79 6,-242.79 0,-236.79 0,-230.79 0,-230.79 0,-189.51 0,-189.51 0,-183.51 6,-177.51 12,-177.51 12,-177.51 239.55,-177.51 239.55,-177.51 245.55,-177.51 251.55,-183.51 251.55,-189.51 251.55,-189.51 251.55,-230.79 251.55,-230.79 251.55,-236.79 245.55,-242.79 239.55,-242.79" />
+<text xml:space="preserve" text-anchor="start" x="71.03" y="-223.75" font-family="Noto Sans" font-weight="bold" font-size="12.00">AWS EC2: us-east-1</text>
+<text xml:space="preserve" text-anchor="start" x="29.03" y="-211.75" font-family="Noto Sans" font-size="12.00">Virginia del Norte, Estados Unidos</text>
+<text xml:space="preserve" text-anchor="start" x="14.4" y="-199.75" font-family="Noto Sans" font-size="12.00">Directorio + PostgreSQL en contenedor</text>
+<text xml:space="preserve" text-anchor="start" x="39.53" y="-187.75" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas y aviso</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>local-&gt;ec2</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M168.88,-338.88C157.68,-330.88 147.51,-321.42 139.78,-310.29 128.81,-294.52 124.7,-273.89 123.58,-255.54" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="166.66,-341.61 176.93,-344.21 170.53,-335.78 166.66,-341.61" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="127.08,-255.6 123.29,-245.7 120.08,-255.8 127.08,-255.6" />
+<text xml:space="preserve" text-anchor="middle" x="229.78" y="-299.84" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">TLS 1.3</text>
+<text xml:space="preserve" text-anchor="middle" x="229.78" y="-284.09" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">registro, consulta y derechos ARCO</text>
+</g>
+
+<g id="node3" class="node">
+<title>discord</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M452.05,-242.79C452.05,-242.79 299.5,-242.79 299.5,-242.79 293.5,-242.79 287.5,-236.79 287.5,-230.79 287.5,-230.79 287.5,-189.51 287.5,-189.51 287.5,-183.51 293.5,-177.51 299.5,-177.51 299.5,-177.51 452.05,-177.51 452.05,-177.51 458.05,-177.51 464.05,-183.51 464.05,-189.51 464.05,-189.51 464.05,-230.79 464.05,-230.79 464.05,-236.79 458.05,-242.79 452.05,-242.79" />
+<text xml:space="preserve" text-anchor="start" x="353.27" y="-223.75" font-family="Noto Sans" font-weight="bold" font-size="12.00">Discord</text>
+<text xml:space="preserve" text-anchor="start" x="310.52" y="-211.75" font-family="Noto Sans" font-size="12.00">Canal privado con bots</text>
+<text xml:space="preserve" text-anchor="start" x="301.9" y="-199.75" font-family="Noto Sans" font-size="12.00">Texto cifrado + metadatos</text>
+<text xml:space="preserve" text-anchor="start" x="305.65" y="-187.75" font-family="Noto Sans" font-size="12.00">No recibe llaves privadas</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>local-&gt;discord</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M307.48,-336.86C315.07,-328.47 322.54,-319.4 328.77,-310.29 340.51,-293.14 350.78,-272.6 358.7,-254.68" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="305.17,-334.21 300.9,-343.9 310.28,-338.99 305.17,-334.21" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="361.89,-256.14 362.61,-245.56 355.45,-253.38 361.89,-256.14" />
+<text xml:space="preserve" text-anchor="middle" x="427.3" y="-291.96" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">handshake y mensajes cifrados</text>
+</g>
+
+<g id="node4" class="node">
+<title>copias</title>
+<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M250.05,-81.6C250.05,-86.1 194.35,-89.76 125.78,-89.76 57.2,-89.76 1.5,-86.1 1.5,-81.6 1.5,-81.6 1.5,-8.16 1.5,-8.16 1.5,-3.66 57.2,0 125.78,0 194.35,0 250.05,-3.66 250.05,-8.16 250.05,-8.16 250.05,-81.6 250.05,-81.6" />
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M250.05,-81.6C250.05,-77.1 194.35,-73.44 125.78,-73.44 57.2,-73.44 1.5,-77.1 1.5,-81.6" />
+<text xml:space="preserve" text-anchor="start" x="62.03" y="-58.48" font-family="Noto Sans" font-weight="bold" font-size="12.00">Registros y respaldos</text>
+<text xml:space="preserve" text-anchor="start" x="15.9" y="-46.48" font-family="Noto Sans" font-size="12.00">Auditoría: IDs seudonimizados, 90 días</text>
+<text xml:space="preserve" text-anchor="start" x="59.78" y="-34.48" font-family="Noto Sans" font-size="12.00">Copias cifradas: 30 días</text>
+<text xml:space="preserve" text-anchor="start" x="35.03" y="-22.48" font-family="Noto Sans" font-size="12.00">Destino externo por comprobar</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>ec2-&gt;copias</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M125.78,-176.89C125.78,-155.75 125.78,-127.52 125.78,-102.68" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="129.28,-102.85 125.78,-92.85 122.28,-102.85 129.28,-102.85" />
+<text xml:space="preserve" text-anchor="middle" x="182.03" y="-131.06" font-family="Noto Sans" font-size="11.00" fill="#b45309">operación del servicio</text>
+</g>
+</g>
+</svg></svg>

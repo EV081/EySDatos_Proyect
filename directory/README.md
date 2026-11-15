@@ -1,6 +1,6 @@
 # `directory/` — Directorio de llaves (F1)
 
-Asocia IDs de Discord con llaves públicas de firma Ed25519. Es un tablón pasivo: nunca ve material secreto ni contenido. Contrato HTTP: [`docs/api/directory.yaml`](../docs/api/directory.yaml). Implementa `client.ports.DirectoryPort` con [`client_lib`](client_lib/__init__.py).
+Asocia IDs de Discord con llaves públicas de firma Ed25519. Nunca ve llaves privadas de mensajería ni contenido. Para autenticar a los usuarios conserva un secreto TOTP cifrado y hashes de códigos de recuperación. Contrato HTTP: [`docs/api/directory.yaml`](../docs/api/directory.yaml). Implementa `client.ports.DirectoryPort` con [`client_lib`](client_lib/__init__.py).
 
 ## Cómo correrlo
 
@@ -19,12 +19,12 @@ Pruebas (necesitan el Postgres de Compose; crean y borran la base `directory_tes
 
 ## Publicar una llave
 
-1. `python -m directory.client_lib.login` abre `/auth/login` y se inicia sesión con Discord (alcance `identify`, `state` + PKCE). La página de vuelta muestra un **token de registro**: dura 10 minutos, sirve para una sola publicación y está ligado a ese ID. El access token de Discord se revoca enseguida y no se guarda.
+1. `python -m directory.client_lib.login` abre `/auth/login` y se inicia sesión con Discord (alcance `identify`, `state` + PKCE). El access token de Discord se revoca enseguida y no se guarda. La primera vez se vincula Microsoft Authenticator por QR; después se pide el código de seis dígitos. Solo tras verificarlo se muestra el **token de registro**: dura 10 minutos, sirve para una sola publicación y está ligado a ese ID.
 2. El cliente (al crear o importar la identidad) llama a `register`: pide un nonce con `POST /v1/challenge` y publica con `PUT /v1/keys/{id}` la llave y la firma `sign_registration` (prueba de posesión).
 
 Solo el dueño modifica su registro: el ID del token tiene que ser el de la ruta. Volver a publicar la misma llave es idempotente (reimportar en otro dispositivo). Una llave distinta reemplaza a la anterior, que se guarda 90 días en `replaced_keys`; si además viene `old_signature` (`sign_key_change` con la llave anterior), se exige que valga.
 
-**Acceso** (`GET /v1/me`, `DirectoryClient.record`): con el token de registro (sin consumirlo), la persona ve todo lo que el directorio guarda de ella: llave, fechas de registro y de cambio, versión y fecha del aviso aceptado, y las llaves reemplazadas con la fecha en que se borran. Solo el registro del dueño del token.
+**Acceso** (`GET /v1/me`, `DirectoryClient.record`): con el token de registro (sin consumirlo), la persona ve su llave, fechas, aviso aceptado, llaves reemplazadas y estado del segundo factor. No se exportan el secreto TOTP ni los hashes de recuperación. Solo el registro del dueño del token.
 
 **Rectificación** (cambio de llave): `DirectoryClient.register(..., sign_old=...)` envía `old_signature`, así la llave vigente autoriza a la nueva (`Identity.rotate()` conserva el almacén local).
 
@@ -36,11 +36,35 @@ Solo el dueño modifica su registro: el ID del token tiene que ser el de la ruta
 |---|---|
 | Esquema mínimo: ID, llave, fechas y versión del aviso; sin IP ni perfil (C-05, C-14) | `migrations/001_init.sql`, `tests/test_esquema.py` |
 | Prueba de posesión + OAuth2, nonces y tokens de un solo uso, solo el dueño (C-06) | `app/main.py`, `tests/test_registro.py`, `tests/test_acceso_ajeno.py` |
-| Rol `directory_app` sin DDL, sin superusuario, solo DML en 5 tablas; consultas siempre parametrizadas en `app/repo.py` (C-08) | `migrations/apply.py`, `tests/test_esquema.py` |
+| Rol `directory_app` sin DDL, sin superusuario, solo DML; consultas siempre parametrizadas en `app/repo.py` (C-08) | `migrations/apply.py`, `tests/test_esquema.py` |
 | *Rate-limit* por IP en memoria, más estricto en las consultas (anti-enumeración) | `app/ratelimit.py` |
 | Errores genéricos: no distinguen ID inexistente, firma mala o token ajeno | `app/errors.py` |
 | Solo se guardan hashes SHA-256 de `state`, tokens y nonces | `app/repo.py` |
 | Purga: llaves reemplazadas a 90 días y estado efímero vencido (C-10; la tarea programada es parte de F4/F5) | `Repo.purge()` |
+
+## Microsoft Authenticator
+
+Configura `TOTP_ENCRYPTION_KEY` antes de arrancar. Es una clave Fernet independiente de la base;
+el servicio falla al arrancar si falta o no es válida. No requiere credenciales de Microsoft ni pagos.
+Consulta [la guía de activación en EC2](../docs/autenticacion-microsoft.md).
+
+El QR se genera en el servidor sin enviar el secreto a terceros. En Microsoft Authenticator se agrega
+como **Otra cuenta (Google, Facebook, etc.)**. TOTP usa seis dígitos y pasos de 30 segundos, con tolerancia
+de un paso por desfase de reloj. Un código aceptado no se admite otra vez, incluso desde otra sesión.
+El servidor debe tener sincronizada la hora.
+
+Cada sesión de segundo factor dura cinco minutos. Cinco fallos bloquean la cuenta cinco minutos;
+el contador se guarda en Postgres y no se reinicia al volver a pasar por Discord.
+La cookie es HttpOnly, SameSite=strict y Secure con HTTPS; el formulario lleva protección CSRF.
+La autenticación inicial vincula el primer factor después de demostrar control de Discord: hasta que
+se confirme el primer QR, la cuenta aún no tiene un segundo factor previamente establecido.
+
+Al vincular se muestran diez códigos de recuperación una sola vez. Usar uno obliga a escanear y confirmar
+un nuevo QR antes de emitir un token; invalida el autenticador y todos los códigos de recuperación anteriores.
+La cancelación del registro también borra el factor y sus sesiones. Los registros de autenticación pendientes
+sin confirmar se purgan después de un día; las sesiones vencidas se borran con la tarea de mantenimiento.
+Esto protege la emisión del token del directorio; la contraseña maestra y el descifrado de la identidad
+siguen siendo locales.
 
 ## TLS 1.3 (F2)
 
@@ -55,6 +79,8 @@ Los eventos van en JSON, uno por línea, a `AUDIT_LOG_DIR/audit.jsonl`. Las aler
 | `login`, `registro`, `renovacion`, `cancelacion` | info | `id` seudonimizado; `aviso` (versión aceptada) |
 | `cambio_de_llave` | warning | `id` seudonimizado |
 | `firma_invalida` | warning | `id` seudonimizado |
+| `mfa_rechazado` | warning | sin identificadores ni códigos |
+| `mfa_recuperacion` | info | `id` seudonimizado; nunca el código |
 | `acceso_ajeno` | warning | `id` (quien intenta) y `objetivo`, seudonimizados |
 | `limite` | warning | `grupo` de rutas (sin IP) |
 | `mantenimiento` | info/error | resultado de la tarea diaria |
