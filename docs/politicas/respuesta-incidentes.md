@@ -1,6 +1,6 @@
 # Plan de respuesta a incidentes
 
-**Versión 1.2, 14 de noviembre de 2026.** Actualiza el alcance al directorio desplegado en AWS EC2, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. La restricción C-19 de la DPIA queda pendiente de completar con el simulacro y la validación operativa.
+**Versión 1.3, 14 de noviembre de 2026.** Actualiza el alcance al directorio en EC2, el MFA de registro y desbloqueo, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. La restricción C-19 de la DPIA queda pendiente de completar con el simulacro y la validación operativa.
 
 **Alcance.** Directorio en EC2 y PostgreSQL en un contenedor de la misma instancia, ubicada en Virginia del Norte, Estados Unidos (`us-east-1`); respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. El destino de las copias queda pendiente de confirmar en el inventario del alojamiento. No se incluyen IP, credenciales ni tokens en este documento.
 
@@ -30,6 +30,7 @@ Lo que ya existe y que este plan usa:
 | Cancelación y cambio de llave en el directorio | `DELETE /v1/keys/{id}`, `PUT` con `old_signature` (F1) |
 | Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6); GitGuardian revisa el repositorio público en GitHub |
 | Alerta de cambio de llave a los contactos | Cliente (RF8) |
+| Segundo factor y desbloqueo | OAuth2 + TOTP para el registro; desafío firmado + TOTP para desbloquear. Sesión local de 30 minutos por defecto; eventos `mfa_rechazado`, `mfa_recuperacion` y `sesion_local` en la auditoría |
 | Inventario de datos y riesgos | DPIA y secciones 6.4 y 7 del informe |
 | Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`), con PostgreSQL en un contenedor de la misma instancia. Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado; confirmar el destino de respaldos |
 
@@ -44,9 +45,11 @@ Lo que ya existe y que este plan usa:
 | Nivel | Criterio | Ejemplos | Tiempo para empezar a responder |
 |---|---|---|---|
 | **Crítico** | Se expone el contenido de los mensajes, una llave privada o la llave de la CA, o hay una sustitución de llaves en curso | S3, S4 con muchas personas, S7, fuga de `ca.key` | Inmediato |
-| **Alto** | Se exponen datos personales del directorio o de las copias, o se filtra un token o un secreto del servidor | S2, S6, S9, fuga de `.env` | Antes de 4 h |
+| **Alto** | Se exponen datos personales del directorio o de las copias, o se filtra un token o un secreto del servidor | S2, S6, S9, fuga de `.env`, robo del factor o de `TOTP_ENCRYPTION_KEY` | Antes de 4 h |
 | **Medio** | Hay un intento detectado sin exposición confirmada | Alerta de enumeración, `acceso_ajeno` aislado, dependencia vulnerable sin explotación conocida | Antes de 24 h |
 | **Bajo** | Hay una indisponibilidad sin exposición | S12 | Siguiente día hábil |
+
+La prueba real con Authenticator está confirmada por el equipo. El simulacro y la recuperación de la base junto con su clave TOTP siguen pendientes de registrar.
 
 **Referencias de escenarios:** S1 a S12 corresponden a la tabla 7.1 del informe.
 
@@ -69,12 +72,15 @@ Lo que ya existe y que este plan usa:
 | Escenario | Contener | Erradicar y recuperar | ¿Notificar a la ANPD? |
 |---|---|---|---|
 | **EC2 o cuenta AWS comprometida** | Desde un equipo seguro, restringir la instancia mediante sus grupos de seguridad y revocar las credenciales de administración comprometidas. Aislar sin destruir evidencia | Revisar IAM, accesos, volúmenes y cambios de configuración; recrear la instancia desde una base limpia y restaurar una copia verificada. Revisar también el contenedor PostgreSQL, sus volúmenes persistentes y sus credenciales: comparte la instancia comprometida | Evaluar datos y derechos afectados con la sección 5; el alojamiento remoto no cambia los plazos |
-| **S2 / S9: brecha de la base o de las copias** | Detener el directorio; cambiar las contraseñas de los roles de Postgres; revocar el acceso del atacante | Restaurar desde la última copia verificada en un servidor limpio (`backup restore`); rotar `BACKUP_KEY` y `PSEUDONYM_KEY`; revisar los registros por cambios de llave en la ventana del incidente | Evaluar art. 34.1: ID, llave y fechas son datos personales; documentar volumen, sensibilidad y perjuicio |
+| **S2 / S9: brecha de la base o de las copias** | Detener el directorio; cambiar las contraseñas de los roles de Postgres; revocar el acceso del atacante | Restaurar desde la última copia verificada en un servidor limpio (`backup restore`); rotar `BACKUP_KEY` y `PSEUDONYM_KEY` si estuvieron expuestas; conservar la clave que descifra los secretos TOTP o recifrarlos de forma controlada; revisar los registros por cambios de llave en la ventana del incidente | Evaluar art. 34.1: ID, llave, fechas y estado de autenticación son datos personales; documentar volumen, sensibilidad y perjuicio |
 | **S3: el directorio sustituye llaves** (alertas de `cambio_de_llave` no reconocidos o reportes de personas) | Detener el directorio; avisar por el canal del proyecto (fuera del directorio) que **nadie inicie conversaciones con contactos sin verificar** | Comparar las llaves con la última copia previa al incidente; restaurar las legítimas; pedir a las personas afectadas que repitan la verificación | Evaluar art. 34.1 y avisar a las personas según 34.3 si afecta sus derechos |
 | **Fuga de `server.key` o de la llave de la CA** | Certificado: `pki revoke <serial>` + `pki issue`, y distribuir `crl.pem`. CA: detener el directorio | CA: crear una nueva (`pki init` en otra carpeta), distribuir el nuevo `ca.pem` por un canal confiable y revisar si hubo emisiones no autorizadas | Evaluar el acceso posible y los datos afectados; no esperar a demostrar cada lectura si ya se conoce el incidente |
+| **R14: pérdida del autenticador** | Bloquear la aplicación; comprobar que la persona conserva acceso a Discord y un código de recuperación. No pedir ni publicar el código en un issue o chat | La persona inicia sesión con Discord y usa el código para vincular otro autenticador. El factor y los códigos anteriores dejan de servir. Si faltan ambos medios, no hay un restablecimiento automático que omita MFA | Evaluar si fue una pérdida o un robo con uso indebido y aplicar la sección 5 |
+| **Fuga de `TOTP_ENCRYPTION_KEY` o del secreto de un factor** | Restringir accesos al directorio y a la base; conservar evidencia sin copiar secretos a la bitácora. Evaluar uso indebido del factor y de los tokens ya emitidos | Si se dispone de la clave anterior, diseñar y ejecutar el recifrado de los secretos con una nueva clave. Cambiar solo la variable no recifra los registros. Ante exposición del secreto de una persona, gestionar una nueva vinculación mediante una recuperación verificada; no habilitar un acceso sin factor | Evaluar exposición de datos de autenticación, otras credenciales y derechos afectados según la sección 5 |
+| **R14 / S12: caída del directorio o pérdida de la clave TOTP** | Avisar que el próximo desbloqueo no podrá validarse. No cambiar la configuración del cliente real para omitir MFA | Restaurar directorio, contenedor PostgreSQL y clave TOTP original desde respaldos separados. Verificar reloj, factor, nonce de propósito `unlock` y vencimiento local. Sin la clave no se puede validar el factor conservado en la base | Documentar el impacto en el acceso a los datos y evaluar el art. 34; indisponibilidad no equivale por sí sola a divulgación |
 | **S6: fuga del token de un bot** | Developer Portal -> *Reset Token*; quitar el bot del servidor si hay abuso | Actualizar `DISCORD_TOKEN`; revisar el canal por mensajes inyectados (el protocolo los rechaza) | Evaluar también los metadatos personales: el cifrado del contenido no excluye la obligación de comunicar |
 | **Secreto publicado en el repositorio** (alerta de GitGuardian o de gitleaks) | Determinar qué protege el secreto y si se usa en otro lado; si protege algo real, rotarlo **antes** de tocar el repositorio | Sacar el secreto del código (variables de entorno, `secrets` de GitHub o generación por ejecución); agregar una regla de gitleaks si no lo detectó; no reescribir el historial publicado salvo que el secreto siga vigente y no se pueda rotar | Evaluar si el secreto daba acceso a datos personales y registrar el resultado, incluso si no corresponde notificación |
-| **Fuga del `.env`** (secretos del servidor) | Rotar **todo** lo del calendario de la política de uso seguro | Revisar el historial de git (gitleaks), los registros y los accesos a la base | Si hay indicios de acceso a la base, tratar como S2 |
+| **Fuga del `.env`** (secretos del servidor) | Rotar los secretos expuestos según el calendario de uso seguro; para `TOTP_ENCRYPTION_KEY`, preservar la anterior hasta recifrar o reconstruir de forma controlada los factores | Revisar el historial de git (gitleaks), los registros y los accesos a la base | Si hay indicios de acceso a la base, tratar como S2 |
 | **S5 / S4: la llave o el dispositivo de una persona** | La persona cancela su registro o publica una llave nueva desde otro dispositivo; sus contactos reciben la alerta | La persona crea una identidad nueva y repite las verificaciones | Asistir a la persona; evaluar el tratamiento bajo responsabilidad del equipo y los criterios de la sección 5, sin descartar el incidente solo por ocurrir en un dispositivo personal |
 | **S7 / S8: dependencia maliciosa o defecto del protocolo** | Retirar la versión afectada; avisar a las personas que bloqueen la aplicación hasta actualizar | Corregir, agregar una prueba que reproduzca el defecto, publicar una versión nueva y pedir rotar las sesiones (las sesiones viejas se descartan al rotar) | Evaluar los datos, las personas y los derechos afectados conforme al art. 34 |
 | **Enumeración o `acceso_ajeno`** | Bajar los límites de solicitudes; bloquear el origen en el firewall si persiste | Revisar si algún intento tuvo éxito (cambios de llave en la ventana) | No, salvo que haya tenido éxito |
@@ -108,6 +114,7 @@ Se usa el canal oficial vigente de la ANPD y del CNSD, verificado al enviar, y s
 
 * En EC2, reconstruir desde una base limpia, revisar IAM y grupos de seguridad y recrear el contenedor PostgreSQL con un volumen verificado. La recuperación debe comprobar tanto el directorio como la base, porque comparten la instancia. Restaurar el servicio desde un estado limpio: copia verificada (`backup verify`), secretos rotados y certificado nuevo.
 * Confirmar que el servicio funciona: la CI en verde, `discord_adapter.check` y `discord_adapter.smoke` sin problemas, y una consulta de llave por HTTPS con la CA vigente, renovada si se comprometió.
+* Probar registro y desbloqueo con Authenticator: un código nuevo se acepta, el mismo código se rechaza al reutilizarlo y una caída de validación mantiene el historial bloqueado. La restauración no debe reactivar tokens o nonces viejos; el estado temporal no se restaura. Revisar también los pasos TOTP y códigos de recuperación que contenga una copia antigua y documentar cómo se evita reactivar factores o códigos revocados.
 * Vigilar con más atención (revisar las alertas cada hora) durante 7 días.
 * La cancelación que pidió una persona afectada se aplica también a las copias, a más tardar en 30 días (rotación).
 
@@ -122,7 +129,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 ## 8. Ejercicios
 
-* **Simulacro en papel** cada semestre, y antes de un uso real. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". El equipo recorre las secciones 4 a 6 con el reloj de 48 h corriendo y registra los resultados en el anexo B.
+* **Simulacro en papel** cada semestre, y antes de un uso real. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". El equipo recorre las secciones 4 a 6 con el reloj de 48 h corriendo y registra los resultados en el anexo B. Incluir pérdida de autenticador, indisponibilidad de EC2 y restauración de PostgreSQL con su clave de cifrado TOTP; la copia de la base por sí sola no basta.
 * **Restauración real** de una copia cada semana (`backup verify`, automatizable) y una restauración completa sobre un servidor limpio cada semestre.
 
 ---
@@ -141,6 +148,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 | Decisión ANPD: supuesto del art. 34.1, hora, medio y acuse | Si corresponde: límite T0 + 48 h |
 | Comunicación CNSD: hora, medio y acuse | Evaluar art. 34.5 |
 | Aviso a las personas: criterio, hora, medio y acuse | Evaluar arts. 34.3 y 34.4 |
+| Estado del segundo factor, tokens y clave de cifrado TOTP | Registrar alcance y medidas, nunca códigos, hashes ni claves en la bitácora pública |
 | Recursos de EC2, base y respaldos afectados | Identificadores en registro privado, sin credenciales |
 | Recuperación confirmada (hora) | |
 | Revisión posterior (fecha y enlace) | |

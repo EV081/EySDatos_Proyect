@@ -37,7 +37,9 @@ MANUAL = {
     "C-18": "Pruebas de la API local (`client/tests/test_api.py`)",
     "C-19": "[Plan de respuesta a incidentes](politicas/respuesta-incidentes.md)",
     "C-20": "CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../ops/reports/README.md)",
-    "C-21": "Pendiente (Elmer): botón de borrado local",
+    "C-21": "Implementado en `frontend/components/PrivacyDialog.tsx`; `client/tests/test_arco.py::test_borrado_local_funciona_aun_bloqueada_y_no_toca_el_directorio`",
+    "C-25": "`client/tests/test_session_mfa.py` (factor obligatorio, reinicio, vencimiento y fallo de red); "
+            "`directory/tests/test_session_mfa.py` (firma, propósito, antirreplay y bloqueo); `crypto/tests/test_unlock.py`",
     "C-22": "Informe 4.2.7 y pruebas negativas de `crypto/` y `client/`",
     "C-23": "`ops/reports/discord-check.txt` (revisión del canal real) y `ops/reports/discord-smoke.txt` (ensayo con la API)",
     "C-24": "Fuera del alcance de la entrega (requisitos previos a un uso real)",

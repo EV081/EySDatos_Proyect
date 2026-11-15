@@ -1,6 +1,6 @@
 # Política de privacidad
 
-**Versión:** 1.2
+**Versión:** 1.3
 **Vigente desde:** 2026-11-14
 
 Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
@@ -21,7 +21,7 @@ Es la ley peruana que protege tus datos personales: cualquier información que s
 
 ## Quién es responsable de tus datos
 
-El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él.
+El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
 
 ## Los principios que seguimos
 
@@ -30,7 +30,7 @@ La ley establece reglas básicas, llamadas principios. Así las cumplimos:
 - **Legalidad:** usamos tus datos solo de formas permitidas por la ley. No compramos datos ni los obtenemos con engaños.
 - **Consentimiento:** solo publicamos tus datos si marcas la casilla de aceptación. La casilla viene desmarcada y puedes retirar tu permiso cuando quieras.
 - **Finalidad:** tus datos sirven para que otras personas te encuentren y puedan escribirte de forma cifrada,
-  y para proteger tu registro con verificación en dos pasos. No los usamos para publicidad, perfiles ni estadísticas.
+  y para proteger tu registro y el desbloqueo habitual con verificación en dos pasos. No los usamos para publicidad, perfiles ni estadísticas.
 - **Proporcionalidad:** pedimos lo mínimo. No te pedimos nombre, correo, teléfono, foto ni dirección.
 - **Calidad:** tus datos deben ser correctos. Si tu llave cambia, puedes actualizarla.
 - **Seguridad:** ciframos tus mensajes de extremo a extremo, tu llave privada queda protegida con tu contraseña maestra y el directorio usa conexiones protegidas y permisos mínimos.
@@ -73,11 +73,11 @@ Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si ti
 
 ## Cómo pedir tus derechos
 
-**Desde la aplicación (lo más rápido):** abre la gestión de identidad y entra a **Mis datos y derechos ARCO**. Ahí puedes ver y descargar tus datos, cambiar tu llave, cancelar tu registro y borrar los datos de tu dispositivo. Lo que cambia el directorio te pide tu contraseña maestra y haber iniciado sesión con Discord en los últimos 10 minutos, para comprobar que eres tú.
+**Desde la aplicación (lo más rápido):** abre la gestión de identidad y entra a **Mis datos y derechos ARCO**. Ahí puedes ver y descargar tus datos, cambiar tu llave, cancelar tu registro y borrar los datos de tu dispositivo. Lo que cambia el directorio te pide tu contraseña maestra y un token de registro de hasta 10 minutos emitido tras Discord y Authenticator, para comprobar que eres tú. El desbloqueo habitual usa contraseña y TOTP nuevo, sin repetir OAuth2; la sesión local dura 30 minutos por defecto. Si el directorio no responde, el historial sigue bloqueado.
 
 **Si prefieres pedírnoslo o algo no funciona:**
 
-1. Escríbenos por mensaje directo de Discord a cualquiera de los responsables, o abre una consulta en el repositorio del proyecto (https://github.com/EV081/EySDatos_Proyect) **sin poner datos personales** en ella; te contactaremos por un canal privado.
+1. Escribe a elmer.villegas@utec.edu.pe o farid.aquino@utec.edu.pe. No publiques tus datos personales ni códigos del autenticador en el repositorio.
 2. Dinos **qué derecho** quieres ejercer y **qué pides** exactamente.
 3. Escríbenos **desde tu propia cuenta de Discord**. Así comprobamos que eres el dueño del ID, sin pedirte tu DNI ni otros documentos.
 4. Si actúas en nombre de otra persona, debes demostrar que te autorizó.
@@ -108,9 +108,15 @@ Por eso, si olvidas tu contraseña, no podemos recuperarla. Exporta tu identidad
 
 Si no te respondemos a tiempo, o si nuestra respuesta no te convence, puedes presentar una reclamación (procedimiento de tutela) ante la **Autoridad Nacional de Protección de Datos Personales (ANPD)** del Ministerio de Justicia y Derechos Humanos. Es gratuito.
 
+## Acceso con el autenticador
+
+La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
+
+Si pierdes el autenticador, usa un código de recuperación después de entrar con Discord para vincular uno nuevo. Esos códigos no recuperan la contraseña maestra. Cancelar el registro borra el factor: exporta lo necesario antes de cancelar, porque no podrás validar el próximo desbloqueo habitual de los archivos conservados.
+
 ## Menores de edad
 
-La aplicación está pensada para personas **mayores de edad**. Si eres menor, úsala solo con permiso de tus padres o tutores.
+La aplicación está dirigida a personas **mayores de edad**. El registro exige declarar esa condición; no se comprueba mediante documentos ni fecha de nacimiento.
 
 ## Cambios en esta política
 

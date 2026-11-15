@@ -1,12 +1,13 @@
 # Políticas de uso seguro
 
-**Versión 1.1, 1 de noviembre de 2026** (cambios: secretos de prueba y de CI en 2.2, ramas reales en 2.4). Se aplica a las personas que usan la aplicación y al equipo que opera el directorio de llaves y el servidor de Discord del proyecto. Se revisa junto con la DPIA ante cualquier cambio de datos, finalidad, tecnología o proveedor. Lo que pasa cuando algo sale mal está en el [plan de respuesta a incidentes](respuesta-incidentes.md).
+**Versión 1.2, 14 de noviembre de 2026.** Incluye MFA, vencimiento de la sesión local y custodia de la clave que cifra el TOTP.
 
 ## 1. Para las personas usuarias
 
 | Política | Por qué |
 |---|---|
 | Usa una **contraseña maestra** larga y única (una frase de 4 o más palabras), que no uses en otro sitio. No hay recuperación: si la olvidas, solo te queda tu exportación | Protege a la vez tu llave, tu historial y tus contactos (punto único de falla, sección 7.3 del informe) |
+| **Protege el autenticador y sus códigos de recuperación.** Guarda los códigos fuera del dispositivo, no los compartas y comprueba el dominio antes de escribir un TOTP | El código es temporal, pero un sitio falso puede usarlo mientras sigue vigente. La recuperación no recupera tu contraseña maestra |
 | **Verifica** a cada contacto comparando la huella **fuera de Discord** (en persona, por llamada o con el QR) antes de hablar de algo sensible | Es la única defensa contra un directorio que entregue una llave falsa (R2). Un contacto sin verificar se muestra como tal |
 | Si aparece la **alerta de cambio de llave**, no sigas la conversación: confirma con la persona por otra vía y repite la verificación. La aplicación no ofrece "continuar" | Un cambio de llave inesperado puede ser una suplantación |
 | **Bloquea** la aplicación cuando no la uses y protege el dispositivo (bloqueo de pantalla, sistema actualizado, antivirus) | Con la aplicación desbloqueada, quien tenga el dispositivo ve todo (S4) |
@@ -28,7 +29,7 @@
 
 * Ningún secreto se versiona. Todos van en `.env` (ignorado por git) o en variables de entorno. gitleaks revisa el historial y el árbol en cada push, y GitGuardian revisa el repositorio en GitHub.
 * **Tampoco las credenciales de prueba o de CI**, aunque protejan algo efímero: la CI genera las suyas en cada ejecución. Lo aprendimos en INC-2026-01 (anexo C del plan de incidentes).
-* El `.env` real vive solo en el equipo del responsable, con permisos de lectura para su usuario.
+* El `.env` real se custodia en el equipo o servidor que necesita cada secreto, con permisos restringidos; nunca se versiona. `TOTP_ENCRYPTION_KEY` se usa en el directorio, fuera de PostgreSQL, y su respaldo protegido se mantiene separado de la instancia y del volcado de la base.
 * Nunca se pegan secretos en Discord, en issues, en chats ni en capturas de pantalla.
 
 **Calendario de rotación:**
@@ -39,16 +40,18 @@
 | CRL | Cada 30 días (la regenera `issue`) | Hay un certificado revocado | `pki issue` / `pki revoke` y distribuir `crl.pem` |
 | Llave de la CA | 5 años | Se filtra `ca.key` o su contraseña | CA nueva y reemplazar `ca.pem` en todos los clientes (incidente) |
 | `PSEUDONYM_KEY` | 90 días (igual que la retención de registros) | Se filtra | Generar una nueva; los registros previos dejan de ser vinculables |
-| Token de cada bot | Cada semestre | Cualquier sospecha | Developer Portal → *Reset Token*, actualizar `DISCORD_TOKEN` |
-| `DISCORD_CLIENT_SECRET` (OAuth2) | Cada semestre | Cualquier sospecha | Developer Portal → *Reset Secret* |
+| `TOTP_ENCRYPTION_KEY` | Rotación planificada con recifrado; no cambiarla en cada despliegue | Se filtra o se sospecha exposición | Conservar la clave anterior para recifrar los secretos; cambiar solo la variable impediría validarlos. Guardar respaldo protegido por separado |
+| Factor de cada persona | Al reemplazar el autenticador | Se pierde o se roba el celular o se expone el secreto | Iniciar con Discord y un código de recuperación, vincular otro factor y guardar los códigos nuevos; no omitir MFA |
+| Token de cada bot | Cada semestre | Cualquier sospecha | Developer Portal -> *Reset Token*, actualizar `DISCORD_TOKEN` |
+| `DISCORD_CLIENT_SECRET` (OAuth2) | Cada semestre | Cualquier sospecha | Developer Portal -> *Reset Secret* |
 | `BACKUP_KEY` | Anual | Se filtra | Clave nueva, copia nueva y borrar las anteriores |
 | Contraseñas de Postgres | Al cambiar el equipo | Se filtra `.env` | `ALTER ROLE ... PASSWORD`, actualizar `.env` y `migrations.apply` |
 
 ### 2.3 Datos personales y registros
 
-* El directorio guarda solo el ID, la llave pública, las fechas y la versión del aviso aceptado. Agregar cualquier dato nuevo exige actualizar antes la DPIA y el aviso de privacidad (y subir su versión).
+* El directorio publica ID y llave pública y conserva fechas, aviso y los datos privados mínimos del segundo factor: secreto cifrado, hashes de recuperación, pasos utilizados y estado de intentos. El código temporal y la contraseña maestra no se registran. Agregar cualquier dato nuevo exige actualizar antes la DPIA y el aviso de privacidad (y subir su versión).
 * Los registros nunca contienen IDs en claro, IPs, llaves, tokens ni mensajes; se revisan con `test_C09_*` en cada push. Solo el equipo lee los registros, y únicamente para investigar un incidente o una alerta.
-* Retención: registros de auditoría 90 días, llaves reemplazadas 90 días, copias de seguridad 30 días y el registro del directorio hasta que la persona lo cancele. La tarea diaria (`python -m ops.scheduled daily`) lo aplica.
+* Retención: registros de auditoría 90 días, llaves reemplazadas 90 días, copias de seguridad 30 días y el registro del directorio hasta que la persona lo cancele. La tarea diaria (`python -m ops.scheduled daily`) aplica la purga. También elimina las sesiones MFA vencidas (cinco minutos de validez) y altas sin confirmar de más de un día. La sesión local de 30 minutos por defecto es otro plazo y no se conserva como token de desbloqueo.
 * Las solicitudes de derechos (acceso, rectificación, cancelación, oposición) se responden en el plazo legal. La cancelación la puede hacer la propia persona desde su cliente.
 
 ### 2.4 Cambios y despliegue
@@ -60,7 +63,7 @@
 
 ### 2.5 Continuidad
 
-* Copia diaria cifrada fuera del servidor y restauración de prueba semanal (`ops.backup.backup verify`). Objetivos: RPO de 24 h y RTO de 30 min.
+* Copia diaria cifrada fuera del servidor, respaldo protegido separado de `TOTP_ENCRYPTION_KEY` y restauración de prueba semanal (`ops.backup.backup verify`). Objetivos: RPO de 24 h y RTO de 30 min.
 * Las alertas (`alerts.jsonl` o el webhook) se revisan a diario. Una alerta de `acceso_ajeno` o de varios `cambio_de_llave` se trata como un posible incidente.
 
 ## 3. Incumplimiento

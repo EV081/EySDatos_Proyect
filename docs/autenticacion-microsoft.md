@@ -1,7 +1,7 @@
 # Activar Microsoft Authenticator en el directorio
 
-Para registrar o modificar llaves: Discord → Microsoft Authenticator → token de registro.
-Para desbloquear habitualmente: contraseña maestra → código de Authenticator → conversaciones.
+Para registrar o modificar llaves: Discord -> Microsoft Authenticator -> token de registro.
+Para desbloquear habitualmente: contraseña maestra -> código de Authenticator -> conversaciones.
 Se usa TOTP estándar;
 no requiere API key, suscripción de Microsoft, correo ni SMS. También funciona con otras apps TOTP.
 Microsoft explica cómo añadir cuentas externas en
@@ -36,38 +36,19 @@ Los tokens de registro emitidos antes de la actualización vencen en diez minuto
 inmediatamente durante el despliegue, con el servicio detenido elimina las filas de `directory.auth_tokens`
 usando una conexión administrativa. Esto obliga a obtener un nuevo token con el segundo factor.
 
-## Si ya tienes MFA del directorio desplegado en EC2 con Supabase
+## Despliegue actual del proyecto
 
-No generes otra `TOTP_ENCRYPTION_KEY` ni vuelvas a vincular tu celular. Conserva la clave existente.
+El equipo confirma que el MFA está desplegado y probado con Microsoft Authenticator. El directorio y PostgreSQL (en un contenedor) comparten la instancia EC2 en Virginia del Norte (`us-east-1`).
 
-1. Lleva el código actualizado a EC2. Como ya aplicaste `003_mfa.sql`, muestra únicamente la nueva migración:
+Para una actualización posterior, conserva la misma `TOTP_ENCRYPTION_KEY`, aplica las migraciones con las credenciales administrativas de ese PostgreSQL y recrea el servicio del directorio. Las migraciones `003_mfa.sql` y `004_session_mfa.sql` ya forman parte del esquema de esta versión. Usa los pasos de «Actualizar EC2» si debes reconstruir el entorno; no vuelvas a vincular el celular ni generes otra clave solo por desplegar código.
 
-   ```bash
-   {
-     printf 'BEGIN;\nSET LOCAL ROLE directory_owner;\nSET LOCAL search_path = directory;\n'
-     cat directory/migrations/004_session_mfa.sql
-     printf '\nCOMMIT;\n'
-   }
-   ```
-
-2. Copia la salida completa y ejecútala en **SQL Editor** de tu proyecto Supabase con el rol `postgres`.
-   Así no necesitas `DATABASE_ADMIN_URL` ni un entorno `.venv` en EC2.
-3. Actualiza y recrea el directorio:
-
-   ```bash
-   docker compose --profile deploy up -d --build directory
-   ```
-
-4. Actualiza también el código de tu computadora. Reinicia `make client` y reconstruye el frontend con
-   `make frontend`. El código de EC2 por sí solo no añade el campo del autenticador al frontend anterior.
-5. Bloquea la identidad: al desbloquearla verás los campos de contraseña maestra y código de Authenticator.
-   No hace falta volver a obtener un token del directorio ni pasar por Discord para cada desbloqueo.
+Actualiza también el cliente y recompila el frontend. El código de EC2 por sí solo no añade el campo del autenticador a una interfaz anterior. El destino de las copias externas y la prueba de restauración conjunta de base y clave siguen pendientes de documentar.
 
 ## Vincular tu celular por primera vez
 
 1. Ejecuta `python -m directory.client_lib.login` o abre `/auth/login` en el directorio por HTTPS.
 2. Autoriza tu cuenta de Discord.
-3. En Microsoft Authenticator pulsa **+ → Otra cuenta (Google, Facebook, etc.)** y escanea el QR.
+3. En Microsoft Authenticator pulsa **+ -> Otra cuenta (Google, Facebook, etc.)** y escanea el QR.
    Si no puedes escanearlo, abre «Introducir la clave manualmente» e introdúcela en la app.
 4. Escribe el código de seis dígitos de la app y confirma.
 5. Guarda los diez códigos de recuperación fuera del dispositivo. Solo se muestran esta vez.

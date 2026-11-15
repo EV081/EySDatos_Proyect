@@ -1,6 +1,6 @@
 # Aviso de privacidad
 
-**Versión:** 1.2
+**Versión:** 1.3
 **Vigente desde:** 2026-11-14
 
 Este aviso te explica, en lenguaje claro, qué datos tuyos trata esta aplicación de mensajería cifrada, para qué, quién los recibe y cómo ejercer tus derechos, según la Ley N.° 29733 de Protección de Datos Personales y su reglamento.
@@ -28,7 +28,7 @@ Lo que se guarda en el directorio:
 - La **versión de este aviso** que aceptaste y la fecha en que lo hiciste.
 - Para la verificación en dos pasos: un **secreto TOTP cifrado**, hashes de códigos de recuperación,
   el estado de vinculación y los contadores y fechas necesarios para impedir reutilización y limitar intentos.
-  Estos datos de autenticación son privados y no se publican con tu llave. El QR se genera sin servicios externos.
+  Estos datos de autenticación son privados y no se publican con tu llave. El QR se genera sin servicios externos. Al desbloquear, el directorio recibe también un código temporal y una firma sobre un desafío; no recibe tu contraseña ni el historial. El directorio valida TOTP directamente, sin consultar una API de Microsoft.
 
 Lo que **no** recogemos: tu nombre, correo, teléfono, foto, nombre de usuario ni dirección IP. No hacemos perfiles, no usamos tus datos para publicidad ni para análisis.
 
@@ -40,13 +40,13 @@ Solo para estas finalidades:
 
 1. Que otras personas encuentren tu llave pública y puedan escribirte de forma cifrada.
 2. Que tú y tus contactos comprueben que hablan con la persona correcta.
-3. Proteger el registro y los cambios en el directorio mediante Discord y un código de Microsoft Authenticator.
+3. Proteger el registro y los cambios en el directorio mediante Discord y un código de Microsoft Authenticator, y validar el desbloqueo habitual con un código nuevo y una prueba firmada por tu cliente.
 
 No usaremos tus datos para ninguna otra finalidad. Si esto cambiara, publicaríamos una nueva versión de este aviso y te pediríamos aceptarla de nuevo.
 
 ## Tu consentimiento
 
-Tratamos tus datos con tu consentimiento, que es libre, previo, expreso, informado e inequívoco. La casilla de aceptación viene desmarcada y se refiere únicamente a la finalidad de arriba. Puedes retirarlo en cualquier momento cancelando tu registro, y retirarlo debe ser tan fácil como darlo.
+Tratamos tus datos con tu consentimiento, que es libre, previo, expreso, informado e inequívoco. La casilla de aceptación viene desmarcada y se refiere únicamente a las finalidades descritas arriba. Puedes retirarlo en cualquier momento cancelando tu registro, y retirarlo debe ser tan fácil como darlo.
 
 ## Carácter obligatorio u opcional
 
@@ -58,20 +58,20 @@ Tu ID de Discord, tu llave pública y la vinculación de una app autenticadora s
 - **Discord:** recibe tus mensajes **ya cifrados** y los metadatos (quién escribe, a quién, cuándo y de qué tamaño). Discord es un responsable independiente de su propia plataforma.
 - **Las personas que operan el directorio:** acceden a lo que está en el directorio, con permisos mínimos.
 - **Proveedor de alojamiento:** el directorio y PostgreSQL se alojan en una instancia Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL corre en un contenedor dentro de esa instancia. El destino de los respaldos queda pendiente de documentar.
-- **Autoridades:** solo si una orden válida lo exige, y únicamente con lo que realmente tenemos: tu ID, tu llave pública y las fechas. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
+- **Autoridades:** solo si una orden válida lo exige, y únicamente con los datos que realmente conservamos en el directorio y sus registros, descritos en este aviso. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
 
 No vendemos ni cedemos tus datos a otras personas o empresas.
 
 ## Transferencias internacionales
 
-Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio y la base PostgreSQL se alojan en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL corre en un contenedor dentro de la instancia. Por tanto, tu ID de Discord, llave pública y fechas también se tratan en Estados Unidos. El destino de los respaldos queda pendiente de documentar. Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
+Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio y la base PostgreSQL se alojan en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL corre en un contenedor dentro de la instancia. Por tanto, tu ID de Discord, llave pública, fechas y datos privados de autenticación también se tratan en Estados Unidos. El destino de los respaldos queda pendiente de documentar. Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
 
 ## Cuánto tiempo conservamos tus datos
 
 - **Tu registro en el directorio:** hasta que lo canceles.
 - **Segundo factor confirmado:** hasta cancelar el registro; reemplazarlo invalida el factor anterior y sus códigos.
-  Los intentos de vinculación sin confirmar se eliminan después de un día y las sesiones vencen en cinco minutos;
-  la eliminación del estado vencido se ejecuta con la tarea diaria de mantenimiento.
+  Los intentos de vinculación sin confirmar se eliminan después de un día y las sesiones web de vinculación vencen en cinco minutos;
+  la eliminación del estado vencido se ejecuta con la tarea diaria de mantenimiento. Los desafíos de desbloqueo duran hasta 120 segundos; la sesión local de la aplicación dura 30 minutos por defecto. Cerrar solo la pestaña no cierra el cliente local.
 - **Llaves que reemplazaste:** 90 días.
 - **Registros de auditoría del servicio:** 90 días, sin tu texto, sin tus llaves y con tu ID seudonimizado.
 - **Copias de seguridad cifradas:** 30 días, con rotación.
@@ -104,6 +104,10 @@ Cifrado de extremo a extremo con renovación periódica de claves, verificación
 ## Lo que debes saber
 
 - **No hay recuperación de contraseña.** Si olvidas tu contraseña maestra, pierdes tu identidad y tu historial. Exporta tu identidad como respaldo.
+- **El desbloqueo habitual requiere conexión al directorio y un código nuevo.** Si falla la validación, la identidad y el historial permanecen bloqueados. El modo de desarrollo sin conexión es una simulación y no valida este segundo factor.
+- **El MFA no cambia el cifrado de tus archivos.** Una copia de la bóveda y la contraseña correcta permiten descifrarla fuera de la aplicación.
+- **Guarda los códigos de recuperación del autenticador fuera del dispositivo.** Se usan después de iniciar sesión con Discord para vincular otro autenticador; no recuperan la contraseña maestra. Si pierdes el autenticador y los códigos, no hay restablecimiento automático.
+- **Antes de cancelar el registro, exporta lo que necesites.** La cancelación elimina el factor del servidor. Si conservas los archivos locales, su próximo desbloqueo habitual ya no podrá validarse.
 - **Los metadatos son visibles** para Discord y para las personas del canal.
 - **Verifica a tus contactos.** Hasta que compares la huella con la otra persona fuera de Discord, no puedes estar seguro de que hablas con quien crees.
 - **Si el dispositivo está comprometido,** por ejemplo con un programa malicioso, la aplicación no puede protegerte.

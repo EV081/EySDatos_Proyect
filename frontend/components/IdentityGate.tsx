@@ -51,7 +51,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
         </p>
         <ul>
           <li><b>Qué se publica:</b> tu ID de Discord y tu llave pública de firma, en un directorio. También guarda fechas y datos privados de verificación en dos pasos: el secreto del autenticador cifrado y hashes de recuperación.</li>
-          <li><b>Para qué:</b> solo para que otras personas encuentren tu llave y puedan escribirte de forma cifrada. No se usa para publicidad ni análisis.</li>
+          <li><b>Para qué:</b> para encontrar llaves, verificar contactos y autenticar el registro y el desbloqueo con el segundo factor. No se usa para publicidad ni análisis.</li>
           <li><b>Qué no ve nadie más:</b> el contenido de tus mensajes y tu llave privada nunca salen de tu dispositivo. Discord solo guarda texto cifrado.</li>
           <li><b>Qué sí se puede ver:</b> quién se comunica con quién y cuándo (los metadatos) es visible para Discord y para quienes están en el canal.</li>
           <li><b>Tus derechos:</b> puedes pedir acceso, rectificación, cancelación u oposición, y exportar tu identidad, en cualquier momento.</li>

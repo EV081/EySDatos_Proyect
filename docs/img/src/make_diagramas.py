@@ -30,7 +30,7 @@ digraph G {{
     label=<<b>Tu dispositivo (confiable)</b>>; labeljust=l; style="rounded,filled,dashed";
     color="{VERDE}"; fillcolor="{VERDE_F}"; fontcolor="{VERDE}"; penwidth=1.6;
     front [label=<<b>Frontend</b><br/>muestra el texto plano>, color="{VERDE}", fillcolor="white"];
-    cli [label=<<b>Cliente local</b><br/>llaves, cifrado y handshake<br/>(texto plano solo en el dispositivo)>, color="{VERDE}", fillcolor="white"];
+    cli [label=<<b>Cliente local</b><br/>llaves, cifrado y handshake<br/>desbloqueo con contraseña + TOTP>, color="{VERDE}", fillcolor="white"];
     boveda [label=<<b>Bóveda cifrada</b><br/>llave privada + historial<br/>Argon2id + AES-256-GCM>, shape=cylinder, style="filled", color="{VERDE}", fillcolor="white"];
     {{ rank=same; front; cli; boveda; }}
     front -> cli [label="API local\\n(127.0.0.1)", dir=both, color="{VERDE}", fontcolor="{VERDE}"];
@@ -39,14 +39,14 @@ digraph G {{
   subgraph cluster_remoto {{
     label=<<b>Servicios remotos (no confiables)</b>>; labeljust=l; labelloc=b; style="rounded,filled,dashed";
     color="{ROJO}"; fillcolor="{ROJO_F}"; fontcolor="{ROJO}"; penwidth=1.6;
-    dir [label=<<b>Directorio de llaves</b><br/>ID de Discord / llave pública<br/>solo datos públicos>, color="{ROJO}", fillcolor="white"];
+    dir [label=<<b>Directorio de llaves</b><br/>ID y llave pública; datos privados de MFA<br/>TOTP cifrado + hashes de recuperación>, color="{ROJO}", fillcolor="white"];
     dis [label=<<b>Discord</b><br/>un bot por persona, canal privado<br/>solo ve texto cifrado y metadatos>, color="{ROJO}", fillcolor="white"];
     {{ rank=same; dir; dis; }}
   }}
-  cli -> dir [label="TLS 1.3 + CA propia\\nregistro y consulta de llaves", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  cli -> dir [label="TLS 1.3 + CA propia\\nllaves y validación del segundo factor", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
   cli -> dis [label="handshake (hs1-hs3)\\ny mensajes cifrados", dir=both, color="{NARANJA}", fontcolor="{NARANJA}"];
   nota [shape=note, style=filled, fillcolor="{GRIS_F}", color="{GRIS}", fontcolor="{GRIS}",
-        label="Las llaves privadas permanecen en el dispositivo.\\nLo que viaja es público o está cifrado."];
+        label="Las llaves privadas permanecen en el dispositivo.\\nLa contraseña maestra y el historial no se envían al directorio."];
   cli -> nota [style=invis];
 }}
 """
@@ -67,8 +67,8 @@ digraph G {{
   subgraph cluster_dir {{
     label=<<b>Directorio</b>>; labeljust=l; style="rounded,filled,dashed";
     color="{ROJO}"; fillcolor="{ROJO_F}"; fontcolor="{ROJO}"; penwidth=1.6;
-    d [label=<<b>4. Prueba de posesión</b><br/>firma un nonce de un solo uso<br/>+ vínculo OAuth2 con el ID de Discord>, color="{ROJO}", fillcolor="white"];
-    e [label=<<b>5. Registro guardado</b><br/>ID, llave pública, fechas<br/>y versión del aviso aceptado>, shape=cylinder, style="filled", color="{ROJO}", fillcolor="white"];
+    d [label=<<b>4. Prueba de posesión</b><br/>OAuth2 de Discord + código TOTP<br/>y firma de un nonce de un solo uso>, color="{ROJO}", fillcolor="white"];
+    e [label=<<b>5. Registro guardado</b><br/>ID, llave pública, fechas<br/>aviso y datos privados del factor>, shape=cylinder, style="filled", color="{ROJO}", fillcolor="white"];
     {{ rank=same; d; e; }}
     d -> e [label="si la firma es válida", color="{VERDE}", fontcolor="{VERDE}"];
   }}
@@ -100,11 +100,11 @@ digraph G {{
   rankdir=TB;
   {BASE}
   local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>Texto plano en memoria<br/>vault.json y store.enc cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
-  ec2 [label=<<b>AWS EC2: us-east-1</b><br/>Virginia del Norte, Estados Unidos<br/>Directorio + PostgreSQL en contenedor<br/>ID, llave pública, fechas y aviso>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  ec2 [label=<<b>AWS EC2: us-east-1</b><br/>Virginia del Norte, Estados Unidos<br/>Directorio + PostgreSQL en contenedor<br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación>, color="{ROJO}", fillcolor="{ROJO_F}"];
   discord [label=<<b>Discord</b><br/>Canal privado con bots<br/>Texto cifrado + metadatos<br/>No recibe llaves privadas>, color="{ROJO}", fillcolor="{ROJO_F}"];
-  copias [label=<<b>Registros y respaldos</b><br/>Auditoría: IDs seudonimizados, 90 días<br/>Copias cifradas: 30 días<br/>Destino externo por comprobar>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
+  copias [label=<<b>Registros y respaldos</b><br/>Auditoría: IDs seudonimizados, 90 días<br/>Copias cifradas: 30 días<br/>Clave TOTP: respaldo separado<br/>Destino externo por comprobar>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
   {{ rank=same; ec2; discord; }}
-  local -> ec2 [label="TLS 1.3\\nregistro, consulta y derechos ARCO", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  local -> ec2 [label="TLS 1.3\\nregistro, ARCO y desbloqueo con MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
   local -> discord [label="handshake y mensajes cifrados", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
   ec2 -> copias [label="operación del servicio", color="{NARANJA}", fontcolor="{NARANJA}"];
 }}
