@@ -56,7 +56,7 @@ Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 
 El MFA es un control del desbloqueo desde la aplicación. El formato de la bóveda sigue siendo cifrado por
 contraseña: una copia de los archivos y la contraseña correcta permiten descifrarlos con otro programa.
-No se ha añadido una clave de descifrado custodiada por el servidor. Tampoco se cambia el cifrado de las
+No hemos añadido una clave de descifrado custodiada por el servidor. Tampoco se cambia el cifrado de las
 exportaciones ni se envía la contraseña, la llave privada o el historial al directorio.
 Si cancelas el registro conservando los archivos, se elimina el factor del servidor y deja de poder validar
 el próximo desbloqueo habitual; exporta lo que necesites antes de cancelar.

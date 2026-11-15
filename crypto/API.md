@@ -84,7 +84,7 @@ session = resp.finish(hs3)            # <- Hs3 recibido
 | Función | Qué hace |
 |---|---|
 | `Pseudonymizer(key)` / `Pseudonymizer.from_env("PSEUDONYM_KEY")` | HMAC-SHA256 con clave secreta (mínimo 32 bytes, base64url en la variable de entorno). Falla si la clave falta o es débil |
-| `pseudonymizer.pseudonym(discord_id)` | 16 caracteres hex estables mientras no cambie la clave. **Úsese para los IDs en los registros de auditoría**; nunca un SHA-256 sin clave |
+| `pseudonymizer.pseudonym(discord_id)` | 16 caracteres hex estables mientras no cambie la clave. **Úsalo para los IDs en los registros de auditoría**; nunca un SHA-256 sin clave |
 | `mask_id(discord_id)` | `1234…5678`, para mensajes de diagnóstico. No sirve para almacenar |
 | `generate_key()` | Clave nueva (rotarla cada 90 días, el plazo de retención de los registros) |
 

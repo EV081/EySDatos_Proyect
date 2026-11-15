@@ -1,6 +1,6 @@
 # Desplegar desde cero: EC2, Supabase y respaldo en S3
 
-Aquí empezamos con una cuenta de AWS Academy y el laboratorio iniciado. Primero creamos EC2 y Supabase; después instalamos el directorio y las copias de seguridad. El directorio funciona en EC2, Virginia del Norte (`us-east-1`); PostgreSQL se aloja en Supabase y las copias cifradas en S3. El cliente y el frontend corren en las laptops según la [guía local](ejecucion-local.md).
+Para seguir esta guía necesitas una cuenta de AWS Academy y el laboratorio iniciado. Primero crea EC2 y Supabase; después instala el directorio y configura las copias de seguridad. El directorio funciona en EC2, Virginia del Norte (`us-east-1`); PostgreSQL se aloja en Supabase y las copias cifradas en S3. El cliente y el frontend corren en las laptops según la [guía local](ejecucion-local.md).
 
 Los comandos del servidor usan Ubuntu 22.04 o 24.04 **x86_64**, usuario `ubuntu` y clon en `/home/ubuntu/EySDatos_Proyect`. Sustituye `HOST_EC2`, referencias, contraseñas y nombres de bucket por los valores propios. En tu computadora necesitas Git, OpenSSH y el entorno Python del paso 1 de la guía local para emitir los certificados. Sigue los pasos en orden para una instalación nueva.
 
@@ -80,7 +80,7 @@ Desde este punto trabaja en `/home/ubuntu/EySDatos_Proyect`, salvo cuando se ind
 
 ## 2. Crear Supabase, la aplicación OAuth y el `.env`
 
-En Supabase crea una organización/proyecto, elige y registra su región y guarda su contraseña administrativa. La región de Supabase se registra por separado de EC2. En **Connect**, copia el host y referencia del **Session pooler**, puerto 5432: permite conexión desde EC2 con IPv4. El administrador usa `postgres.PROJECT_REF`; nuestros roles usarán `directory_app.PROJECT_REF` y `directory_backup.PROJECT_REF`. No uses el pooler de transacciones de 6543 para esta guía. Consulta las [conexiones de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
+En Supabase crea una organización/proyecto, elige y registra su región y guarda su contraseña administrativa. La región de Supabase se registra por separado de EC2. En **Connect**, copia el host y referencia del **Session pooler**, puerto 5432: permite conexión desde EC2 con IPv4. El administrador usa `postgres.PROJECT_REF`; los roles de la aplicación y de respaldos usarán `directory_app.PROJECT_REF` y `directory_backup.PROJECT_REF`. No uses el pooler de transacciones de 6543 para esta guía. Consulta las [conexiones de Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres).
 
 En los ajustes SSL de la base, descarga el certificado raíz de Supabase. Cópialo desde tu computadora a EC2:
 
@@ -113,7 +113,7 @@ PSEUDONYM_KEY=CLAVE_BASE64URL_DE_32_BYTES
 TOTP_ENCRYPTION_KEY=OTRA_CLAVE_BASE64URL_DE_32_BYTES
 ```
 
-La aplicación usa el usuario de base de datos con los permisos necesarios para la app, que se creará en el paso 4; no la conexión administrativa. El certificado se verá dentro del contenedor en `/app/ops/certs/`. No necesitas `POSTGRES_PASSWORD`, claves `anon` ni `service_role` para esta arquitectura. Más adelante agregamos las variables para preparar las tablas y hacer las copias.
+La aplicación usa el usuario de base de datos con los permisos necesarios para la app, que se creará en el paso 4; no la conexión administrativa. El certificado se verá dentro del contenedor en `/app/ops/certs/`. No necesitas `POSTGRES_PASSWORD`, claves `anon` ni `service_role` para esta arquitectura. Más adelante agregarás las variables para preparar las tablas y hacer las copias.
 
 ```bash
 chmod 600 .env
@@ -215,7 +215,7 @@ El directorio ya puede atender solicitudes; completa el respaldo diario y su pru
 
 ## 8. Activar el respaldo diario de Supabase en S3
 
-**Prueba del proyecto:** ya subimos una copia cifrada al bucket `proyecto-eticayseguridad`, comprobamos que llegó sin cambios y la recuperamos en una base de prueba separada. Se recuperaron 2 registros y se pudo descifrar el secreto de 1 autenticador ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta comprobar su primera ejecución automática. Los pasos siguientes permiten repetir la instalación con un bucket nuevo.
+**Prueba del proyecto:** ya subimos una copia cifrada al bucket `proyecto-eticayseguridad`, comprobamos que llegó sin cambios y la recuperamos en una base de prueba separada. Recuperamos 2 registros y desciframos el secreto de 1 autenticador ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta comprobar su primera ejecución automática. Los pasos siguientes permiten repetir la instalación con un bucket nuevo.
 
 ### 8.1 Crear el bucket y comprobar el rol
 

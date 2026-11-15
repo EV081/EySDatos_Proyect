@@ -8,7 +8,7 @@
 | | |
 |---|---|
 | Responsable del tratamiento | Equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro |
-| Delegado / oficial de datos | No designado. Ambos integrantes realizan la revisión interna; esto no sustituye el cargo de oficial de datos personales cuando corresponda |
+| Delegado / oficial de datos | No designado. Ambos realizamos la revisión interna; esto no sustituye el cargo de oficial de datos personales cuando corresponda |
 | Contacto para ejercer derechos | [elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe) y [farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe) |
 
 ---
@@ -17,10 +17,10 @@
 
 **Qué hace el proyecto.** Una capa de cifrado de extremo a extremo (E2EE) sobre la API de Discord. Cada persona usa un frontend conectado a un cliente local que cifra los mensajes antes de enviarlos. Discord recibe el texto cifrado y los metadatos del protocolo. Un *directorio de llaves* publica, por cada usuario, su ID de Discord y su llave pública de firma para que otros puedan encontrarla.
 
-**Por qué se hace una DPIA.** Como parte del proyecto se realizó esta evaluación para identificar los riesgos del tratamiento de datos personales y definir las medidas para reducirlos, considerando los siguientes factores:
+**Por qué se hace una DPIA.** Como parte del proyecto realizamos esta evaluación para identificar los riesgos del tratamiento de datos personales y definir las medidas para reducirlos, considerando los siguientes factores:
 
 1. **Tecnología novedosa:** un protocolo criptográfico propio (handshake autenticado con PFS) que no ha tenido una auditoría externa.
-2. **Puede alcanzar datos sensibles:** el contenido de las conversaciones es libre y puede incluir datos de salud, políticos, de menores, etc., aunque el responsable no puede leerlos.
+2. **Puede alcanzar datos sensibles:** el contenido de las conversaciones es libre y puede incluir datos de salud, políticos, de menores, etc., aunque no podemos leerlos.
 3. **Identificadores de personas reales:** el directorio relaciona un ID de Discord con una llave y una fecha.
 4. **Privacidad desde el diseño:** conviene identificar los riesgos antes de que entre un solo dato real.
 
@@ -32,7 +32,7 @@
 
 ![Flujo de datos entre el dispositivo, el directorio en EC2 y Discord](../img/dpia-tratamiento.png)
 
-El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL está alojado en Supabase, en el proyecto elegido por el equipo; la región de ese proyecto debe registrarse por separado de la de EC2. El cliente y el frontend siguen en el dispositivo de cada persona. El MFA del registro y del desbloqueo habitual está desplegado y probado con Microsoft Authenticator. Las copias cifradas se guardan en el bucket privado S3 `proyecto-eticayseguridad`, en `us-east-1`; una copia fue descargada y restaurada en PostgreSQL aislado.
+El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL está alojado en Supabase, en el proyecto que elegimos; debemos registrar su región por separado de la de EC2. El cliente y el frontend siguen en el dispositivo de cada persona. Desplegamos y probamos el MFA del registro y del desbloqueo habitual con Microsoft Authenticator. Las copias cifradas se guardan en el bucket privado S3 `proyecto-eticayseguridad`, en `us-east-1`; descargamos una copia y la restauramos en PostgreSQL aislado.
 
 | Etapa | Qué ocurre | Dónde |
 |---|---|---|
@@ -55,7 +55,7 @@ El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Uni
 | Fechas de registro y de cambio de llave | Directorio | Personal (metadato) | Operadores del directorio | Igual que el registro |
 | Versión del aviso aceptado y fecha | Directorio; almacén local | Personal (prueba de consentimiento) | Operadores; la propia persona | Mientras dure el registro; la auditoría se conserva seudonimizada durante 90 días |
 | Secreto TOTP cifrado, hashes de recuperación y estado de autenticación | Directorio; secreto también en la app autenticadora | Crítica (autenticación) | Backend con clave de cifrado independiente; metadatos accesibles a la persona | Hasta cancelar el registro o reemplazar el factor; altas sin confirmar: un día; sesiones de vinculación: cinco minutos, con purga diaria; desafío de desbloqueo: 120 segundos |
-| Contenido de los mensajes (texto plano) | **Solo** el dispositivo: memoria y almacén local cifrado | **Potencialmente sensible**; el responsable no puede leerlo | Solo los dos interlocutores | Hasta que la persona lo borre localmente |
+| Contenido de los mensajes (texto plano) | **Solo** el dispositivo: memoria y almacén local cifrado | **Potencialmente sensible**; no podemos leerlo | Solo los dos interlocutores | Hasta que la persona lo borre localmente |
 | Mensajes cifrados | Discord | Ilegible sin las llaves de sesión, que ya no existen tras rotar o bloquear | Discord y miembros del canal | Según Discord (fuera de nuestro control) |
 | Metadatos de mensajes (quién, a quién, cuándo, tamaño) | Discord; canal | Personal (relaciones sociales) | Discord y miembros del canal | Según Discord |
 | Llave privada y clave del almacén local | Solo el dispositivo, en la bóveda cifrada | Crítica | Nadie sin la contraseña maestra | Hasta que la persona borre la bóveda |
@@ -72,20 +72,20 @@ El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Uni
 * **Autenticación:** el factor confirmado se conserva hasta cancelar el registro o reemplazarlo. El estado de vinculación sin confirmar se purga tras un día; las sesiones web vencen a los cinco minutos y los desafíos firmados a los 120 segundos. La sesión local real dura 30 minutos por defecto y no se persiste como autorización para un próximo desbloqueo. Estos plazos son distintos de la retención de datos.
 * **Contenido local:** lo decide la persona, porque solo existe en su dispositivo.
 
-Estos plazos están definidos en el código y en las políticas. Falta comprobar su programación y ejecución en el entorno alojado; se revisan si cambia la finalidad.
+Definimos estos plazos en el código y en las políticas. Debemos comprobar su programación y ejecución en el alojamiento y revisarlos si cambia la finalidad.
 
 **Categorías especiales:** el sistema no las recoge ni puede leerlas; solo podrían aparecer dentro de los mensajes, que solo ven las personas que conversan.
 **Volumen y frecuencia:** demostración con 2 usuarios; uso real previsto de decenas. Un registro por persona; los mensajes dependen de ellas.
 **Personas afectadas:** usuarios de la aplicación y sus contactos (que solo se publican mediante registro con OAuth2, prueba de posesión y consentimiento: ver R7).
-**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio se aloja en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL se aloja en Supabase. La región de Supabase queda pendiente de confirmar y no se deduce de la región de EC2. Las copias cifradas se alojan en S3, en Virginia del Norte (`us-east-1`).
+**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio se aloja en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL se aloja en Supabase. Nos falta confirmar la región de Supabase; no podemos deducirla de la región de EC2. Las copias cifradas se alojan en S3, en Virginia del Norte (`us-east-1`).
 
 ### 2.3 Contexto
 
-* **Relación con las personas:** directa y voluntaria; el equipo no tiene ningún vínculo de autoridad sobre ellas.
+* **Relación con las personas:** directa y voluntaria; no tenemos ningún vínculo de autoridad sobre ellas.
 * **Control que tienen:** crean y bloquean su identidad, exportan su identidad cifrada, verifican contactos, deciden con quién hablan. Pueden borrar su registro del directorio con la opción de cancelación (C-11).
 * **Expectativas:** quien usa una herramienta "cifrada" espera que nadie lea sus mensajes; no necesariamente que los **metadatos** queden visibles (ver R1). Por eso el aviso lo dice explícitamente.
 * **Menores y grupos vulnerables:** La aplicación está dirigida a mayores de edad. El frontend exige declarar esa condición al aceptar el aviso, pero no comprueba edad con documentos ni fecha de nacimiento (ver R12).
-* **Inquietudes previas:** el debate público sobre el acceso excepcional frente al E2EE; el proyecto adopta una posición explícita: **no existe ninguna llave de custodia ni puerta trasera**.
+* **Inquietudes previas:** el debate público sobre el acceso excepcional frente al E2EE. Adoptamos una posición explícita: **no existe ninguna llave de custodia ni puerta trasera**.
 * **Novedad:** el protocolo es propio, aunque se compone de primitivas estándar y sigue el patrón de SSH y TLS 1.3. No ha pasado una auditoría externa.
 * **Códigos de conducta o certificaciones:** ninguno.
 
@@ -103,12 +103,12 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 
 | Parte | Cómo se consulta | Estado |
 |---|---|---|
-| Equipo del proyecto | Elmer Villegas Suarez y Farid Aquino Castro revisaron de forma cruzada el trabajo de cada integrante | Finalizada |
-| Personas usuarias | Los dos integrantes del grupo probaron internamente el sistema y revisaron la claridad del aviso, la recuperación del acceso y la verificación de contactos | Finalizada; consulta interna |
-| Revisión por pares | Revisión interna entre ambos integrantes de las finalidades, los plazos de conservación, los riesgos y las medidas de esta DPIA | Finalizada |
-| Discord | No se le consulta: es un tercero independiente. Se toman sus condiciones como un dato de contexto (ver paso 4) | No aplica |
-| Revisión técnica | Análisis automático del código (Bandit, pip-audit, gitleaks) y revisión humana del protocolo por ambos integrantes | Finalizada: análisis automatizado y revisión humana realizados |
-| Auditoría externa del protocolo | Se recomienda una auditoría independiente antes de ampliar el uso del sistema | Recomendada |
+| Equipo del proyecto | Revisamos de forma cruzada el trabajo de cada integrante | Finalizada |
+| Personas usuarias | Probamos internamente el sistema y revisamos la claridad del aviso, la recuperación del acceso y la verificación de contactos | Finalizada; consulta interna |
+| Revisión por pares | Revisamos entre ambos las finalidades, los plazos de conservación, los riesgos y las medidas de esta DPIA | Finalizada |
+| Discord | No le consultamos porque es un tercero independiente. Tomamos sus condiciones como un dato de contexto (ver paso 4) | No aplica |
+| Revisión técnica | Analizamos el código con Bandit, pip-audit y gitleaks, y realizamos entre ambos la revisión humana del protocolo | Finalizada: análisis automatizado y revisión humana realizados |
+| Auditoría externa del protocolo | Recomendamos una auditoría independiente antes de ampliar el uso del sistema | Recomendada |
 
 ---
 
@@ -116,7 +116,7 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 
 * **Base de licitud:** consentimiento libre, previo, expreso, informado e inequívoco (Ley 29733), pedido al registrarse y por separado de cualquier otra cosa. Está **desmarcado por defecto**, cubre las finalidades de 2.4 y su versión se registra. No se condiciona el uso a ninguna otra finalidad.
 * **¿Se logra la finalidad?** Sí: conversación cifrada de extremo a extremo con verificación de identidad.
-* **¿Hay otra forma de lograrlo?** Usar Signal o similar da mejor protección, pero el objetivo es proteger conversaciones **dentro de Discord**. Se descartó intercambiar llaves a mano por ser inusable; el directorio es el compromiso, y la ceremonia de verificación fuera de banda impide que el directorio pueda sustituir llaves sin que se detecte.
+* **¿Hay otra forma de lograrlo?** Usar Signal o similar da mejor protección, pero el objetivo es proteger conversaciones **dentro de Discord**. Descartamos intercambiar llaves a mano por la dificultad de uso; el directorio es el compromiso, y la ceremonia de verificación fuera de banda impide que el directorio pueda sustituir llaves sin que se detecte.
 * **Prevención de usos adicionales (*function creep*):** el directorio solo guarda lo que está en la tabla 2.2; las finalidades se limitan a las de 2.4; no se hace analítica ni publicidad; si el aviso cambia, sube la versión y hay que volver a aceptarlo.
 * **Calidad y minimización:** no se piden nombre, correo, teléfono, avatar ni nombre de usuario; el directorio no registra direcciones IP (C-05 implementada en la aplicación; revisar registros del alojamiento). El cliente nunca envía contenido al directorio.
 * **Información a las personas:** resumen del aviso (versión 1.4) visible antes de aceptar; el texto completo, con los elementos que exige la Ley 29733, se publica dentro de la aplicación y está disponible en el [aviso de privacidad](../privacidad/aviso-de-privacidad.md).
@@ -131,8 +131,8 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 | Portabilidad | La persona exporta su identidad cifrada con la contraseña que elija para importarla en otro dispositivo; el archivo no incluye historial ni contactos | Implementada y probada |
 | Borrado local de datos | La persona borra la bóveda y el almacén cifrado mediante su contraseña maestra | Implementado en «Borrar mis datos de este dispositivo» |
 
-* **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. AWS presta el alojamiento del directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y Supabase presta el alojamiento de PostgreSQL. El directorio se conecta a la base con el rol de aplicación y verificación TLS. Se deben revisar las condiciones de tratamiento y los accesos de administración, incluidos los respaldos cifrados en S3 (`us-east-1`). El cifrado E2EE no elimina el tratamiento de los identificadores por estos proveedores.
-* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio trata identificadores y datos de autenticación en Estados Unidos (`us-east-1`). Supabase almacena los registros y datos privados de autenticación en la región configurada para su proyecto; esa región debe confirmarse y documentarse para evaluar el flujo internacional completo. Esto constituye otro flujo internacional de datos personales; se deben revisar las garantías aplicables, incluidas las de los respaldos cifrados en S3, en Virginia del Norte.
+* **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. AWS presta el alojamiento del directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y Supabase presta el alojamiento de PostgreSQL. El directorio se conecta a la base con el rol de aplicación y verificación TLS. Debemos revisar las condiciones de tratamiento y los accesos de administración, incluidos los respaldos cifrados en S3 (`us-east-1`). El cifrado E2EE no elimina el tratamiento de los identificadores por estos proveedores.
+* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio trata identificadores y datos de autenticación en Estados Unidos (`us-east-1`). Supabase almacena los registros y datos privados de autenticación en la región configurada para su proyecto; debemos confirmar y documentar esa región para evaluar el flujo internacional completo. Esto constituye otro flujo internacional de datos personales; debemos revisar las garantías aplicables, incluidas las de los respaldos cifrados en S3, en Virginia del Norte.
 
 ---
 
@@ -146,7 +146,7 @@ Estos plazos están definidos en el código y en las políticas. Falta comprobar
 | **Posible** | Bajo | Medio | **Alto** |
 | **Remota** | Bajo | Bajo | Medio |
 
-Los riesgos están descritos con las medidas **de diseño base** ya consideradas (E2EE, firmas y PFS) pero **antes** de las medidas adicionales del paso 6. Las categorías LINDDUN son L = vinculabilidad, I = identificabilidad, N = no repudio, D = detectabilidad, Di = divulgación, U = desconocimiento, NC = incumplimiento.
+Los riesgos están descritos con las medidas **de diseño base** ya consideradas (E2EE, firmas y PFS) pero **antes** de las medidas adicionales del paso 6. Usamos las categorías LINDDUN: L = vinculabilidad, I = identificabilidad, N = no repudio, D = detectabilidad, Di = divulgación, U = desconocimiento, NC = incumplimiento.
 
 | ID | Riesgo y su impacto en las personas | LINDDUN | Probabilidad | Gravedad | Riesgo global |
 |---|---|---|---|---|---|
@@ -169,7 +169,7 @@ Los riesgos están descritos con las medidas **de diseño base** ya consideradas
 
 ## Paso 6. Medidas para reducir los riesgos
 
-Las medidas se identifican como **restricciones verificables** (C-xx). Se indica cómo se comprueba cada una y el área correspondiente; ambos integrantes del equipo se encargan de su implementación y revisión.
+Identificamos las medidas como **restricciones verificables** (C-xx). Indicamos cómo comprobar cada una y el área correspondiente; ambos nos encargamos de su implementación y revisión.
 
 ### 6.1 Restricciones
 
@@ -205,22 +205,22 @@ Las medidas se identifican como **restricciones verificables** (C-xx). Se indica
 
 | Riesgo | Medidas | Efecto | Riesgo residual | Aprobación |
 |---|---|---|---|---|
-| **R1** Metadatos | C-23 (canal privado y acotado), C-15 (el aviso lo dice con claridad), C-01. Recomendado a futuro (sección 8 del informe): relleno de mensajes a tamaño fijo y un canal por par de contactos (ver las recomendaciones) | Reducido: la exposición sigue existiendo, pero se limita a un público pequeño y la persona lo sabe; **sin la aplicación, Discord vería además el contenido** | Probable x Mínima -> **Medio** | Aprobado por el equipo |
-| **R2** Sustitución de llaves | C-07, C-06, C-16, y la ceremonia fuera de banda con *pin* | Reducido; el primer contacto no verificado sigue dependiendo de la confianza en el directorio (TOFU) | Remota x Grave -> **Medio** | Aprobado por el equipo; la interfaz muestra "sin verificar" |
-| **R3** Dispositivo | C-02, C-03, C-04, C-25. Fuera de alcance: un dispositivo ya comprometido con la aplicación desbloqueada | MFA limita el cliente oficial y el vencimiento reduce la ventana abierta. Una copia de los archivos con la contraseña correcta puede descifrarse fuera de la aplicación; no se reduce la puntuación por MFA | Remota x Grave -> **Medio** | Aprobado por el equipo |
-| **R4** Contraseña | C-03 y mínimo de 10 caracteres; exportación de la identidad como respaldo (RF12); el aviso dice que no hay recuperación | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R5** Brecha del directorio | C-05, C-07, C-08, C-10, C-12, C-13; secreto TOTP cifrado con Fernet y clave fuera de la base | Reducido para el robo de la base sin acceso a su clave de cifrado; incluye estado del factor y hashes de recuperación, pero no contenido ni contraseña. Comprometer también el servidor exige reevaluar el impacto | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R6** Conservación | C-10, C-11, C-12; el cifrado hace que lo que quede en Discord sea inservible (*borrado criptográfico*, porque las claves de sesión se destruyen) | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R7** Transparencia | C-14, C-15, indicadores del estado de la sesión en la interfaz y registro de consentimiento por versión | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R8** Registros | C-09, C-10 | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R9** Incumplimiento | C-19, C-24, C-15; documentar la transferencia a Discord y alojar el directorio donde se justifique | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R10** Token del bot | C-13; permisos mínimos del bot y rotación del token ante cualquier sospecha | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R11** Robo de la llave | C-03 y C-04; cambio de llave con OAuth2 y TOTP, más la firma de la anterior cuando se aporta, que **alerta a los contactos** (RF8); la PFS protege lo pasado | Reducido; lo futuro no queda protegido hasta que la persona cambie de llave | Remota x Grave -> **Medio** | Aprobado por el equipo |
-| **R12** Menores | Declaración de mayoría de edad dentro del consentimiento y aviso dirigido a mayores de edad; C-24 (revisar la suficiencia de la declaración antes de ampliar el uso); datos mínimos, nada de perfilado ni publicidad, aviso en lenguaje claro | Reducido | Remota x Significativa -> **Bajo** | Aprobado por el equipo |
-| **R13** Defecto del protocolo | C-22, C-20; componentes criptográficos estándar, pruebas negativas (comprobadas a mano contra defectos introducidos a propósito); recomendación de auditoría externa | Reducido; **no eliminado** | Remota x Grave -> **Medio** | Aprobado por el equipo; la limitación se declara en el informe |
-| **R14** Acceso y MFA | C-25; códigos de recuperación fuera del dispositivo, clave TOTP respaldada por separado y recuperación por Discord; instrucciones en [la guía local](../ejecucion-local.md#7-entrar-las-siguientes-veces-y-recuperar-el-acceso) | Reducido; no hay acceso offline habitual. Sin autenticador ni códigos no hay restablecimiento automático. La copia de la base debe restaurarse con su clave de cifrado original | Posible x Significativa -> **Medio** | Aprobado por el equipo |
+| **R1** Metadatos | C-23 (canal privado y acotado), C-15 (el aviso lo dice con claridad), C-01. Recomendado a futuro (sección 8 del informe): relleno de mensajes a tamaño fijo y un canal por par de contactos (ver las recomendaciones) | Reducido: la exposición sigue existiendo, pero se limita a un público pequeño y la persona lo sabe; **sin la aplicación, Discord vería además el contenido** | Probable x Mínima -> **Medio** | Sí |
+| **R2** Sustitución de llaves | C-07, C-06, C-16, y la ceremonia fuera de banda con *pin* | Reducido; el primer contacto no verificado sigue dependiendo de la confianza en el directorio (TOFU) | Remota x Grave -> **Medio** | Sí; la interfaz muestra "sin verificar" |
+| **R3** Dispositivo | C-02, C-03, C-04, C-25. Fuera de alcance: un dispositivo ya comprometido con la aplicación desbloqueada | MFA limita el cliente oficial y el vencimiento reduce la ventana abierta. Una copia de los archivos con la contraseña correcta puede descifrarse fuera de la aplicación; no se reduce la puntuación por MFA | Remota x Grave -> **Medio** | Sí |
+| **R4** Contraseña | C-03 y mínimo de 10 caracteres; exportación de la identidad como respaldo (RF12); el aviso dice que no hay recuperación | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R5** Brecha del directorio | C-05, C-07, C-08, C-10, C-12, C-13; secreto TOTP cifrado con Fernet y clave fuera de la base | Reducido para el robo de la base sin acceso a su clave de cifrado; incluye estado del factor y hashes de recuperación, pero no contenido ni contraseña. Comprometer también el servidor exige reevaluar el impacto | Remota x Significativa -> **Bajo** | Sí |
+| **R6** Conservación | C-10, C-11, C-12; el cifrado hace que lo que quede en Discord sea inservible (*borrado criptográfico*, porque las claves de sesión se destruyen) | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R7** Transparencia | C-14, C-15, indicadores del estado de la sesión en la interfaz y registro de consentimiento por versión | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R8** Registros | C-09, C-10 | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R9** Incumplimiento | C-19, C-24, C-15; documentar la transferencia a Discord y alojar el directorio donde se justifique | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R10** Token del bot | C-13; permisos mínimos del bot y rotación del token ante cualquier sospecha | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R11** Robo de la llave | C-03 y C-04; cambio de llave con OAuth2 y TOTP, más la firma de la anterior cuando se aporta, que **alerta a los contactos** (RF8); la PFS protege lo pasado | Reducido; lo futuro no queda protegido hasta que la persona cambie de llave | Remota x Grave -> **Medio** | Sí |
+| **R12** Menores | Declaración de mayoría de edad dentro del consentimiento y aviso dirigido a mayores de edad; C-24 (revisar la suficiencia de la declaración antes de ampliar el uso); datos mínimos, nada de perfilado ni publicidad, aviso en lenguaje claro | Reducido | Remota x Significativa -> **Bajo** | Sí |
+| **R13** Defecto del protocolo | C-22, C-20; componentes criptográficos estándar, pruebas negativas (comprobadas a mano contra defectos introducidos a propósito); recomendación de auditoría externa | Reducido; **no eliminado** | Remota x Grave -> **Medio** | Sí; la limitación se declara en el informe |
+| **R14** Acceso y MFA | C-25; códigos de recuperación fuera del dispositivo, clave TOTP respaldada por separado y recuperación por Discord; instrucciones en [la guía local](../ejecucion-local.md#7-entrar-las-siguientes-veces-y-recuperar-el-acceso) | Reducido; no hay acceso offline habitual. Sin autenticador ni códigos no hay restablecimiento automático. La copia de la base debe restaurarse con su clave de cifrado original | Posible x Significativa -> **Medio** | Sí |
 
-**Criterio para aceptar un riesgo en nivel medio.** Un riesgo se acepta solo si se cumplen las cuatro condiciones: (1) no puede eliminarse sin dejar de cumplir la finalidad; (2) el beneficio compensa el impacto y no existe una alternativa implementada que mantenga las mismas garantías; (3) la persona lo sabe antes de aceptar, por el aviso y por los indicadores de la interfaz; y (4) existe una mejora recomendada para reducirlo más adelante.
+**Criterio para aceptar un riesgo en nivel medio.** Aceptamos un riesgo solo si se cumplen las cuatro condiciones: (1) no puede eliminarse sin dejar de cumplir la finalidad; (2) el beneficio compensa el impacto y no existe una alternativa implementada que mantenga las mismas garantías; (3) la persona lo sabe antes de aceptar, por el aviso y por los indicadores de la interfaz; y (4) existe una mejora recomendada para reducirlo más adelante.
 
 | Riesgo residual aceptado | Por qué no se elimina | Mejora recomendada |
 |---|---|---|
@@ -231,7 +231,7 @@ Las medidas se identifican como **restricciones verificables** (C-xx). Se indica
 | R13 Defecto del protocolo | Ningún protocolo nuevo es demostrablemente correcto sin una revisión externa | Auditoría externa y verificación formal del protocolo |
 | R14 Acceso y MFA | El desbloqueo real exige validar el factor en el directorio; continuar sin él anularía ese control | Continuidad del directorio, custodia de recuperación y simulacro de restauración de PostgreSQL y de la clave TOTP |
 
-**El equipo acepta seis riesgos residuales medios** (R1, R2, R3, R11, R13, R14), con las razones de arriba y la firma consignada mediante sus correos en el paso 7. Las comprobaciones operativas pendientes se incluyen en el plan de acciones. No se deduce una exención legal de estas puntuaciones; se revisará la necesidad de actuaciones adicionales si cambian el alcance o los riesgos.
+**Aceptamos seis riesgos residuales medios** (R1, R2, R3, R11, R13, R14) por las razones expuestas y consignamos nuestros correos como firma en el paso 7. Incluimos las comprobaciones operativas pendientes en el plan de acciones. Estas puntuaciones no suponen una exención legal; revisaremos la necesidad de actuaciones adicionales si cambian el alcance o los riesgos.
 
 ---
 
@@ -239,16 +239,16 @@ Las medidas se identifican como **restricciones verificables** (C-xx). Se indica
 
 | Elemento | Nombre / cargo / fecha | Notas |
 |---|---|---|
-| Medidas aprobadas por | Elmer Villegas Suarez ([elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe)) y Farid Aquino Castro ([farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe)); integrantes del equipo; 2026-11-15 | Aprobadas. Los correos de ambos integrantes se consignan como firma del equipo. Las acciones pendientes se integran al plan siguiente |
-| Riesgos residuales aprobados por | Elmer Villegas Suarez ([elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe)) y Farid Aquino Castro ([farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe)); integrantes del equipo; 2026-11-15 | Aceptados R1, R2, R3, R11, R13 y R14 con las razones del paso 6 |
-| Consejo del delegado | No aplica: no hay delegado designado | La revisión fue interna entre ambos integrantes |
+| Medidas aprobadas por | Elmer Villegas Suarez ([elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe)) y Farid Aquino Castro ([farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe)); integrantes del equipo; 2026-11-15 | Aprobamos las medidas y consignamos nuestros correos como firma. Incluimos las acciones pendientes en el plan siguiente |
+| Riesgos residuales aprobados por | Elmer Villegas Suarez ([elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe)) y Farid Aquino Castro ([farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe)); integrantes del equipo; 2026-11-15 | Aceptamos R1, R2, R3, R11, R13 y R14 por las razones del paso 6 |
+| Consejo del delegado | No aplica: no hay delegado designado | Realizamos la revisión interna entre ambos |
 | Resumen del consejo | No aplica | No aplica |
 | Consejo aceptado o rechazado por | No aplica | No aplica |
 | Comentarios | No aplica | No aplica |
-| Respuestas de la consulta revisadas por | Elmer Villegas Suarez y Farid Aquino Castro; 2026-11-15 | Revisión interna finalizada; las observaciones se incorporaron a esta evaluación |
+| Respuestas de la consulta revisadas por | Elmer Villegas Suarez y Farid Aquino Castro; 2026-11-15 | Completamos la revisión interna e incorporamos las observaciones a esta evaluación |
 | Esta DPIA será revisada por | Ambos integrantes | Ante cambios de datos, finalidad, tecnología, proveedor o alcance del servicio |
 
-**Decisión:** el equipo aprueba las medidas y acepta los riesgos residuales descritos en el paso 6. El directorio está desplegado en EC2; el cliente y la interfaz se ejecutan en cada dispositivo. El borrado local, los derechos ARCO y el MFA del registro y del desbloqueo están implementados; el MFA está desplegado y probado con Microsoft Authenticator. Antes de ampliar el uso con datos de terceros se completarán las acciones operativas, la revisión de condiciones de los proveedores y el simulacro de incidentes del plan siguiente.
+**Decisión:** aprobamos las medidas y aceptamos los riesgos residuales descritos en el paso 6. El directorio está desplegado en EC2; el cliente y la interfaz se ejecutan en cada dispositivo. Implementamos el borrado local, los derechos ARCO y el MFA del registro y del desbloqueo, que desplegamos y probamos con Microsoft Authenticator. Antes de ampliar el uso con datos de terceros, completaremos las acciones operativas, revisaremos las condiciones de los proveedores y realizaremos el simulacro de incidentes del plan siguiente.
 
 ### Plan de acciones pendientes
 

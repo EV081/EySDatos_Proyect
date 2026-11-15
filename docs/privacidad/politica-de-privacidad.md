@@ -21,9 +21,9 @@ Es la ley peruana que protege tus datos personales: cualquier información que s
 
 ## Quién es responsable de tus datos
 
-El equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Somos quienes deciden cómo se usa el directorio de llaves y quienes responden por él. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
+Somos Elmer Villegas Suarez y Farid Aquino Castro, en Lima, Perú. Decidimos cómo se usa el directorio de llaves y respondemos por él. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
 
-El directorio se aloja en AWS EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte (`us-east-1`), durante 30 días con rotación. La región del proyecto Supabase sigue pendiente de confirmar y documentar en el inventario de alojamiento.
+El directorio se aloja en AWS EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte (`us-east-1`), durante 30 días con rotación. Nos falta confirmar y documentar la región del proyecto Supabase en el inventario de alojamiento.
 
 ## Los principios que seguimos
 
@@ -112,7 +112,7 @@ Si no te respondemos a tiempo, o si nuestra respuesta no te convence, puedes pre
 
 ## Acceso con el autenticador
 
-El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
+Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator. La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
 
 Si pierdes el autenticador, usa un código de recuperación después de entrar con Discord para vincular uno nuevo. Esos códigos no recuperan la contraseña maestra. Cancelar el registro borra el factor: exporta lo necesario antes de cancelar, porque no podrás validar el próximo desbloqueo habitual de los archivos conservados.
 

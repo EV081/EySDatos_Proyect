@@ -21,13 +21,13 @@ Estos conceptos nos ayudaron a decidir cómo proteger los mensajes y las llaves.
 
 ## 3. Requerimientos
 
-El proyecto tiene como fin crear una capa de seguridad en la comunicación de texto de **Discord**. Los requerimientos se derivan del siguiente modelo de amenaza.
+Buscamos proteger la comunicación de texto en **Discord** con una capa de cifrado. Definimos los requerimientos a partir del siguiente modelo de amenaza.
 
-**Modelo de amenaza**: Para el proveedor de la plataforma de **Discord** y cualquier entidad con acceso a sus servidores, se considera como adversario a un atacante pasivo y activo en la red. Se asume que es confiable el dispositivo del usuario y el sistema operativo del cliente. Queda **fuera del alcance** la protección de los metadatos, la disponibiliad del servicio y el compromiso físico del endpoint. El atacante activo puede además intervenir en el protocolo (repetir, reflejar, reordenar o suplantar mensajes del *handshake*), pero no puede romper las primitivas; y se asume que podría obtener **más adelante** la llave de identidad de un usuario, sin que eso deba exponer las conversaciones pasadas.
+**Modelo de amenaza:** consideramos adversarios al proveedor de **Discord**, a quienes accedan a sus servidores y a atacantes pasivos o activos en la red. Asumimos que el dispositivo y el sistema operativo de la persona son confiables. Dejamos **fuera del alcance** la protección de los metadatos, la disponibilidad del servicio y el compromiso físico del dispositivo. El atacante activo puede intervenir en el protocolo (repetir, reflejar, reordenar o suplantar mensajes del *handshake*), pero no romper las primitivas criptográficas. También contemplamos que obtenga **más adelante** la llave de identidad de una persona, sin que eso exponga sus conversaciones pasadas.
 
-Para entender la distinción entre atacante pasivo y activo, se usa la definición de Dolev y Yao (1983) que menciona que la diferencia entre ambos es lo **qué puede hacer con los mensajes que ve**. El pasivo solo observa, lee, copia y almacena. En cambio, el activo puede modificar un mensaje, borrarlo, retrasarlo, reordenarlo, editarlo, etc.
+Para distinguir entre un atacante pasivo y uno activo, usamos la definición de Dolev y Yao (1983): la diferencia está en **qué puede hacer con los mensajes que ve**. El pasivo solo observa, lee, copia y almacena. En cambio, el activo puede modificar un mensaje, borrarlo, retrasarlo, reordenarlo, editarlo, etc.
 
-Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realizado en la siguiente tabla.
+En la siguiente tabla aplicamos esa distinción a nuestro proyecto.
 
 | Actor | Atacante pasivo | Atacante activo |
 |---    |---              |---              |
@@ -99,7 +99,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 ### 3.3. Requerimientos agregados durante la implementación
 
-Al construir el directorio y las operaciones aparecieron requerimientos que la versión inicial dejaba implícitos. Salen del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12); cada uno está trazado a sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
+Al construir el directorio y las operaciones, identificamos requerimientos que habíamos dejado implícitos en la primera versión. Los derivamos del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12), y relacionamos cada uno con sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
 
 * **RF15:** La persona debe poder cancelar su registro en el directorio desde su cliente, con su llave vigente y una sesión OAuth2; el registro se borra en el acto y desaparece de las copias en 30 días como máximo.
 
@@ -145,7 +145,7 @@ Cada conversación muestra su estado:
 
 Seguimos el patrón de SSH y TLS 1.3: **identidad de largo plazo que solo firma, Diffie-Hellman efímero para la sesión y cifrado autenticado para los mensajes** (Ed25519, X25519, HKDF-SHA256 y AES-256-GCM).
 
-> **Decisión importante.** En la primera entrega cifrábamos contra la llave pública de identidad del receptor. Nos dimos cuenta de que así no hay *forward secrecy*: quien robe esa llave descifra todo el historial. Por eso ahora la identidad solo firma y las llaves de sesión son efímeras en ambos extremos.
+> **Decisión de diseño.** En la primera entrega cifrábamos contra la llave pública de identidad del receptor. Nos dimos cuenta de que así no hay *forward secrecy*: quien robe esa llave descifra todo el historial. Por eso ahora la identidad solo firma y las llaves de sesión son efímeras en ambos extremos.
 
 #### 4.2.1 Arquitectura y límite de confianza
 
@@ -288,7 +288,7 @@ El sistema protege el contenido, no el patrón de comunicación. Además:
 
 ### 5.7 Implementación lograda
 
-Todos los componentes de la sección 5.1 están implementados. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL alojado en Supabase; cada cliente cifra y descifra en su propio dispositivo.
+Implementamos todos los componentes de la sección 5.1. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL alojado en Supabase; cada cliente cifra y descifra en su propio dispositivo.
 
 | Componente | Qué hace | Pruebas automáticas |
 |---|---|---|
@@ -299,7 +299,7 @@ Todos los componentes de la sección 5.1 están implementados. El sistema integr
 | `discord_adapter/` | Un bot por persona sobre `discord.py`; solo publica mensajes `E2EE1:` | 14, incluida una conversación cifrada completa entre dos clientes reales; ensayo con la API real (`discord_adapter.smoke`) |
 | `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
 
-**Cómo se cumplió lo propuesto, y dónde hubo que decidir:**
+**Cómo cumplimos lo propuesto y qué decisiones tomamos:**
 
 * **Vínculo con la cuenta de Discord (RS16).** El contrato del cliente con el directorio no lleva credenciales, así que el **directorio** hace el flujo OAuth2 (código de autorización con `state` y PKCE, alcance `identify`). Lee el ID, revoca enseguida el token de Discord y entrega un token de registro propio de 10 minutos, de un solo uso y ligado a ese ID. Así el token de Discord nunca llega al cliente, y el cliente no tuvo que cambiar.
 * **Cambio y cancelación de llaves.** Un cambio con OAuth2 guarda la llave anterior 90 días y dispara la alerta de RF8 en los contactos; si además viene la firma de la llave anterior (`sign_key_change`), se exige que valga. La cancelación se firma, de forma provisoria, como un "cambio hacia la llave nula" con un nonce reservado para cancelar. Lo recomendable es que la librería tenga una firma propia con su contexto, y está pendiente.
@@ -313,7 +313,7 @@ Todos los componentes de la sección 5.1 están implementados. El sistema integr
 
 ### 5.8 Operaciones, políticas e incidentes
 
-| Área | Qué se implementó | Dónde |
+| Área | Qué implementamos | Dónde |
 |---|---|---|
 | Certificados | CA de 5 años con la llave cifrada; certificado de 90 días (se renueva a los 60); CRL de 30 días; revocación | [ops/certs](../ops/certs/README.md) |
 | Copias de seguridad | `pg_dump` con rol de lectura y AES-256-GCM; subida a S3 con verificación y limpieza de 30 días. Copia real a S3 verificada y restaurada en PostgreSQL aislado: 2 registros y 1 factor MFA descifrable ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta observar una ejecución automática. RPO 24 h y RTO 30 min son objetivos | [ops/backup](../ops/backup/README.md) |
@@ -335,9 +335,9 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 
 | ID | Riesgo | Inicial | Residual |
 |---|---|---|---|
-| R1 | Metadatos expuestos a Discord y al canal | Alto | Medio (aceptado por el equipo) |
-| R2 | Sustitución de llaves por un directorio malicioso | Alto | Medio (aceptado por el equipo) |
-| R3 | Robo o infección del dispositivo | Alto | Medio (aceptado por el equipo) |
+| R1 | Metadatos expuestos a Discord y al canal | Alto | Medio (aceptado) |
+| R2 | Sustitución de llaves por un directorio malicioso | Alto | Medio (aceptado) |
+| R3 | Robo o infección del dispositivo | Alto | Medio (aceptado) |
 | R4 | Contraseña maestra débil o perdida | Medio | Bajo |
 | R5 | Brecha de la base de datos del directorio | Medio | Bajo |
 | R6 | Conservación excesiva o borrado incompleto | Alto | Bajo |
@@ -345,14 +345,14 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 | R8 | Datos personales en los registros | Medio | Bajo |
 | R9 | Incumplimiento legal | Medio | Bajo |
 | R10 | Filtración del token del bot | Medio | Bajo |
-| R11 | Robo de la llave de identidad | Alto | Medio (aceptado por el equipo) |
+| R11 | Robo de la llave de identidad | Alto | Medio (aceptado) |
 | R12 | Personas menores de edad | Medio | Bajo |
-| R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptado por el equipo) |
-| R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptado por el equipo) |
+| R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptado) |
+| R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptado) |
 
 **Medidas.** Definimos 25 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
 
-**Decisión.** Elmer Villegas Suarez y Farid Aquino Castro realizaron la revisión cruzada del proyecto y la revisión humana del protocolo. El equipo revisó y aprobó la DPIA, y aceptó seis riesgos residuales de nivel medio por las razones del paso 6. Los correos de ambos integrantes se consignan como firma en el paso 7. El directorio está desplegado en EC2; los clientes se ejecutan localmente. El análisis de código, el borrado local y el MFA están implementados; el MFA está desplegado y probado con Microsoft Authenticator. Antes de ampliar el uso quedan el simulacro de incidentes, las comprobaciones operativas del alojamiento y los requisitos de C-24.
+**Decisión.** Revisamos de forma cruzada el proyecto y realizamos la revisión humana del protocolo. Aprobamos la DPIA y aceptamos seis riesgos residuales de nivel medio por las razones expuestas en el paso 6. Consignamos nuestros correos como firma en el paso 7. El directorio está desplegado en EC2 y los clientes se ejecutan localmente. Implementamos el análisis de código, el borrado local y el MFA, que desplegamos y probamos con Microsoft Authenticator. Antes de ampliar el uso, debemos realizar el simulacro de incidentes, completar las comprobaciones operativas del alojamiento y revisar los requisitos de C-24.
 
 ### 6.2 Cumplimiento de la Ley 29733 y su reglamento
 
@@ -375,9 +375,9 @@ El sistema se hace en Perú y trata datos de personas identificables, así que a
 | Aviso de privacidad | Hecho ([aviso](privacidad/aviso-de-privacidad.md)), también dentro de la app. Incluye correos de contacto; falta completar domicilio postal antes de ampliar el uso |
 | Medidas de seguridad | Implementadas en el código, incluido el borrado local (C-21); falta comprobar las medidas operativas en el entorno desplegado |
 | Notificar incidentes según el art. 34 del reglamento | El [plan de incidentes](politicas/respuesta-incidentes.md) define cuándo corresponde notificar a la ANPD (máximo 48 h), a las personas y al CNSD; falta el primer simulacro |
-| Inscribir el banco de datos | Pendiente; se evaluará la obligación de inscripción y se realizará el trámite si corresponde antes de ampliar el uso (C-24) |
-| Oficial de datos personales | No designado; ambos integrantes realizan la revisión interna y atienden los correos de contacto. La necesidad de designación se revisará antes de ampliar el uso |
-| Evaluación de impacto | Realizada como parte del proyecto; revisión interna finalizada y aprobación del equipo consignada mediante sus correos en el paso 7 de la DPIA |
+| Inscribir el banco de datos | Pendiente; evaluaremos la obligación de inscripción y realizaremos el trámite si corresponde antes de ampliar el uso (C-24) |
+| Oficial de datos personales | No hemos designado un oficial; ambos realizamos la revisión interna y atendemos los correos de contacto. Revisaremos la necesidad de designación antes de ampliar el uso |
+| Evaluación de impacto | La realizamos como parte del proyecto, completamos la revisión interna y consignamos nuestros correos como firma en el paso 7 de la DPIA |
 
 ### 6.3 Consideraciones éticas
 
@@ -460,7 +460,7 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | **Contactos** | Sus mensajes se exponen aunque su dispositivo esté seguro | Verificar la huella y atender alertas |
 | **Terceros mencionados** | Sus datos aparecen en chats que no controlan | No hay medida técnica; por eso se protege el dispositivo |
 | **Menores de edad** | Podrían declarar una edad que no tienen y no comprender el riesgo | Servicio para mayores de edad con declaración obligatoria, sin comprobación documental |
-| **Equipo responsable** | Debe evaluar y documentar la brecha y comunicarla según los supuestos del art. 34 del reglamento | Plan de incidentes, auditoría y evidencia |
+| **Equipo responsable** | Debemos evaluar y documentar la brecha y comunicarla según los supuestos del art. 34 del reglamento | Plan de incidentes, auditoría y evidencia |
 | **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
 | **Institución vinculada al proyecto** | Su nombre queda ligado al proyecto si hay una brecha con datos reales | Completar las acciones de la DPIA antes de ampliar el uso con datos de terceros |
 | **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
@@ -480,7 +480,7 @@ Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es 
 
 ## 8. Recomendaciones de protección futura
 
-Estas mejoras quedan para después. Las agrupamos según cuándo sería razonable trabajarlas y qué riesgo ayudarían a reducir.
+Proponemos las siguientes mejoras para futuras versiones. Las agrupamos según cuándo sería razonable trabajarlas y qué riesgo ayudarían a reducir.
 
 ### 8.1 Antes de ampliar el uso
 
@@ -496,7 +496,7 @@ Estas mejoras quedan para después. Las agrupamos según cuándo sería razonabl
 
 ### 8.2 A mediano plazo
 
-El siguiente cambio de cifrado propuesto es una clave aleatoria adicional, distinta de la contraseña y del código TOTP. La bóveda necesitaría la contraseña y esa clave para descifrarse. EC2 conservaría la clave cifrada y la entregaría por HTTPS después de validar el autenticador; al bloquear o vencer la sesión, el cliente dejaría de conservarla en memoria. Así, copiar los archivos y conocer la contraseña no bastaría, y EC2 seguiría sin conocer la contraseña maestra ni la llave privada de mensajería.
+Proponemos como siguiente cambio de cifrado una clave aleatoria adicional, distinta de la contraseña y del código TOTP. La bóveda necesitaría la contraseña y esa clave para descifrarse. EC2 conservaría la clave cifrada y la entregaría por HTTPS después de validar el autenticador; al bloquear o vencer la sesión, el cliente dejaría de conservarla en memoria. Así, copiar los archivos y conocer la contraseña no bastaría, y EC2 seguiría sin conocer la contraseña maestra ni la llave privada de mensajería.
 
 Esto requiere diseñar la migración de bóvedas y exportaciones, la forma de guardar y recuperar esa clave, y qué hacer si el servidor deja de estar disponible. Perderla sin respaldo podría impedir el acceso a los datos. También hay que resolver la autenticación inicial: no se puede exigir para entregar la clave una firma cuya llave privada todavía está dentro de la bóveda cerrada. Esta propuesta no está implementada; el MFA actual sigue siendo un control de acceso de la aplicación.
 
@@ -546,7 +546,7 @@ Ninguna medida reemplaza a las otras: la seguridad se arma con capas, y cada una
 3. Reservar tiempo fijo para documentar mientras se programa, y no al final.
 4. Acordar los contratos entre módulos por escrito antes de repartir el trabajo.
 
-**Aprendizaje personal.** Antes pensaba que "usar AES" era suficiente. Ahora entiendo que el problema difícil es la gestión de llaves y la confianza: quién me da la llave del otro, cómo sé que es la suya y qué pasa si algo se compromete mañana. También que la privacidad se decide en el diseño: lo que no se recoge no se puede filtrar.
+**Aprendizaje del equipo.** Antes pensábamos que "usar AES" era suficiente. Ahora entendemos que la dificultad está en la gestión de llaves y la confianza: quién nos entrega la llave de la otra persona, cómo comprobamos que es la suya y qué ocurre si algo se compromete después. También aprendimos que la privacidad se decide en el diseño: los datos que no recogemos no se pueden filtrar.
 
 *Falta completar la retrospectiva del directorio, las operaciones y las herramientas.*
 

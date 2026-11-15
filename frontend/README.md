@@ -31,7 +31,7 @@ La prueba `e2e` levanta el backend, sirve el sitio y maneja dos pestañas por el
 ## Decisiones de seguridad de la interfaz
 
 * **Nada de lo que llega de Discord se interpreta como HTML:** todo se renderiza con React como texto (no se usa `dangerouslySetInnerHTML`). La prueba e2e lo comprueba con `<img onerror=…>`.
-* **CSP en producción:** el navegador solo puede conectarse a `127.0.0.1`/`localhost`. Se permite `'unsafe-inline'` en scripts porque Next inserta el arranque en línea; la defensa de fondo es el punto anterior.
+* **CSP en producción:** el navegador solo puede conectarse a `127.0.0.1`/`localhost`. Permitimos `'unsafe-inline'` en scripts porque Next inserta el arranque en línea; la defensa de fondo es el punto anterior.
 * **El token solo viaja a `127.0.0.1` o `localhost`** (se rechaza cualquier otra dirección) y vive en `sessionStorage`, no en `localStorage`.
 * **Las contraseñas no se guardan:** se limpian de los campos tras usarlas.
 * **Dependencias mínimas y fijadas** (`next`, `react`, `react-dom` y tipos), sin librerías de UI ni de estado. Las únicas añadidas son `qrcode-generator` (dibujar el QR) y `jsqr` (leerlo con la cámara), ambas sin dependencias propias.

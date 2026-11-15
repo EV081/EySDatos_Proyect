@@ -9,8 +9,8 @@ CA del directorio de llaves  (ECDSA P-256, 5 años, pathlen 0, solo firma certif
 
 * El cliente **solo** confía en `ca.pem`: `directory.client_lib.tls_context` crea un contexto vacío (sin las CA del sistema), carga esa CA, verifica el nombre del host y exige **TLS 1.3 como mínimo**. El servidor (`python -m directory.serve`) tampoco acepta nada por debajo de TLS 1.3.
 * Ante cualquier fallo (otra CA, certificado vencido, nombre distinto, revocado, TLS 1.2) la conexión se corta y el cliente lanza `DirectoryError`, que el orquestador convierte en "no se pudo consultar el directorio". **No existe opción de continuar** ni parámetro para desactivar la verificación.
-* ¿Por qué una CA propia y no una pública? El directorio es la pieza que podría sustituir llaves (R2). Si el cliente confiara en todas las CA públicas, cualquiera de ellas podría emitir un certificado para el directorio. Con una CA propia, la superficie se reduce a una sola llave que controla el equipo.
-* `ca.pem` y `crl.pem` se distribuyen junto con el cliente (o se copian a mano en la demo). La llave de la CA nunca sale del equipo del responsable.
+* ¿Por qué una CA propia y no una pública? El directorio es la pieza que podría sustituir llaves (R2). Si el cliente confiara en todas las CA públicas, cualquiera de ellas podría emitir un certificado para el directorio. Con una CA propia, la superficie se reduce a una sola llave que controlamos.
+* Distribuimos `ca.pem` y `crl.pem` junto con el cliente (o los copiamos a mano en la demo). La llave de la CA nunca sale del equipo del responsable.
 
 ## Operación
 
@@ -34,8 +34,8 @@ python -m directory.serve                  # https://localhost:8443
 
 * **Certificado del servidor comprometido** (por ejemplo, se filtró `server.key`): `revoke <serial>`, `issue` y distribuir el nuevo `crl.pem`. Con `DIRECTORY_CRL_FILE` configurado, el cliente rechaza el certificado revocado (`VERIFY_CRL_CHECK_LEAF`).
 * **La CRL vence a los 30 días.** Si el cliente tiene configurada una CRL vencida, falla cerrado. `issue` y `revoke` la regeneran. Programar `issue` mensualmente cubre ambos plazos.
-* **Llave de la CA comprometida:** no se puede revocar a sí misma. Se crea una CA nueva (`init` en otra carpeta), se reemplaza `ca.pem` en todos los clientes y se trata como incidente (ver `docs/politicas/respuesta-incidentes.md`). Como la llave de la CA está cifrada y fuera del servidor del directorio, robar el servidor no basta para emitir certificados.
-* No se usa OCSP: con un solo servidor y clientes conocidos, una CRL distribuida a mano es más simple y no filtra a un tercero qué clientes consultan el directorio.
+* **Llave de la CA comprometida:** no se puede revocar a sí misma. Debemos crear una CA nueva (`init` en otra carpeta), reemplazar `ca.pem` en todos los clientes y tratarlo como incidente (ver `docs/politicas/respuesta-incidentes.md`). Como la llave de la CA está cifrada y fuera del servidor del directorio, robar el servidor no basta para emitir certificados.
+* No usamos OCSP: con un solo servidor y clientes conocidos, distribuir la CRL a mano es más simple y no revela a un tercero qué clientes consultan el directorio.
 
 ## Notas
 

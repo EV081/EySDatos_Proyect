@@ -4,7 +4,7 @@
 
 **Alcance.** Directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL alojado en Supabase; respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. Las copias cifradas se alojan en el bucket privado S3 `proyecto-eticayseguridad`, en Virginia del Norte (`us-east-1`). No se incluyen IP, credenciales ni tokens en este documento.
 
-**Regla de notificación.** Se evalúan los supuestos de los artículos 34 a 36 del [reglamento de la Ley 29733, DS 016-2024-JUS](https://www.gob.pe/institucion/anpd/normas-legales/6554453-n-016-2024-jus). Se documenta todo incidente; no se presume que todos tengan las mismas obligaciones de comunicación. La sección 5 fija los criterios.
+**Regla de notificación.** Evaluamos los supuestos de los artículos 34 a 36 del [reglamento de la Ley 29733, DS 016-2024-JUS](https://www.gob.pe/institucion/anpd/normas-legales/6554453-n-016-2024-jus). Documentamos todo incidente y evaluamos las obligaciones de comunicación de cada caso. La sección 5 fija los criterios.
 
 ## 1. Gobernar: roles y contactos
 
@@ -15,9 +15,9 @@
 | Responsable técnico de infraestructura | Área de infraestructura | Directorio, base de datos, TLS, copias, registros y bots |
 | Contacto con la ANPD y con las personas afectadas | El responsable del banco de datos (el equipo) | Envía las notificaciones y responde consultas |
 
-**Contactos:** ANPD (Autoridad Nacional de Protección de Datos Personales, Ministerio de Justicia y Derechos Humanos), por su mesa de partes virtual. Discord: Trust & Safety, para la revocación de bots o los abusos de la plataforma. Contactos del equipo: [elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe) y [farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe). Para AWS, usar el canal de soporte de la cuenta. Para la base, usar el soporte y los controles de acceso del proyecto Supabase; su región debe documentarse por separado. Antes del simulacro, confirmar que ambos integrantes pueden acceder a esos canales desde un equipo seguro.
+**Contactos:** ANPD (Autoridad Nacional de Protección de Datos Personales, Ministerio de Justicia y Derechos Humanos), por su mesa de partes virtual. Discord: Trust & Safety, para la revocación de bots o los abusos de la plataforma. Contactos del equipo: [elmer.villegas@utec.edu.pe](mailto:elmer.villegas@utec.edu.pe) y [farid.aquino@utec.edu.pe](mailto:farid.aquino@utec.edu.pe). Para AWS, usar el canal de soporte de la cuenta. Para la base, usamos el soporte y los controles de acceso del proyecto Supabase; debemos documentar su región por separado. Antes del simulacro, debemos comprobar que ambos podemos acceder a esos canales desde un dispositivo seguro.
 
-La revisión interna del protocolo y de esta evaluación fue realizada por Elmer Villegas Suarez y Farid Aquino Castro. La aprobación de las medidas y de los riesgos residuales consta en el paso 7 de la [DPIA](../dpia/DPIA.md), con sus correos como firma del equipo.
+Realizamos la revisión interna del protocolo y de la DPIA. Aprobamos las medidas y los riesgos residuales descritos en su [paso 7](../dpia/DPIA.md#paso-7-aprobación-y-registro-de-resultados), donde consignamos nuestros correos como firma.
 
 ## 2. Identificar y Proteger: preparación
 
@@ -36,7 +36,7 @@ Lo que ya existe y que este plan usa:
 | Inventario de datos y riesgos | [DPIA](../dpia/DPIA.md) y secciones 6.4 y 7 del [informe](../README.md) |
 | Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase; confirmar la región del proyecto de la base. Respaldos cifrados en S3, Virginia del Norte (`us-east-1`). Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado |
 
-**Comprobaciones operativas:** verificar TLS, permisos IAM, acceso de administración restringido y retención en el alojamiento. La tarea de copias está instalada y activa; una copia cifrada de S3 se descargó y restauró en PostgreSQL aislado, con 2 registros y 1 factor MFA descifrable mediante la clave original. Falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado. La llave privada de la CA y la clave de los respaldos se custodian fuera de la instancia.
+**Comprobaciones operativas:** verificar TLS, permisos IAM, acceso de administración restringido y retención en el alojamiento. La tarea de copias está instalada y activa; descargamos una copia cifrada de S3 y la restauramos en PostgreSQL aislado, con 2 registros y 1 factor MFA descifrable mediante la clave original. Nos falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado. Custodiamos la llave privada de la CA y la clave de los respaldos fuera de la instancia.
 
 ## 3. Detectar: fuentes y clasificación
 
@@ -51,11 +51,11 @@ Lo que ya existe y que este plan usa:
 | **Medio** | Hay un intento detectado sin exposición confirmada | Alerta de enumeración, `acceso_ajeno` aislado, dependencia vulnerable sin explotación conocida | Antes de 24 h |
 | **Bajo** | Hay una indisponibilidad sin exposición | S12 | Siguiente día hábil |
 
-El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. La restauración aislada de una copia de S3 permitió recuperar la base y descifrar un factor MFA con la clave TOTP original; queda probar el inicio de sesión del servicio recuperado y realizar el simulacro del anexo B.
+Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator. Restauramos una copia de S3 en una base aislada y desciframos un factor MFA con la clave TOTP original. Nos falta probar el inicio de sesión del servicio recuperado y realizar el simulacro del anexo B.
 
 **Referencias de escenarios:** S1 a S12 corresponden a la tabla 7.1 del informe.
 
-**Reloj legal:** cuando el incidente cumple los supuestos de notificación, el plazo máximo de 48 horas corre desde que el equipo **conoce o tiene constancia** del incidente, no desde que termina la investigación. La primera entrada de la bitácora registra la fecha y hora de ese momento (T0).
+**Reloj legal:** cuando el incidente cumple los supuestos de notificación, el plazo máximo de 48 horas corre desde que **conocemos o tenemos constancia** del incidente, no desde que termina la investigación. La primera entrada de la bitácora registra la fecha y hora de ese momento (T0).
 
 ## 4. Responder
 
@@ -99,7 +99,7 @@ El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Au
 | Responsable del tratamiento | Art. 36: aviso del encargado cuando conoce un incidente | De forma inmediata; documentar cuándo informó el proveedor |
 | AWS, Supabase o Discord | Cuando el incidente requiere contención o asistencia de su servicio | Abrir un caso por un canal de soporte verificado; conservar el identificador |
 
-La coordinación deja por escrito la decisión de notificar o no, los hechos y el artículo aplicado. Todo incidente se documenta conforme al art. 35. No se espera al resultado final de la investigación para iniciar las comunicaciones obligatorias. Si una comunicación supera el plazo, se registran y comunican los motivos y el sustento de la demora.
+La coordinación deja por escrito la decisión de notificar o no, los hechos y el artículo aplicado. Documentamos todo incidente conforme al art. 35. No esperamos al resultado final de la investigación para iniciar las comunicaciones obligatorias. Si una comunicación supera el plazo, registramos y comunicamos los motivos y el sustento de la demora.
 
 ### 5.2 Contenido y canal
 
@@ -110,7 +110,7 @@ La notificación incluye:
 * Contactos del equipo: elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe.
 * Información todavía desconocida y cómo se completará, sin inventar cantidades ni afirmar que el cifrado elimina todo riesgo.
 
-Se usa el canal oficial vigente de la ANPD y del CNSD, verificado al enviar, y se guarda el acuse. A las personas se les escribe por un medio que no dependa del componente comprometido: qué pasó, qué datos afecta y qué deben hacer (bloquear la aplicación, renovar credenciales o verificar de nuevo sus contactos). No incluir llaves, tokens ni datos de terceros en mensajes públicos.
+Usamos el canal oficial vigente de la ANPD y del CNSD, lo verificamos al enviar y guardamos el acuse. Escribimos a las personas por un medio que no dependa del componente comprometido: qué pasó, qué datos afecta y qué deben hacer (bloquear la aplicación, renovar credenciales o verificar de nuevo sus contactos). No incluir llaves, tokens ni datos de terceros en mensajes públicos.
 
 ## 6. Recuperar
 
@@ -131,7 +131,7 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 ## 8. Ejercicios
 
-* **Simulacro en papel** cada semestre, y antes de ampliar el uso. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". El equipo recorre las secciones 4 a 6 con el reloj de 48 h corriendo y registra los resultados en el anexo B. Incluir pérdida de autenticador, indisponibilidad de EC2 y restauración de PostgreSQL con su clave de cifrado TOTP; la copia de la base por sí sola no basta.
+* **Simulacro en papel** cada semestre, y antes de ampliar el uso. Escenario sugerido: "llega una alerta de 3 cambios de llave en una hora y una persona reporta que su contacto ya no está verificado". Recorremos las secciones 4 a 6 con el plazo de 48 h en curso y registramos los resultados en el anexo B. Incluir pérdida de autenticador, indisponibilidad de EC2 y restauración de PostgreSQL con su clave de cifrado TOTP; la copia de la base por sí sola no basta.
 * **Restauración real** de una copia cada semana (`backup verify`, automatizable) y una restauración completa sobre un servidor limpio cada semestre.
 
 ---
@@ -180,9 +180,9 @@ Dentro de los 7 días siguientes al cierre, sin buscar culpables:
 
 **Revisión posterior.**
 
-* **Por qué pasó:** en una CI se ven como inofensivas las contraseñas de bases efímeras, y se escribieron en el workflow. La política 2.2 ("ningún secreto se versiona") no hacía excepciones, y aun así se incumplió.
+* **Por qué pasó:** consideramos inofensivas las contraseñas de las bases efímeras de CI y las escribimos en el workflow. Nuestra política 2.2 ("no versionamos secretos") no hacía excepciones, y aun así la incumplimos.
 * **Por qué no lo detectamos antes:** las reglas por defecto de gitleaks ignoran contraseñas cortas y de baja entropía. La CI pasaba en verde con el secreto adentro.
-* **Qué funcionó:** la detección externa (GitGuardian) llegó a los minutos; el impacto se acotó rápido gracias a que la base era efímera y las contraseñas no se reutilizaban.
+* **Qué funcionó:** la detección externa (GitGuardian) llegó a los minutos; acotamos el impacto rápidamente porque la base era efímera y no reutilizábamos las contraseñas.
 * **Acciones:**
 
 | Acción | Responsable | Estado |

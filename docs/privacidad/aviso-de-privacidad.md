@@ -14,13 +14,13 @@ Este aviso te explica, en lenguaje claro, qué datos tuyos trata esta aplicació
 
 ## Quién es el responsable
 
-El responsable del tratamiento y titular del banco de datos del directorio es el equipo del proyecto: Elmer Villegas Suarez y Farid Aquino Castro, con domicilio en Lima, Perú. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe. El domicilio postal se completará antes de ampliar el uso con datos de terceros.
+Somos Elmer Villegas Suarez y Farid Aquino Castro, responsables del tratamiento y titulares del banco de datos del directorio, con domicilio en Lima, Perú. Puedes escribir a elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe. Completaremos el domicilio postal antes de ampliar el uso con datos de terceros.
 
 Para ejercer tus derechos, escribe a elmer.villegas@utec.edu.pe o a farid.aquino@utec.edu.pe. Te responderemos por un canal privado. No publiques tus datos personales en el repositorio.
 
 ## Qué datos tratamos
 
-Lo que se guarda en el directorio:
+En el directorio guardamos:
 
 - Tu **ID de Discord**.
 - Tu **llave pública de firma**, que por diseño es pública.
@@ -30,7 +30,7 @@ Lo que se guarda en el directorio:
   el estado de vinculación y los contadores y fechas necesarios para impedir reutilización y limitar intentos.
   Estos datos de autenticación son privados y no se publican con tu llave. El QR se genera sin servicios externos. Al desbloquear, el directorio recibe también un código temporal y una firma sobre un desafío; no recibe tu contraseña ni el historial. El directorio valida TOTP directamente, sin consultar una API de Microsoft.
 
-La aplicación no solicita tu nombre, correo, teléfono, foto ni nombre de usuario, y sus registros no guardan tu dirección IP. Los registros del alojamiento se revisan por separado. No hacemos perfiles, no usamos tus datos para publicidad ni para análisis.
+La aplicación no solicita tu nombre, correo, teléfono, foto ni nombre de usuario, y sus registros no guardan tu dirección IP. Revisamos los registros del alojamiento por separado. No hacemos perfiles, no usamos tus datos para publicidad ni para análisis.
 
 Lo que se queda **solo en tu dispositivo** y nosotros no vemos: el contenido de tus conversaciones, tu llave privada, tus contactos y su estado de verificación, y los mensajes pendientes de envío. Todo se guarda cifrado con una clave derivada de tu contraseña maestra.
 
@@ -56,15 +56,15 @@ Tu ID de Discord, tu llave pública y la vinculación de una app autenticadora s
 
 - **Otras personas usuarias:** ven tu ID de Discord y tu llave pública cuando te buscan.
 - **Discord:** recibe tus mensajes **ya cifrados** y los metadatos (quién escribe, a quién, cuándo y de qué tamaño). Discord es un responsable independiente de su propia plataforma.
-- **Las personas que operan el directorio:** acceden a lo que está en el directorio, con permisos mínimos.
-- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. La región del proyecto Supabase debe confirmarse y documentarse. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`).
+- **Quienes operamos el directorio:** accedemos a los datos que conserva, con permisos mínimos.
+- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. Debemos confirmar y documentar la región del proyecto Supabase. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`).
 - **Autoridades:** solo si una orden válida lo exige, y únicamente con los datos que realmente conservamos en el directorio y sus registros, descritos en este aviso. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
 
 No vendemos ni cedemos tus datos a otras personas o empresas.
 
 ## Transferencias internacionales
 
-Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; la región del proyecto Supabase debe confirmarse antes de ampliar el uso con datos de terceros. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`). Deben revisarse las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
+Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; debemos confirmar la región del proyecto Supabase antes de ampliar el uso con datos de terceros. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`). Debemos revisar las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
 
 ## Cuánto tiempo conservamos tus datos
 
@@ -81,7 +81,7 @@ Lo que Discord conserve depende de sus propias condiciones. Aun así, los mensaj
 
 ## El banco de datos
 
-Los datos del directorio forman un banco de datos personales. El banco del proyecto **no está inscrito** en el Registro Nacional de Protección de Datos Personales. Antes de ampliar el uso del servicio se evaluará la obligación de inscripción y se realizará el trámite si corresponde, como se recoge en la DPIA.
+Los datos del directorio forman un banco de datos personales. El banco del proyecto **no está inscrito** en el Registro Nacional de Protección de Datos Personales. Antes de ampliar el uso del servicio, evaluaremos la obligación de inscripción y realizaremos el trámite si corresponde, como indicamos en la DPIA.
 
 ## Tus derechos
 
@@ -99,7 +99,7 @@ Responderemos dentro de los plazos que establece la ley. No tomamos decisiones a
 
 ## Cómo protegemos tus datos
 
-El MFA del registro y del desbloqueo está desplegado y probado con Microsoft Authenticator. Usamos cifrado de extremo a extremo con renovación periódica de claves, verificación de identidad fuera de Discord, tu llave privada cifrada con tu contraseña maestra, conexión protegida con el directorio, permisos mínimos y registros con IDs seudonimizados, sin contenido ni secretos. Si ocurre un incidente de seguridad, lo documentaremos y evaluaremos las comunicaciones del artículo 34 del reglamento. Cuando se cumplan sus supuestos, notificaremos a la ANPD en un máximo de 48 horas desde que lo conozcamos; si afecta a otros derechos, te lo comunicaremos también dentro de las 48 horas y sin dilación indebida. En el entorno digital se contempla además la comunicación al Centro Nacional de Seguridad Digital.
+Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator. Usamos cifrado de extremo a extremo con renovación periódica de claves, verificación de identidad fuera de Discord, tu llave privada cifrada con tu contraseña maestra, conexión protegida con el directorio, permisos mínimos y registros con IDs seudonimizados, sin contenido ni secretos. Si ocurre un incidente de seguridad, lo documentaremos y evaluaremos las comunicaciones del artículo 34 del reglamento. Cuando se cumplan sus supuestos, notificaremos a la ANPD en un máximo de 48 horas desde que lo conozcamos; si afecta a otros derechos, te lo comunicaremos también dentro de las 48 horas y sin dilación indebida. En el entorno digital se contempla además la comunicación al Centro Nacional de Seguridad Digital.
 
 ## Lo que debes saber
 
