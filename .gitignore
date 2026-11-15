@@ -152,9 +152,11 @@ activemq-data/
 
 # Environments
 .env
-# Variables por persona (.env.a, .env.b): llevan el token del bot y el del cliente. La plantilla sí se versiona.
+# Variables por persona (.env.a, .env.b): llevan el token del bot y el del cliente. Las plantillas sí se versionan.
 .env.*
 !.env.example
+!.env.example.local
+!.env.example.ec2
 .envrc
 .venv
 env/

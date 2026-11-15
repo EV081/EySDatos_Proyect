@@ -8,6 +8,8 @@ La [guía de ejecución local](../docs/guia/ejecucion-local.md) explica el `.env
 
 Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 
+Para una laptop conectada al directorio de EC2, copia [`.env.example.local`](../.env.example.local) a `.env` y completa sus valores según la guía. La plantilla [`.env.example`](../.env.example) corresponde al desarrollo con PostgreSQL y directorio locales.
+
 ## Lo que el frontend debe saber
 
 * **Auth:** todas las rutas (salvo `/health`) piden `Authorization: Bearer <token>`. CORS solo admite el origen del frontend (`CLIENT_ALLOWED_ORIGIN`). El `Host` debe ser `localhost` o `127.0.0.1`.

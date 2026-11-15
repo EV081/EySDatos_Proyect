@@ -26,28 +26,32 @@ ARQUITECTURA = f"""
 digraph G {{
   rankdir=TB;
   {BASE}
+  graph [nodesep=0.3, ranksep=0.5];
   subgraph cluster_local {{
-    label=<<b>Tu dispositivo (confiable)</b>>; labeljust=l; style="rounded,filled,dashed";
-    color="{VERDE}"; fillcolor="{VERDE_F}"; fontcolor="{VERDE}"; penwidth=1.6;
-    front [label=<<b>Frontend</b><br/>muestra el texto plano>, color="{VERDE}", fillcolor="white"];
-    cli [label=<<b>Cliente local</b><br/>llaves, cifrado y handshake<br/>desbloqueo con contraseña + TOTP>, color="{VERDE}", fillcolor="white"];
-    boveda [label=<<b>Bóveda cifrada</b><br/>llave privada + historial<br/>Argon2id + AES-256-GCM>, shape=cylinder, style="filled", color="{VERDE}", fillcolor="white"];
-    {{ rank=same; front; cli; boveda; }}
-    front -> cli [label="API local\\n(127.0.0.1)", dir=both, color="{VERDE}", fontcolor="{VERDE}"];
-    cli -> boveda [color="{VERDE}"];
+    label=<<b>Dispositivo de cada persona</b>>; labeljust=l; style="rounded,filled,dashed";
+    color="{VERDE}"; fillcolor="{VERDE_F}"; fontcolor="{VERDE}";
+    front [label=<<b>Frontend</b><br/>interfaz y texto plano>, color="{VERDE}", fillcolor="white"];
+    cli [label=<<b>Cliente local</b><br/>cifrado, identidad y sesiones<br/>contraseña + TOTP al desbloquear>, color="{VERDE}", fillcolor="white"];
+    boveda [label=<<b>Bóveda de identidad</b><br/>llave privada + clave del almacén<br/>Argon2id + AES-256-GCM>, shape=cylinder, style=filled, color="{VERDE}", fillcolor="white"];
+    store [label=<<b>Almacén local</b><br/>historial, contactos y cola<br/>AES-256-GCM>, shape=cylinder, style=filled, color="{VERDE}", fillcolor="white"];
+    {{ rank=same; front; cli; }}
+    {{ rank=same; boveda; store; }}
+    front -> cli [label="API local\\n127.0.0.1", dir=both, color="{VERDE}", fontcolor="{VERDE}"];
+    cli -> boveda [dir=both, color="{VERDE}"];
+    cli -> store [dir=both, color="{VERDE}"];
   }}
-  subgraph cluster_remoto {{
-    label=<<b>Servicios remotos (no confiables)</b>>; labeljust=l; labelloc=b; style="rounded,filled,dashed";
-    color="{ROJO}"; fillcolor="{ROJO_F}"; fontcolor="{ROJO}"; penwidth=1.6;
-    dir [label=<<b>Directorio de llaves</b><br/>API de llaves y verificación de MFA<br/>PostgreSQL alojado en Supabase>, color="{ROJO}", fillcolor="white"];
-    dis [label=<<b>Discord</b><br/>un bot por persona, canal privado<br/>solo ve texto cifrado y metadatos>, color="{ROJO}", fillcolor="white"];
-    {{ rank=same; dir; dis; }}
-  }}
-  cli -> dir [label="TLS 1.3 + CA propia\\nllaves y validación del segundo factor", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
-  cli -> dis [label="handshake (hs1-hs3)\\ny mensajes cifrados", dir=both, color="{NARANJA}", fontcolor="{NARANJA}"];
-  nota [shape=note, style=filled, fillcolor="{GRIS_F}", color="{GRIS}", fontcolor="{GRIS}",
-        label="Las llaves privadas permanecen en el dispositivo.\\nLa contraseña maestra y el historial no se envían al directorio."];
-  cli -> nota [style=invis];
+  dir [label=<<b>Directorio en AWS EC2</b><br/>Llaves públicas y validación MFA<br/>Virginia del Norte: us-east-1>, color="{AZUL}", fillcolor="{AZUL_F}"];
+  backup [label=<<b>Respaldo desde EC2</b><br/>pg_dump con rol de solo lectura<br/>AES-256-GCM antes de subir>, color="{NARANJA}", fillcolor="{NARANJA_F}"];
+  db [label=<<b>PostgreSQL · Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado y hashes de recuperación>, shape=cylinder, color="{AZUL}", fillcolor="{AZUL_F}"];
+  s3 [label=<<b>Amazon S3 · us-east-1</b><br/>bucket privado: copias cifradas<br/>retención de 30 días>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
+  discord [label=<<b>Discord</b><br/>un bot por persona, canal privado<br/>texto cifrado + metadatos>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  {{ rank=same; dir; discord; }}
+  {{ rank=same; db; backup; }}
+  cli -> dir [label="TLS 1.3 + CA propia\\nllaves y validación MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  cli -> discord [label="handshake y mensajes E2EE", dir=both, color="{ROJO}", fontcolor="{ROJO}"];
+  dir -> db [label="PostgreSQL + TLS", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  db -> backup [label="pg_dump por TLS", color="{NARANJA}", fontcolor="{NARANJA}"];
+  backup -> s3 [label="HTTPS: copia cifrada\\nverificación de tamaño y SHA-256", color="{NARANJA}", fontcolor="{NARANJA}"];
 }}
 """
 
@@ -99,18 +103,22 @@ DPIA = f"""
 digraph G {{
   rankdir=TB;
   {BASE}
-  local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>vault.json y store.enc cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
-  ec2 [label=<<b>Directorio en AWS EC2</b><br/>Virginia del Norte: us-east-1<br/>Registro, consultas y validación MFA<br/>Clave de cifrado TOTP fuera de la base>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  graph [nodesep=0.4, ranksep=0.6];
+  local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>Bóveda de identidad y almacén cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
+  ec2 [label=<<b>Directorio en AWS EC2</b><br/>Virginia del Norte: us-east-1<br/>Registro, consultas y validación MFA>, color="{AZUL}", fillcolor="{AZUL_F}"];
   discord [label=<<b>Discord</b><br/>Canal privado con bots<br/>Texto cifrado + metadatos>, color="{ROJO}", fillcolor="{ROJO_F}"];
-  base [label=<<b>PostgreSQL en Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación<br/>Región del proyecto por confirmar>, shape=cylinder, color="{ROJO}", fillcolor="{ROJO_F}"];
-  copias [label=<<b>Registros y respaldos</b><br/>Auditoría: IDs seudonimizados, 90 días<br/>Copias cifradas: 30 días<br/>Clave TOTP: respaldo separado<br/>Destino externo por comprobar>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
+  base [label=<<b>PostgreSQL en Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación<br/>Región del proyecto por confirmar>, shape=cylinder, color="{AZUL}", fillcolor="{AZUL_F}"];
+  backup [label=<<b>Respaldo desde EC2</b><br/>Lectura de la base con permisos mínimos<br/>Cifrado AES-256-GCM antes de subir>, color="{NARANJA}", fillcolor="{NARANJA_F}"];
+  audit [label=<<b>Auditoría en EC2</b><br/>IDs seudonimizados, sin contenido<br/>Retención: 90 días>, shape=cylinder, color="{GRIS}", fillcolor="{GRIS_F}"];
+  s3 [label=<<b>Amazon S3 · us-east-1</b><br/>Bucket privado, copias cifradas<br/>Retención: 30 días>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];
   {{ rank=same; ec2; discord; }}
-  {{ rank=same; base; copias; }}
-  local -> ec2 [label="TLS 1.3\\nregistro, ARCO y desbloqueo MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
-  local -> discord [label="handshake y mensajes cifrados", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
-  ec2 -> base [label="PostgreSQL + TLS\\nrol de mínimos permisos", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
-  ec2 -> copias [label="auditoría del servicio", color="{NARANJA}", fontcolor="{NARANJA}"];
-  base -> copias [label="copias cifradas", color="{NARANJA}", fontcolor="{NARANJA}"];
+  {{ rank=same; base; audit; }}
+  local -> ec2 [label="TLS 1.3: registro, ARCO y MFA", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  local -> discord [label="handshake y mensajes cifrados", dir=both, color="{ROJO}", fontcolor="{ROJO}"];
+  ec2 -> base [label="PostgreSQL + TLS", dir=both, color="{AZUL}", fontcolor="{AZUL}"];
+  ec2 -> audit [label="eventos del servicio", color="{GRIS}", fontcolor="{GRIS}"];
+  base -> backup [label="pg_dump por TLS", color="{NARANJA}", fontcolor="{NARANJA}"];
+  backup -> s3 [label="HTTPS: copia cifrada y verificada", color="{NARANJA}", fontcolor="{NARANJA}"];
 }}
 """
 

@@ -102,7 +102,15 @@ Guarda los cuatro resultados por separado: contraseña de `directory_app`, contr
 
 En [Discord Developer Portal](https://discord.com/developers/applications), crea la aplicación OAuth del directorio. Copia el **Application ID** y el **Client Secret**; en **OAuth2 > Redirects** registra exactamente `https://HOST_EC2:8443/auth/callback`. Cada participante creará su propio bot según la guía local. El directorio usa OAuth con alcance `identify`; Authenticator usa TOTP y no requiere una API key de Microsoft.
 
-En EC2 crea `.env` con `nano .env` y completa las seis variables de la API:
+En EC2 copia la [plantilla del servidor](../../.env.example.ec2) a `.env` y ábrela con tu editor:
+
+```bash
+cp .env.example.ec2 .env
+chmod 600 .env
+nano .env
+```
+
+Completa primero las seis variables de la API. Sustituye las referencias, el host y los valores de ejemplo por los de tu proyecto:
 
 ```dotenv
 DATABASE_URL='postgresql://directory_app.PROJECT_REF:CONTRASENA_ROL_APP@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/app/ops/certs/supabase-ca.pem'
@@ -113,7 +121,7 @@ PSEUDONYM_KEY=CLAVE_BASE64URL_DE_32_BYTES
 TOTP_ENCRYPTION_KEY=OTRA_CLAVE_BASE64URL_DE_32_BYTES
 ```
 
-La aplicación usa el usuario de base de datos con los permisos necesarios para la app, que se creará en el paso 4; no la conexión administrativa. El certificado se verá dentro del contenedor en `/app/ops/certs/`. No necesitas `POSTGRES_PASSWORD`, claves `anon` ni `service_role` para esta arquitectura. Más adelante agregarás las variables para preparar las tablas y hacer las copias.
+La aplicación usa el usuario de base de datos con los permisos necesarios para la app, que se creará en el paso 4; no la conexión administrativa. El certificado se verá dentro del contenedor en `/app/ops/certs/`. No necesitas `POSTGRES_PASSWORD`, claves `anon` ni `service_role` para esta arquitectura. Las credenciales administrativas se configuran por separado en el paso 4. La plantilla ya incluye las variables de respaldos; complétalas al llegar al paso 8.
 
 ```bash
 chmod 600 .env
@@ -260,7 +268,7 @@ Los permisos necesarios son `s3:GetBucketPublicAccessBlock`, `s3:GetBucketVersio
 
 El entorno Python 3.12 y las herramientas `pg_dump`/`pg_restore` ya se instalaron en el paso 1. La tarea se ejecuta directamente en EC2, fuera del contenedor del directorio.
 
-El usuario `directory_backup`, que solo puede leer la base, se habilitó en el paso 4. Usa su contraseña para agregar estas variables al `.env` de EC2, o guárdalas en `.env.backup` si prefieres separarlas:
+El usuario `directory_backup`, que solo puede leer la base, se habilitó en el paso 4. Usa su contraseña para completar la sección de respaldos de `.env`, incluida en `.env.example.ec2`. También puedes guardar solo estas variables en `.env.backup` si prefieres separarlas:
 
 ```dotenv
 BACKUP_DATABASE_URL='postgresql://directory_backup.PROJECT_REF:CONTRASENA_ROL_RESPALDO@POOLER_HOST:5432/postgres?sslmode=verify-full&sslrootcert=/home/ubuntu/EySDatos_Proyect/ops/certs/supabase-ca.pem'

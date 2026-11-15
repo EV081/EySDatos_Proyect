@@ -151,10 +151,14 @@ Seguimos el patrón de SSH y TLS 1.3: **identidad de largo plazo que solo firma,
 
 En el **dispositivo de cada persona** quedan los mensajes legibles y las claves privadas: la interfaz muestra los mensajes y el cliente local gestiona las llaves. El **directorio**, desplegado en EC2 en Virginia del Norte (`us-east-1`) con PostgreSQL en Supabase, publica la asociación ID de Discord <-> llave pública de firma y valida el segundo factor por TLS 1.3 (RS6). PostgreSQL guarda también el secreto TOTP cifrado, hashes de recuperación y el estado necesario para impedir reutilizaciones; esos datos no se publican con las llaves. La clave `TOTP_ENCRYPTION_KEY` se configura fuera de la base. **Discord** transporta y guarda el intercambio para iniciar la conversación y los mensajes cifrados.
 
+Para respaldar el directorio, un proceso en EC2 lee PostgreSQL en Supabase con un rol de solo lectura, cifra el volcado con AES-256-GCM y lo sube por HTTPS al bucket privado `proyecto-eticayseguridad` en Amazon S3, en `us-east-1`. La copia pasa por EC2 ya cifrada en disco; el contenido legible del volcado solo se procesa en memoria. Conservamos las copias durante 30 días con rotación. S3 respalda los datos del directorio, incluidos los datos privados de autenticación; el historial, los contactos y las llaves privadas de mensajería permanecen en cada dispositivo.
+
+La bóveda local guarda la llave privada de identidad y la clave del almacén. El historial, los contactos y la cola están en otro archivo cifrado con esa clave. La contraseña maestra protege la bóveda mediante Argon2id y AES-256-GCM; el MFA controla el desbloqueo desde la aplicación.
+
 Como el autor que muestra Discord siempre es un bot, no confiamos en él: el emisor y el receptor van dentro del mensaje y se autentican con el *handshake*. Cada cliente ignora lo que no va dirigido a su ID.
 
 <p align="center">
-  <img src="img/arquitectura.png" alt="Arquitectura de componentes y flujos de información" width="800" style="max-width: 100%; height: auto;" />
+  <img src="img/arquitectura.png" alt="Arquitectura: almacenamiento local, directorio en EC2, PostgreSQL en Supabase, Discord y respaldos cifrados en S3" width="800" style="max-width: 100%; height: auto;" />
 </p>
 
 #### 4.2.2 Registro y custodia de la identidad
@@ -240,11 +244,21 @@ Las firmas no impiden que un directorio malicioso entregue una llave propia, as�
 | Alteración o inyección | Etiqueta GCM con AAD (RS5) |
 | Borrado o reordenamiento por Discord | Se detecta por `ctr`; la disponibilidad queda fuera de alcance |
 
+#### 4.2.8 Respaldo y recuperación del directorio
+
+Diseñamos el respaldo como un flujo separado de la mensajería. EC2 ejecuta `pg_dump` sobre el esquema del directorio en Supabase con el rol de solo lectura. Excluimos del volcado los datos temporales de OAuth, los tokens, los desafíos y las sesiones de vinculación MFA. El proceso cifra el resultado en memoria con una clave independiente, `BACKUP_KEY`, y escribe únicamente la copia cifrada antes de enviarla a S3.
+
+Antes de subir, comprobamos que el bucket tenga bloqueado el acceso público y no tenga versionado, para evitar que sobrevivan versiones ocultas de copias que deban borrarse. Tras la subida, verificamos el tamaño y SHA-256; solo si coinciden eliminamos las copias de más de 30 días del prefijo del proyecto. AWS CLI usa el rol de EC2 con permisos limitados al bucket y su prefijo.
+
+Para restaurar necesitamos la copia y `BACKUP_KEY`. Para volver a validar los autenticadores de los registros restaurados necesitamos además la `TOTP_ENCRYPTION_KEY` original, porque los secretos TOTP ya estaban cifrados dentro de PostgreSQL. Custodiamos esas claves por separado del bucket; ninguna copia de S3 contiene las conversaciones ni las identidades locales de las personas.
+
+Definimos una copia diaria, un objetivo de pérdida máxima de 24 horas de datos (RPO) y un objetivo de recuperación de 30 minutos (RTO). Instalamos la tarea programada y probamos la descarga y restauración de una copia de S3 en PostgreSQL aislado. Nos falta observar una ejecución automática, probar el inicio de sesión del servicio recuperado y medir el RTO. La configuración y el ensayo se describen en la [guía de despliegue](guia/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3).
+
 ## 5. Implementación
 
 ### 5.1 Arquitectura general
 
-Tres piezas: el **cliente** (toda la criptografía y el único con texto plano), el **directorio de llaves** (ID de Discord -> llave pública) y **Discord** (solo transporte, con un bot y un canal privado).
+La mensajería conecta el **cliente local**, que cifra y descifra en el dispositivo, con el **directorio en EC2**, que publica llaves y valida MFA, y con **Discord**, que transporta mensajes cifrados mediante un bot por persona en un canal privado. El directorio usa **PostgreSQL en Supabase** para sus registros y datos privados de autenticación. Un proceso de respaldo en EC2 genera las copias cifradas y las guarda en **Amazon S3**. El frontend, la bóveda de identidad y el almacén de historial siguen en cada dispositivo, como muestra el diagrama de 4.2.1.
 
 ### 5.2 Esquema criptográfico concreto
 
@@ -266,7 +280,7 @@ Está descrito en 4.2.6: huella de 60 dígitos, comparación fuera de Discord y 
 
 ### 5.4 Tecnologías
 
-Cliente local en Python 3.12 (`cryptography`, `argon2-cffi`, FastAPI), frontend en Next.js, directorio en FastAPI + PostgreSQL, adaptador de Discord con `discord.py`, y Git con los secretos fuera del repositorio.
+Usamos Python 3.12 (`cryptography`, `argon2-cffi`, FastAPI) para el cliente local, Next.js para el frontend y `discord.py` para el transporte por Discord. Desplegamos el directorio FastAPI con Docker en AWS EC2 y alojamos PostgreSQL en Supabase. Para los respaldos usamos `pg_dump`/`pg_restore`, cifrado AES-256-GCM y AWS CLI para subir y verificar las copias en un bucket privado de Amazon S3. Gestionamos el código con Git y mantenemos los secretos fuera del repositorio.
 
 ### 5.5 Fases de ejecución
 
@@ -275,6 +289,7 @@ Cliente local en Python 3.12 (`cryptography`, `argon2-cffi`, FastAPI), frontend 
 3. Directorio de llaves y cliente HTTPS.
 4. Integración con Discord.
 5. Verificación: huellas, QR, indicadores y alertas.
+6. Despliegue del directorio en EC2 con Supabase, copias cifradas en S3 y ensayo de restauración.
 
 ### 5.6 Limitaciones reconocidas
 
@@ -288,7 +303,7 @@ El sistema protege el contenido, no el patrón de comunicación. Además:
 
 ### 5.7 Implementación lograda
 
-Implementamos todos los componentes de la sección 5.1. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL alojado en Supabase; cada cliente cifra y descifra en su propio dispositivo.
+Implementamos todos los componentes de la sección 5.1. El sistema integra la librería criptográfica, el cliente local, el frontend, el directorio, el transporte por Discord y las operaciones. El directorio está desplegado en una instancia de Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), con PostgreSQL alojado en Supabase y respaldos cifrados en Amazon S3 (`us-east-1`); cada cliente cifra y descifra en su propio dispositivo.
 
 | Componente | Qué hace | Pruebas automáticas |
 |---|---|---|
@@ -297,7 +312,7 @@ Implementamos todos los componentes de la sección 5.1. El sistema integra la li
 | `frontend/` | Interfaz en Next.js | Pruebas unitarias y prueba e2e (los módulos `lib/` deben versionarse; ver la nota) |
 | `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, cancelación, TLS 1.3, auditoría y alertas | 68 |
 | `discord_adapter/` | Un bot por persona sobre `discord.py`; solo publica mensajes `E2EE1:` | 14, incluida una conversación cifrada completa entre dos clientes reales; ensayo con la API real (`discord_adapter.smoke`) |
-| `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
+| `ops/` | CA propia, copias cifradas de Supabase a S3, restauración, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
 
 **Cómo cumplimos lo propuesto y qué decisiones tomamos:**
 
@@ -404,7 +419,8 @@ Cada dato se etiqueta con una **categoría** (P personal, S sensible, C confiden
 | ID de Discord, fechas y versión del aviso | P · confidencial | Solo en el directorio; en los registros va seudonimizado | Directorio |
 | Metadatos de mensajes (quién, a quién, cuándo) | P · confidencial | No se pueden ocultar; canal privado; el aviso lo declara | Discord |
 | Contactos, *pines* y verificación | P · confidencial | Solo local y cifrado | Dispositivo |
-| Registros de auditoría y copias del directorio | P · confidencial | IDs con HMAC, sin texto ni llaves; 90 días; copias cifradas fuera del servidor, 30 días | Servidor |
+| Registros de auditoría | P · confidencial | IDs con HMAC, sin texto, llaves ni códigos; retención de 90 días | Volumen de auditoría del directorio en EC2 |
+| Copias del directorio | P/C · restringido | Volcado cifrado con AES-256-GCM, bucket privado, verificación SHA-256 y rotación de 30 días; claves bajo custodia separada | Amazon S3 en `us-east-1`; archivo cifrado temporal en EC2 |
 | Llave pública, mensajes del *handshake*, texto cifrado, huella | P/U · interno | Públicos o ilegibles; integridad con TLS, firmas y verificación fuera de banda | Directorio y Discord |
 
 **No recogemos:** nombre, correo, teléfono, foto, nombre de usuario, IP, edad, documento ni ubicación. Lo que no se recoge no hay que cifrarlo, borrarlo ni notificarlo si hay una brecha.
@@ -412,7 +428,7 @@ Cada dato se etiqueta con una **categoría** (P personal, S sensible, C confiden
 | Técnica | Dónde | Límite |
 |---|---|---|
 | **Minimización** | El directorio guarda solo lo necesario | Ninguno; es la más barata y fuerte |
-| **Cifrado AES-256-GCM** | Mensajes, bóveda y almacén local | Todo depende de quién tiene la clave |
+| **Cifrado AES-256-GCM** | Mensajes, bóveda, almacén local y copias del directorio en S3 | Todo depende de quién tiene la clave |
 | **Firmas y DH efímero** | *Handshake* | No protege un dispositivo ya comprometido |
 | **Argon2id con sal** | Contraseña maestra | Una contraseña débil sigue siendo débil |
 | **Seudonimización con HMAC-SHA256** | IDs en los registros de auditoría | Sigue siendo dato personal; quien tenga la clave puede calcular el seudónimo |
@@ -447,7 +463,7 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | S6 | Fuga del token del bot | Lectura del canal cifrado y mensajes falsos (el protocolo los rechaza) | Metadatos y disponibilidad (R10) | Token en entorno, gitleaks en CI, permisos mínimos del bot |
 | S7 | Dependencia maliciosa (cadena de suministro) | Todo, **incluido el texto plano** | Confidencialidad total | Pocas dependencias con versión fija, pip-audit, npm audit y SBOM en CI. Es el más difícil de cerrar |
 | S8 | Defecto del protocolo o su implementación | Contenido o suplantación | Todo (R13) | Componentes estándar, pruebas de rechazo y tabla de ataques; sin auditoría externa |
-| S9 | Fuga de copias o registros | Copias: los datos de S2, incluido el factor cifrado. Registros: eventos con IDs seudonimizados, sin códigos ni secretos | Confidencialidad (R5, R8) | Copias cifradas fuera del servidor, retención de 30 y 90 días |
+| S9 | Fuga de copias o registros | Copias en S3: los datos de S2, incluido el factor cifrado. Registros: eventos con IDs seudonimizados, sin códigos ni secretos | Confidencialidad (R5, R8) | Copias cifradas fuera del servidor, retención de 30 y 90 días |
 | S10 | Abuso interno o *phishing* al equipo | Lo que contiene el directorio | Confidencialidad e integridad | Permisos mínimos, auditoría, verificación; el operador no ve contenido |
 | S11 | Página maliciosa contra la API local | Con la app desbloqueada, leer chats y enviar mensajes | Confidencialidad e integridad | Token por ejecución, CORS restringido y validación de `Host` |
 | S12 | Caída de Discord o del directorio | Discord: se retrasan mensajes. Directorio: falla el próximo desbloqueo y no se abre el historial desde la aplicación | Disponibilidad y acceso local (R14) | Cola y reintentos para mensajes; el desbloqueo real no continúa sin MFA. La sesión ya abierta conserva solo el plazo restante |
@@ -464,7 +480,7 @@ La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la segurid
 | **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
 | **Institución vinculada al proyecto** | Su nombre queda ligado al proyecto si hay una brecha con datos reales | Completar las acciones de la DPIA antes de ampliar el uso con datos de terceros |
 | **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
-| **Proveedores de alojamiento (AWS EC2 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de AWS y Supabase, región del proyecto Supabase y copias cifradas en S3 (`us-east-1`) |
+| **Proveedores de alojamiento (AWS EC2, S3 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de AWS y Supabase, región del proyecto Supabase y copias cifradas en S3 (`us-east-1`) |
 
 ### 7.3 Puntos únicos de falla
 
@@ -475,7 +491,7 @@ Las referencias S1 a S12 son los escenarios de la tabla 7.1: por ejemplo, S4 es 
 * **El directorio** concentra la publicación de llaves y la validación del segundo factor. La huella limita la sustitución de llaves (S3), pero una caída también impide nuevos desbloqueos (S12).
 * **El autenticador y su recuperación** son necesarios para el acceso habitual. La clave `TOTP_ENCRYPTION_KEY` debe conservarse fuera de la instancia junto con un procedimiento para restaurarla sin publicarla.
 * **El directorio depende de EC2 y de Supabase.** Una caída de cualquiera puede impedir la validación del segundo factor. Un compromiso de EC2 puede exponer las credenciales con las que se accede a la base de Supabase, aunque los servicios estén separados.
-* **Directorio y copias en el mismo servidor** convertirían una brecha en pérdida total; por eso las copias van cifradas y fuera.
+* **Directorio y copias en el mismo servidor** convertirían una pérdida de la instancia en pérdida de ambos. Por eso guardamos las copias cifradas en S3, fuera de EC2. Ambos servicios están en `us-east-1`: esta separación no equivale a un respaldo en otra región.
 * **Un mismo operador para el servidor y el bot** vería metadatos y datos del directorio, pero nunca el contenido.
 
 ## 8. Recomendaciones de protección futura

@@ -6,6 +6,8 @@ Asocia IDs de Discord con llaves públicas de firma Ed25519. Nunca ve llaves pri
 
 Sigue la [guía de EC2](../docs/guia/despliegue-ec2.md) para conectar PostgreSQL en Supabase, preparar los certificados, aplicar las migraciones y levantar el directorio en EC2. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/guia/ejecucion-local.md).
 
+En EC2 usa [`.env.example.ec2`](../.env.example.ec2) como plantilla de `.env`. Para desarrollar con PostgreSQL local usa [`.env.example`](../.env.example). Las laptops usan su propia plantilla [`.env.example.local`](../.env.example.local).
+
 `directory.serve` arranca sin el registro de acceso de uvicorn, que escribiría la IP y la ruta con el ID de Discord en claro (C-05, C-09). Si ejecutas `uvicorn` a mano, debes incluir `--no-access-log`.
 
 Pruebas (necesitan el Postgres de Compose; crean y borran la base `directory_test`): `cd directory && ../.venv/Scripts/python -m pytest -q`.

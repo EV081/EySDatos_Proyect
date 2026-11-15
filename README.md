@@ -7,6 +7,14 @@ Para instalar y usar el proyecto desde cero:
 - [Ejecutar la aplicación: `.env`, Discord, Authenticator, `make client` y `make frontend`](docs/guia/ejecucion-local.md).
 - [Instalar el directorio en EC2, preparar Supabase y configurar las copias en S3](docs/guia/despliegue-ec2.md).
 
+Elige la plantilla según dónde vayas a ejecutar el proyecto y cópiala a `.env`:
+
+| Plantilla | Entorno |
+|---|---|
+| [`.env.example.local`](.env.example.local) | Laptop: cliente, bot propio y conexión al directorio de EC2 |
+| [`.env.example.ec2`](.env.example.ec2) | EC2: directorio, Supabase, OAuth y respaldos en S3 |
+| [`.env.example`](.env.example) | Desarrollo y pruebas con directorio y PostgreSQL locales |
+
 El [informe](docs/README.md) explica el diseño y sus límites. La [DPIA](docs/dpia/DPIA.md) revisa los riesgos para los datos personales. La [tabla de trazabilidad](docs/trazabilidad/trazabilidad.md) relaciona cada requerimiento con sus pruebas; GitHub Actions revisa que esté actualizada.
 
 Completamos la revisión cruzada del proyecto y la revisión humana del protocolo. Aprobamos la DPIA y consignamos nuestros correos como firma en el paso 7.

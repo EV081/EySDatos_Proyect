@@ -75,7 +75,9 @@ Trabajamos en un monorepo y asignamos un responsable por carpeta para evitar con
 ```
 EySDatos_Proyect/
 ├── README.md
-├── .env.example                 # variables sin valores; el .env real va en .gitignore
+├── .env.example                 # desarrollo con PostgreSQL y directorio locales
+├── .env.example.local           # cliente de cada laptop conectado a EC2
+├── .env.example.ec2             # directorio, Supabase y respaldos en S3
 ├── docker-compose.yml           # Postgres + directorio (Farid)
 ├── Makefile                     # make dev | test | scan | backup | restore
 ├── .github/workflows/ci.yml     # pruebas + Bandit + pip-audit + gitleaks (Farid, F6)

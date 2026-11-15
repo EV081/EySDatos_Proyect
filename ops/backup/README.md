@@ -13,6 +13,8 @@ El código dispone de respaldo cifrado local y subida a S3 con verificación de 
 
 El procedimiento operativo está en la [guía de EC2, sección 8](../../docs/guia/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3). `make backup-remote` exige `BACKUP_S3_BUCKET`; `ENV_FILE=.env.backup` permite separar su configuración de la API. La clave TOTP y `BACKUP_KEY` no se suben al bucket.
 
+La plantilla [`.env.example.ec2`](../../.env.example.ec2) incluye la sección de respaldos para EC2. Complétala antes de ejecutar `make backup-remote`; las credenciales administrativas de migraciones permanecen en un archivo separado.
+
 ## Qué se protege y cómo
 
 | Requisito | Cómo se cumple | Prueba |

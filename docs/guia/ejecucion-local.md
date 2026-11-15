@@ -59,28 +59,24 @@ Importa `ca.pem` como autoridad de confianza para sitios web en el navegador que
 
 ## 3. Configurar tu `.env`
 
-Crea un archivo `.env` en la carpeta principal del repositorio con `nano .env` o tu editor. Es una configuración propia de esta computadora. Pega el siguiente contenido y reemplaza los valores de ejemplo:
-
-```dotenv
-DIRECTORY_URL=https://HOST_EC2:8443
-DIRECTORY_CA_FILE=ops/certs/ca.pem
-DIRECTORY_CRL_FILE=ops/certs/crl.pem
-DIRECTORY_AUTH_TOKEN_FILE=./data/directory-token
-
-DISCORD_TOKEN=TOKEN_DE_TU_BOT
-DISCORD_CHANNEL_ID=ID_DEL_CANAL_PRIVADO
-
-CLIENT_API_TOKEN=TOKEN_LOCAL_LARGO_Y_ALEATORIO
-CLIENT_DATA_DIR=./data
-CLIENT_SESSION_TTL=1800
-CLIENT_ALLOWED_ORIGIN=http://127.0.0.1:5173
-```
-
-Reemplaza los ejemplos por tus datos. Para generar `CLIENT_API_TOKEN`, ejecuta `openssl rand -hex 32` y copia el resultado a tu `.env`. Protege el archivo:
+Desde la carpeta principal del repositorio, copia la [plantilla para laptop](../../.env.example.local) a `.env` y ábrela con tu editor:
 
 ```bash
+cp .env.example.local .env
 chmod 600 .env
+nano .env
 ```
+
+Completa estos valores:
+
+| Variable | Qué poner |
+|---|---|
+| `DIRECTORY_URL` | URL HTTPS del directorio, por ejemplo `https://HOST_EC2:8443` |
+| `DISCORD_TOKEN` | Token de tu bot |
+| `DISCORD_CHANNEL_ID` | ID del canal privado compartido |
+| `CLIENT_API_TOKEN` | Una cadena aleatoria generada con `openssl rand -hex 32` |
+
+La plantilla incluye las rutas de los certificados públicos y del token de registro, la carpeta de datos, el vencimiento de 1800 segundos y el origen del frontend. Puedes conservar esos valores si sigues esta guía. Cada participante tiene su propio `.env`.
 
 No necesitas credenciales de PostgreSQL, `DISCORD_CLIENT_SECRET` ni `TOTP_ENCRYPTION_KEY` en la laptop para conectarte al directorio en EC2. No definas `DIRECTORY_AUTH_TOKEN` si usarás el archivo: esa variable tiene prioridad sobre el token guardado.
 
