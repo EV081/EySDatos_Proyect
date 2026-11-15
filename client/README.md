@@ -4,7 +4,7 @@ Une `crypto/`, el directorio y Discord, y expone una API HTTP **solo en 127.0.0.
 
 ## Ejecución
 
-La [guía de ejecución local](../docs/ejecucion-local.md) explica el `.env`, el token de registro, Authenticator y el arranque con `make client` y `make frontend`. Para preparar el directorio remoto está la [guía de EC2](../docs/despliegue-ec2.md).
+La [guía de ejecución local](../docs/guia/ejecucion-local.md) explica el `.env`, el token de registro, Authenticator y el arranque con `make client` y `make frontend`. Para preparar el directorio remoto está la [guía de EC2](../docs/guia/despliegue-ec2.md).
 
 Pruebas: `cd client && ../.venv/bin/python -m pytest -q`.
 

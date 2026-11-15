@@ -57,7 +57,7 @@ jobs:
         run: cd discord_adapter && ../.venv/bin/python -m pytest -q
       - name: ops (copias de seguridad)
         run: cd ops && ../.venv/bin/python -m pytest -q
-      - name: Trazabilidad requerimiento ↔ prueba (F8)
+      - name: Comprobar docs/trazabilidad/trazabilidad.md (F8)
         run: .venv/bin/python -m ops.trazabilidad --check
 
   frontend:

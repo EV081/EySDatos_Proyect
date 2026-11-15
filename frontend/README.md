@@ -4,7 +4,7 @@ Sitio **100 % estático** (`output: 'export'`): no hay código de servidor. Todo
 
 ## Ejecución
 
-Sigue la [guía de ejecución local](../docs/ejecucion-local.md): incluye las variables del cliente, el login con Discord y Authenticator, `make client`, `make frontend` y la conexión de la interfaz. El directorio remoto se prepara con la [guía de EC2](../docs/despliegue-ec2.md).
+Sigue la [guía de ejecución local](../docs/guia/ejecucion-local.md): incluye las variables del cliente, el login con Discord y Authenticator, `make client`, `make frontend` y la conexión de la interfaz. El directorio remoto se prepara con la [guía de EC2](../docs/guia/despliegue-ec2.md).
 
 ## Pruebas
 

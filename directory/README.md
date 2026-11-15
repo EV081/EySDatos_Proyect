@@ -4,7 +4,7 @@ Asocia IDs de Discord con llaves públicas de firma Ed25519. Nunca ve llaves pri
 
 ## Ejecución y despliegue
 
-Sigue la [guía de EC2](../docs/despliegue-ec2.md) para conectar PostgreSQL en Supabase, preparar los certificados, aplicar las migraciones y levantar el directorio en EC2. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/ejecucion-local.md).
+Sigue la [guía de EC2](../docs/guia/despliegue-ec2.md) para conectar PostgreSQL en Supabase, preparar los certificados, aplicar las migraciones y levantar el directorio en EC2. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/guia/ejecucion-local.md).
 
 `directory.serve` arranca sin el registro de acceso de uvicorn, que escribiría la IP y la ruta con el ID de Discord en claro (C-05, C-09). Si ejecutas `uvicorn` a mano, debes incluir `--no-access-log`.
 
@@ -39,7 +39,7 @@ Solo el dueño modifica su registro: el ID del token tiene que ser el de la ruta
 
 Configura `TOTP_ENCRYPTION_KEY` antes de arrancar. Es una clave Fernet independiente de la base;
 el servicio falla al arrancar si falta o no es válida. No requiere credenciales de Microsoft ni pagos.
-Consulta [la guía de EC2](../docs/despliegue-ec2.md).
+Consulta [la guía de EC2](../docs/guia/despliegue-ec2.md).
 
 El QR se genera en el servidor sin enviar el secreto a terceros. En Microsoft Authenticator se agrega
 como **Otra cuenta (Google, Facebook, etc.)**. TOTP usa seis dígitos y pasos de 30 segundos, con tolerancia

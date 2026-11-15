@@ -215,7 +215,7 @@ El directorio ya puede atender solicitudes; completa el respaldo diario y su pru
 
 ## 8. Activar el respaldo diario de Supabase en S3
 
-**Prueba del proyecto:** ya subimos una copia cifrada al bucket `proyecto-eticayseguridad`, comprobamos que llegó sin cambios y la recuperamos en una base de prueba separada. Recuperamos 2 registros y desciframos el secreto de 1 autenticador ([evidencia](../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta comprobar su primera ejecución automática. Los pasos siguientes permiten repetir la instalación con un bucket nuevo.
+**Prueba del proyecto:** ya subimos una copia cifrada al bucket `proyecto-eticayseguridad`, comprobamos que llegó sin cambios y la recuperamos en una base de prueba separada. Recuperamos 2 registros y desciframos el secreto de 1 autenticador ([evidencia](../../ops/reports/f4-s3-smoke.txt)). Cron está configurado y activo; falta comprobar su primera ejecución automática. Los pasos siguientes permiten repetir la instalación con un bucket nuevo.
 
 ### 8.1 Crear el bucket y comprobar el rol
 

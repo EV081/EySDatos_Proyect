@@ -233,7 +233,7 @@ logs/
 
 # Archivos antiguos de despliegue y pruebas remotas; se conserva la guía actual
 docs/despliegue-*.md
-!docs/despliegue-ec2.md
+!docs/guia/despliegue-ec2.md
 docs/prueba-remota-*.md
 render.yaml
 docs/github.txt

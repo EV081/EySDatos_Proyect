@@ -57,8 +57,8 @@ Generado por `python -m ops.trazabilidad` a partir de los nombres de las pruebas
 | **C-16** | Ante un cambio de llave de un contacto verificado: se revoca la verificación, se aborta el handshake y no s… | 0 | `test_RF8_*` del cliente |
 | **C-17** | Nada de lo que llega de Discord se interpreta como HTML ni se ejecuta | 0 | Prueba e2e del frontend (`frontend/e2e/smoke.mjs`) |
 | **C-18** | La API local solo escucha en `127.0.0.1`, exige token, restringe CORS al origen del frontend y valida el `H… | 0 | Pruebas de la API local (`client/tests/test_api.py`) |
-| **C-19** | Existe un plan con registro de incidentes, rotación y revocación de llaves y evaluación de las comunicacion… | 0 | [Plan de respuesta a incidentes](politicas/respuesta-incidentes.md) |
-| **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos est… | 0 | CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../ops/reports/README.md) |
+| **C-19** | Existe un plan con registro de incidentes, rotación y revocación de llaves y evaluación de las comunicacion… | 0 | [Plan de respuesta a incidentes](../politicas/respuesta-incidentes.md) |
+| **C-20** | El código pasa SAST (Bandit/Semgrep) y escaneo de dependencias (pip-audit) en CI, y los hallazgos altos est… | 0 | CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../../ops/reports/README.md) |
 | **C-21** | Existe un botón para borrar localmente la bóveda y el almacén cifrado | 0 | Implementado en `frontend/components/PrivacyDialog.tsx`; `client/tests/test_arco.py::test_borrado_local_funciona_aun_bloqueada_y_no_toca_el_directorio` |
 | **C-22** | El protocolo está documentado, con tabla de ataques considerados y pruebas negativas por cada defensa; se d… | 0 | Informe 4.2.7 y pruebas negativas de `crypto/` y `client/` |
 | **C-23** | El canal de Discord del proyecto es privado y de acceso restringido a los participantes | 1 | `discord_adapter/tests/test_adapter.py::test_C23_revision_del_canal`<br>`ops/reports/discord-check.txt` (revisión del canal real) y `ops/reports/discord-smoke.txt` (ensayo con la API) |

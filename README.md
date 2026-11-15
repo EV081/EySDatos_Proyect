@@ -4,10 +4,10 @@ Cada persona ejecuta el cliente y el frontend en su computadora. El directorio d
 
 Para instalar y usar el proyecto desde cero:
 
-- [Ejecutar la aplicación: `.env`, Discord, Authenticator, `make client` y `make frontend`](docs/ejecucion-local.md).
-- [Instalar el directorio en EC2, preparar Supabase y configurar las copias en S3](docs/despliegue-ec2.md).
+- [Ejecutar la aplicación: `.env`, Discord, Authenticator, `make client` y `make frontend`](docs/guia/ejecucion-local.md).
+- [Instalar el directorio en EC2, preparar Supabase y configurar las copias en S3](docs/guia/despliegue-ec2.md).
 
-El [informe](docs/README.md) explica el diseño y sus límites. La [DPIA](docs/dpia/DPIA.md) revisa los riesgos para los datos personales. La [tabla de trazabilidad](docs/trazabilidad.md) relaciona cada requerimiento con sus pruebas; GitHub Actions revisa que esté actualizada.
+El [informe](docs/README.md) explica el diseño y sus límites. La [DPIA](docs/dpia/DPIA.md) revisa los riesgos para los datos personales. La [tabla de trazabilidad](docs/trazabilidad/trazabilidad.md) relaciona cada requerimiento con sus pruebas; GitHub Actions revisa que esté actualizada.
 
 Completamos la revisión cruzada del proyecto y la revisión humana del protocolo. Aprobamos la DPIA y consignamos nuestros correos como firma en el paso 7.
 

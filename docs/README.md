@@ -99,7 +99,7 @@ En la siguiente tabla aplicamos esa distinción a nuestro proyecto.
 
 ### 3.3. Requerimientos agregados durante la implementación
 
-Al construir el directorio y las operaciones, identificamos requerimientos que habíamos dejado implícitos en la primera versión. Los derivamos del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12), y relacionamos cada uno con sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
+Al construir el directorio y las operaciones, identificamos requerimientos que habíamos dejado implícitos en la primera versión. Los derivamos del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12), y relacionamos cada uno con sus pruebas en la [tabla de trazabilidad](trazabilidad/trazabilidad.md).
 
 * **RF15:** La persona debe poder cancelar su registro en el directorio desde su cliente, con su llave vigente y una sesión OAuth2; el registro se borra en el acto y desaparece de las copias en 30 días como máximo.
 
@@ -307,7 +307,7 @@ Implementamos todos los componentes de la sección 5.1. El sistema integra la li
 * **Transporte.** Los mensajes se entregan al cliente desde un hilo propio, porque el cliente responde con `send()` mientras procesa un mensaje y entregarlos desde el bucle de `discord.py` produciría un bloqueo mutuo. El adaptador se niega a publicar cualquier texto que no sea del protocolo.
 * **Entorno.** El desarrollo local usó Python 3.13 (la máquina no tenía 3.12); la CI corre en 3.12, la versión fijada del proyecto.
 
-**Resultados verificables:** 273 pruebas de Python en verde contra un PostgreSQL 17 real y servidores TLS reales; análisis de código sin hallazgos tras la clasificación ([ops/reports](../ops/reports/README.md)); y la tabla de trazabilidad, en la que todos los requerimientos y restricciones tienen evidencia ([trazabilidad.md](trazabilidad.md)), generada y comprobada en CI.
+**Resultados verificables:** 273 pruebas de Python en verde contra un PostgreSQL 17 real y servidores TLS reales; análisis de código sin hallazgos tras la clasificación ([ops/reports](../ops/reports/README.md)); y la tabla de trazabilidad, en la que todos los requerimientos y restricciones tienen evidencia ([trazabilidad.md](trazabilidad/trazabilidad.md)), generada y comprobada en CI.
 
 **Pendiente:** el adaptador ya se ensayó contra la API real de Discord con un bot (publicar, leer, rechazar texto plano, reconectar y recuperar lo atrasado: [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt)); y el login OAuth2 con una cuenta real: registro, rechazo del acceso ajeno, token de un solo uso y cancelación ([ops/reports/oauth-discord.txt](../ops/reports/oauth-discord.txt)). Falta la conversación entre los dos bots. Además, los módulos `frontend/lib/` deben versionarse: una regla del `.gitignore` los excluía, y sin ellos el frontend no compila desde un clon limpio.
 

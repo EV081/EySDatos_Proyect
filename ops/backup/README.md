@@ -11,7 +11,7 @@ python -m ops.backup.backup restore D:/e2ee-backups/directory-20261031T225559Z.d
 
 El código dispone de respaldo cifrado local y subida a S3 con verificación de tamaño y SHA-256 y limpieza remota de 30 días (19 casos de prueba de S3, TLS y carga del entorno). Realizamos el ensayo de 2026-11-01 en local; ese ensayo no acredita una tarea activa en Supabase o EC2. Después verificamos la primera copia real en S3 ([evidencia](../reports/f4-s3-smoke.txt)) e instalamos el crontab con el servicio activo. Descargamos la copia de S3 y la restauramos en PostgreSQL 17 aislado: recuperamos 2 registros y desciframos 1 factor MFA con la clave original. Nos falta observar una ejecución automática.
 
-El procedimiento operativo está en la [guía de EC2, sección 8](../../docs/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3). `make backup-remote` exige `BACKUP_S3_BUCKET`; `ENV_FILE=.env.backup` permite separar su configuración de la API. La clave TOTP y `BACKUP_KEY` no se suben al bucket.
+El procedimiento operativo está en la [guía de EC2, sección 8](../../docs/guia/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3). `make backup-remote` exige `BACKUP_S3_BUCKET`; `ENV_FILE=.env.backup` permite separar su configuración de la API. La clave TOTP y `BACKUP_KEY` no se suben al bucket.
 
 ## Qué se protege y cómo
 

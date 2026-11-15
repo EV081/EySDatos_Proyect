@@ -37,11 +37,11 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`) y TOTP; solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Publica ID y llave pública; guarda también fechas, aviso y datos privados mínimos de MFA (secreto cifrado y hashes de recuperación). Endpoint de cancelación | Hecho (pruebas del directorio contra Postgres; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
 | F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | Hecho (10 pruebas; [ops/certs/README.md](../ops/certs/README.md)) |
 | F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | Hecho (14 pruebas con Discord simulado; ensayo con la API real y un bot en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); falta el bot de Elmer) |
-| F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | Parcial: primera copia real a S3 verificada ([evidencia](../ops/reports/f4-s3-smoke.txt)); cron configurado y activo; restauración desde S3 ensayada con 2 registros y 1 factor MFA descifrable; falta observar una ejecución automática ([guía](despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3)) |
+| F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | Parcial: primera copia real a S3 verificada ([evidencia](../ops/reports/f4-s3-smoke.txt)); cron configurado y activo; restauración desde S3 ensayada con 2 registros y 1 factor MFA descifrable; falta observar una ejecución automática ([guía](guia/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3)) |
 | F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | Hecho (10 pruebas; tarea diaria `ops.scheduled`) |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | Hecho ([ops/reports/README.md](../ops/reports/README.md)) |
 | F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | Hecho ([politicas/](politicas/), plan v1.5 y uso seguro v1.3; primer incidente real registrado, INC-2026-01); falta registrar el simulacro |
-| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad.md), generada y comprobada en CI) |
+| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad/trazabilidad.md), generada y comprobada en CI) |
 | F9 | Lecciones aprendidas y retrospectiva (parte de Farid) | Pendiente |
 
 ### Compartido (al final)
@@ -94,6 +94,8 @@ EySDatos_Proyect/
     ├── REPARTO.md
     ├── api/                     # contratos
     ├── dpia/                    # DPIA (Elmer)
+    ├── guia/                    # ejecución local y despliegue en EC2
+    ├── trazabilidad/            # tabla generada por ops.trazabilidad
     ├── politicas/               # políticas y plan de incidentes (Farid)
     └── img/                     # diagramas
 ```
