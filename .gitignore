@@ -231,8 +231,9 @@ data/
 backups/
 logs/
 
-# Despliegue y pruebas remotas (no forman parte de la entrega)
+# Archivos antiguos de despliegue y pruebas remotas; se conserva la guía actual
 docs/despliegue-*.md
+!docs/despliegue-ec2.md
 docs/prueba-remota-*.md
 render.yaml
 docs/github.txt

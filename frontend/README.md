@@ -2,39 +2,9 @@
 
 Sitio **100 % estático** (`output: 'export'`): no hay código de servidor. Todo el trabajo lo hace el cliente local (`client/`); esta interfaz solo habla con él por HTTP en `127.0.0.1`. Contrato: [`docs/api/client.openapi.json`](../docs/api/client.openapi.json).
 
-## Cómo correrlo
+## Ejecución
 
-```bash
-# 1) backend de desarrollo (Alice :8001, Bob :8002, token "dev-token"; directorio y canal en memoria)
-.venv/bin/python -m client.dev
-
-# 2a) desarrollo con recarga en caliente
-cd frontend && npm install && npm run dev            # http://127.0.0.1:5173
-# 2b) o sitio exportado
-npm run build && npm start                           # http://127.0.0.1:5173
-```
-
-Abre dos pestañas, una por usuario (el token y la dirección se pasan una sola vez por la URL y se borran de ella):
-
-* Alice: `http://127.0.0.1:5173/?api=http://127.0.0.1:8001&token=dev-token`
-* Bob: `http://127.0.0.1:5173/?api=http://127.0.0.1:8002&token=dev-token`
-
-Con el backend real (Farid), el `api` es el puerto del cliente de cada persona y el `token` es `CLIENT_API_TOKEN`. Si se abre sin parámetros, pide la dirección y el token.
-
-### Contra Discord y el directorio reales
-
-Cada persona corre **su propio** `client/` en su laptop (nunca en un servidor: tiene las llaves privadas y el texto plano) y abre el frontend contra él:
-
-```bash
-# .env propio: DISCORD_TOKEN (de SU bot), DISCORD_CHANNEL_ID, DIRECTORY_URL, DIRECTORY_CA_FILE, CLIENT_API_TOKEN
-make directory                                   # solo si el directorio corre en esta laptop (otra terminal)
-python -m directory.client_lib.login             # una vez: token de registro con OAuth2 de Discord
-make client                                      # API local en 127.0.0.1:8001 (CLIENT_PORT=8002 para otra)
-make frontend                                    # http://127.0.0.1:5173
-# abrir: http://127.0.0.1:5173/?api=http://127.0.0.1:8001&token=<CLIENT_API_TOKEN>
-```
-
-El frontend no cambia con Discord: sigue mostrando el texto plano que le entrega el cliente. En `#e2ee-relay` solo se ven `hs1`, `hs2`, `hs3` (llaves públicas y firmas) y luego `E2EE1:…` ilegible (AES-256-GCM en base64url). La dirección del cliente solo puede ser `127.0.0.1`/`localhost` (ver `lib/conn.ts`), aunque el directorio esté desplegado en otro servidor.
+Sigue la [guía de ejecución local](../docs/ejecucion-local.md): incluye las variables del cliente, el login con Discord y Authenticator, `make client`, `make frontend` y la conexión de la interfaz. El directorio remoto se prepara con la [guía de EC2](../docs/despliegue-ec2.md).
 
 ## Pruebas
 

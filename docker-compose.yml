@@ -19,7 +19,7 @@ services:
       retries: 10
 
   # Solo con `--profile deploy`. El certificado y la CA se montan (nunca van en la imagen); los secretos salen del .env.
-  # No depende de `db`: DATABASE_URL apunta a Supabase o, si se usa el Postgres de al lado, a `db:5432`.
+  # No depende de `db`: levantar primero Postgres. En EC2, DATABASE_URL usa `db:5432`.
   directory:
     profiles: ["deploy"]
     build:

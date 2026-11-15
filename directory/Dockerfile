@@ -1,7 +1,7 @@
 # Directorio de llaves (F1) para desplegarlo en un servidor. Contexto de construcción: la raíz del repositorio.
 #   docker build -f directory/Dockerfile -t e2ee-directory .
 # Los certificados (ops/certs) y los secretos NO van en la imagen: se montan y se pasan por entorno
-# (ver docker-compose.yml, perfil "deploy", y docs/despliegue-directorio.md).
+# (ver docker-compose.yml, perfil "deploy", y docs/despliegue-ec2.md).
 FROM python:3.12-slim
 
 RUN useradd --system --uid 10001 --create-home app

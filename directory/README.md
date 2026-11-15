@@ -2,16 +2,9 @@
 
 Asocia IDs de Discord con llaves públicas de firma Ed25519. Nunca ve llaves privadas de mensajería ni contenido. Para autenticar a los usuarios conserva un secreto TOTP cifrado y hashes de códigos de recuperación. Contrato HTTP: [`docs/api/directory.yaml`](../docs/api/directory.yaml). Implementa `client.ports.DirectoryPort` con [`client_lib`](client_lib/__init__.py).
 
-## Cómo correrlo
+## Ejecución y despliegue
 
-```bash
-cp .env.example .env              # completar contraseñas, PSEUDONYM_KEY y la app OAuth2 de Discord
-docker compose up -d db           # Postgres 17 en 127.0.0.1:55432
-set -a; . ./.env; set +a
-.venv/Scripts/python -m directory.migrations.apply      # roles y esquema (idempotente)
-.venv/Scripts/python -m ops.certs.pki init               # una vez: CA propia y certificado (F2)
-.venv/Scripts/python -m directory.serve                  # https://localhost:8443, solo TLS 1.3
-```
+Sigue la [guía de EC2](../docs/despliegue-ec2.md) para configurar PostgreSQL, los certificados, las migraciones y el directorio. El registro y el desbloqueo con Authenticator se explican en la [guía de ejecución local](../docs/ejecucion-local.md).
 
 `directory.serve` arranca sin el registro de acceso de uvicorn, que escribiría la IP y la ruta con el ID de Discord en claro (C-05, C-09). Si se usa `uvicorn` a mano, `--no-access-log` es obligatorio.
 
@@ -46,7 +39,7 @@ Solo el dueño modifica su registro: el ID del token tiene que ser el de la ruta
 
 Configura `TOTP_ENCRYPTION_KEY` antes de arrancar. Es una clave Fernet independiente de la base;
 el servicio falla al arrancar si falta o no es válida. No requiere credenciales de Microsoft ni pagos.
-Consulta [la guía de activación en EC2](../docs/autenticacion-microsoft.md).
+Consulta [la guía de EC2](../docs/despliegue-ec2.md).
 
 El QR se genera en el servidor sin enviar el secreto a terceros. En Microsoft Authenticator se agrega
 como **Otra cuenta (Google, Facebook, etc.)**. TOTP usa seis dígitos y pasos de 30 segundos, con tolerancia
