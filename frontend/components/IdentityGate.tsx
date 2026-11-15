@@ -113,9 +113,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
                 pattern="[0-9]{6}" minLength={6} maxLength={6} value={mfaCode}
                 onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required />
             </label>
-            <p className="hint">Necesitas conexión con el directorio. La sesión se bloqueará al vencer.
-              Si todavía no vinculaste la app o necesitas recuperar el autenticador, completa el inicio
-              de sesión con Discord mediante <code>python -m directory.client_lib.login</code>.</p>
+            <p className="hint">Necesitas conexión a internet para verificar tu código.
+              Para vincular o recuperar tu autenticador, inicia sesión con Discord.</p>
           </>}
           <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Desbloquear</button>
         </form>
