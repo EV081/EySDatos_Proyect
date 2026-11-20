@@ -1,0 +1,70 @@
+{
+  "generado": "2026-11-20T20:19:20+00:00",
+  "periodo": {
+    "desde": "2026-09-25",
+    "hasta": "2026-11-20"
+  },
+  "privacidad": {
+    "unidad": "persona (ID de Discord)",
+    "garantia": "ε-DP pura",
+    "epsilon_reporte": 1.0,
+    "epsilon_por_consulta": 0.333333,
+    "mecanismo": "Laplace discreto (OpenDP)",
+    "max_eventos_por_persona": 2,
+    "error_tipico": {
+      "registros": 3.0,
+      "versiones": 3.0,
+      "eventos": 6.0
+    },
+    "gastado_en_el_mes": 4.0,
+    "tope_mensual": 4.0
+  },
+  "registros_por_semana": [
+    {
+      "semana": "2026-09-25",
+      "personas": 0
+    },
+    {
+      "semana": "2026-10-02",
+      "personas": 4
+    },
+    {
+      "semana": "2026-10-09",
+      "personas": 0
+    },
+    {
+      "semana": "2026-10-16",
+      "personas": 0
+    },
+    {
+      "semana": "2026-10-23",
+      "personas": 1
+    },
+    {
+      "semana": "2026-10-30",
+      "personas": 12
+    },
+    {
+      "semana": "2026-11-06",
+      "personas": 4
+    },
+    {
+      "semana": "2026-11-13",
+      "personas": 0
+    }
+  ],
+  "personas_por_version_del_aviso": {
+    "1.0": 14,
+    "otra": 0
+  },
+  "operaciones_por_tipo": {
+    "registro": 3,
+    "cambio_de_llave": 0,
+    "renovacion": 0,
+    "cancelacion": 0,
+    "login": 15,
+    "acceso": 26,
+    "firma_invalida": 0,
+    "acceso_ajeno": 0
+  }
+}

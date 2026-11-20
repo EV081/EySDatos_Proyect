@@ -2,7 +2,7 @@
 PY ?= .venv/bin/python
 CLIENT_PORT ?= 8001
 
-.PHONY: dev db certs directory client frontend test scan backup verify-backup restore daily trazabilidad
+.PHONY: dev db certs directory client frontend test scan backup verify-backup restore daily trazabilidad dp dp-experimento
 
 dev:            ## dos clientes en memoria, sin Discord ni directorio reales
 	$(PY) -m client.dev
@@ -44,3 +44,9 @@ daily:
 
 trazabilidad:
 	$(PY) -m ops.trazabilidad
+
+dp:             ## estadísticas del directorio con privacidad diferencial (make dp EPSILON=1)
+	set -a; . ./.env; set +a; $(PY) -m ops.dp.metrics report --epsilon $(or $(EPSILON),1)
+
+dp-experimento: ## utilidad frente a ε con datos sintéticos -> ops/reports/dp-experimento.md
+	$(PY) -m ops.dp.experiment

@@ -46,7 +46,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install -r client/requirements-dev.txt -r directory/requirements-dev.txt \
-            -r discord_adapter/requirements-dev.txt
+            -r discord_adapter/requirements-dev.txt -r ops/requirements.txt
       - name: crypto
         run: cd crypto && ../.venv/bin/python -m pytest -q
       - name: client
@@ -55,7 +55,7 @@ jobs:
         run: cd directory && ../.venv/bin/python -m pytest -q
       - name: discord_adapter
         run: cd discord_adapter && ../.venv/bin/python -m pytest -q
-      - name: ops (copias de seguridad)
+      - name: ops (copias de seguridad y privacidad diferencial)
         run: cd ops && ../.venv/bin/python -m pytest -q
       - name: Trazabilidad requerimiento ↔ prueba (F8)
         run: .venv/bin/python -m ops.trazabilidad --check
@@ -101,7 +101,7 @@ jobs:
         run: |
           pip install pip-audit==2.10.1
           mkdir -p sbom
-          for c in crypto client directory discord_adapter; do
+          for c in crypto client directory discord_adapter ops; do
             pip-audit -r "$c/requirements.txt" --progress-spinner off
             pip-audit -r "$c/requirements.txt" --progress-spinner off -f cyclonedx-json -o "sbom/$c.cdx.json"
           done
