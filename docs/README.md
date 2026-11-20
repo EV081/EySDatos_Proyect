@@ -124,7 +124,7 @@ Para enfocar esta distinción se ilustra esas diferencias bajo el trabajo realiz
 
 ### 3.3. Requerimientos agregados durante la implementación
 
-Al construir el directorio y las operaciones aparecieron requerimientos que la versión inicial dejaba implícitos. Salen del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12); cada uno está trazado a sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
+Al construir el directorio y las operaciones aparecieron requerimientos que la versión inicial dejaba implícitos. Salen del modelo de amenaza (el directorio como adversario, sección 3) y de la DPIA (restricciones C-05 a C-12); RS21 sale de la necesidad de compartir estadísticas de uso sin exponer a nadie (sección 9.4). Cada uno está trazado a sus pruebas en la [tabla de trazabilidad](trazabilidad.md).
 
 * **RF15:** La persona debe poder cancelar su registro en el directorio desde su cliente, con su llave vigente y una sesión OAuth2; el registro se borra en el acto y desaparece de las copias en 30 días como máximo.
 
@@ -137,6 +137,8 @@ Al construir el directorio y las operaciones aparecieron requerimientos que la v
 * **RS19:** Los registros de auditoría no deben contener texto de mensajes, llaves, tokens, IPs ni IDs en claro (los IDs se seudonimizan con HMAC); deben alimentar alertas ante abusos y conservarse 90 días.
 
 * **RS20:** El directorio debe respaldarse a diario con copias cifradas, guardadas fuera de su servidor, con restauración probada y rotación de 30 días.
+
+* **RS21:** Toda estadística del directorio que se comparta fuera del equipo de operación debe publicarse con privacidad diferencial (unidad de privacidad: una persona), con la contribución de cada persona acotada, un ε declarado por reporte y un tope mensual de presupuesto que impida publicar si se supera.
 
 ## 4. Diseño
 
@@ -321,12 +323,12 @@ Todos los componentes de la sección 5.1 están implementados. El cliente local 
 
 | Componente | Qué hace | Pruebas automáticas |
 |---|---|---|
-| `crypto/` | Identidad, bóveda, *handshake* con PFS, sesión, huella y seudonimización | 126 |
-| `client/` | API local: orquesta las sesiones, la cola de salida, la rotación y las alertas | 55 |
-| `frontend/` | Interfaz en Next.js | Pruebas unitarias y prueba e2e (los módulos `lib/` deben versionarse; ver la nota) |
-| `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, cancelación, TLS 1.3, auditoría y alertas | 68 |
+| `crypto/` | Identidad, bóveda, *handshake* con PFS, sesión, huella y seudonimización | 127 |
+| `client/` | API local: orquesta las sesiones, la cola de salida, la rotación y las alertas; derechos ARCO, rotación de la llave de firma y quitar contactos | 86 |
+| `frontend/` | Interfaz en Next.js: identidad, contactos, chat, verificación con código QR, alertas y la sección "Mis datos" (derechos ARCO) | 39 unitarias y una prueba e2e en navegador |
+| `directory/` | Directorio de llaves (FastAPI + PostgreSQL 17): OAuth2 y prueba de posesión, consulta del registro propio, cambio de llave, cancelación, TLS 1.3, auditoría y alertas. Se despliega con Docker ([despliegue](despliegue-directorio.md)) | 77 |
 | `discord_adapter/` | Un bot por persona sobre `discord.py`; solo publica mensajes `E2EE1:` | 14, incluida una conversación cifrada completa entre dos clientes reales; ensayo con la API real (`discord_adapter.smoke`) |
-| `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código y trazabilidad | 10 (además de las de TLS y auditoría en `directory/`) |
+| `ops/` | CA propia, copias de seguridad, tarea diaria, análisis de código, trazabilidad y estadísticas con privacidad diferencial | 19 (además de las de TLS y auditoría en `directory/`) |
 
 **Cómo se cumplió lo propuesto, y dónde hubo que decidir:**
 
@@ -334,11 +336,15 @@ Todos los componentes de la sección 5.1 están implementados. El cliente local 
 * **Cambio y cancelación de llaves.** Un cambio con OAuth2 guarda la llave anterior 90 días y dispara la alerta de RF8 en los contactos; si además viene la firma de la llave anterior (`sign_key_change`), se exige que valga. La cancelación se firma, de forma provisoria, como un "cambio hacia la llave nula" con un nonce reservado para cancelar. Lo recomendable es que la librería tenga una firma propia con su contexto, y está pendiente.
 * **TLS 1.3 (RS6, RS18).** Una CA propia (ECDSA P-256), un certificado de servidor de 90 días y una CRL. El cliente no usa las CA del sistema: así, ninguna CA pública puede emitir un certificado para el directorio.
 * **Transporte.** Los mensajes se entregan al cliente desde un hilo propio, porque el cliente responde con `send()` mientras procesa un mensaje y entregarlos desde el bucle de `discord.py` produciría un bloqueo mutuo. El adaptador se niega a publicar cualquier texto que no sea del protocolo.
+* **Derechos ARCO en el directorio.** La persona consulta todo lo que el directorio guarda de ella (`GET /v1/me`, con su sesión OAuth2 y solo su propio registro), cambia su llave y cancela su registro. El cliente y la sección "Mis datos" del frontend lo exponen; el detalle está en la [política de privacidad](privacidad/politica-de-privacidad.md).
+* **Estadísticas de uso (RS21).** Para compartir cómo se usa el directorio sin exponer a nadie, `python -m ops.dp.metrics` publica conteos con privacidad diferencial y un presupuesto mensual de ε (sección 9.4).
 * **Entorno.** El desarrollo local usó Python 3.13 (la máquina no tenía 3.12); la CI corre en 3.12, la versión fijada del proyecto.
 
-**Resultados verificables:** 273 pruebas de Python en verde contra un PostgreSQL 17 real y servidores TLS reales; análisis de código sin hallazgos tras la clasificación ([ops/reports](../ops/reports/README.md)); y la tabla de trazabilidad, en la que todos los requerimientos y restricciones tienen evidencia ([trazabilidad.md](trazabilidad.md)), generada y comprobada en CI.
+**Resultados verificables:** 323 pruebas de Python y 39 del frontend en verde, contra un PostgreSQL 17 real y servidores TLS reales; análisis de código sin hallazgos tras la clasificación ([ops/reports](../ops/reports/README.md)); y la tabla de trazabilidad, en la que todos los requerimientos y restricciones tienen evidencia ([trazabilidad.md](trazabilidad.md)), generada y comprobada en CI. El detalle de los resultados está en la sección 9.
 
-**Pendiente:** el adaptador ya se ensayó contra la API real de Discord con un bot (publicar, leer, rechazar texto plano, reconectar y recuperar lo atrasado: [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt)); y el login OAuth2 con una cuenta real: registro, rechazo del acceso ajeno, token de un solo uso y cancelación ([ops/reports/oauth-discord.txt](../ops/reports/oauth-discord.txt)). Falta la conversación entre los dos bots. Además, los módulos `frontend/lib/` deben versionarse: una regla del `.gitignore` los excluía, y sin ellos el frontend no compila desde un clon limpio.
+**Ensayos con servicios reales.** El adaptador se ensayó contra la API real de Discord (publicar, leer, rechazar texto plano, reconectar y recuperar lo atrasado: [discord-smoke.txt](../ops/reports/discord-smoke.txt)); el login OAuth2 con una cuenta real (registro, rechazo del acceso ajeno, token de un solo uso y cancelación: [oauth-discord.txt](../ops/reports/oauth-discord.txt)); y una conversación en local entre dos clientes, cada uno con su propio bot (`.env.a` y `.env.b`) en el canal `#e2ee-relay`. Los módulos `frontend/lib/` ya están versionados (una regla del `.gitignore` los excluía).
+
+**Pendiente:** una firma de cancelación con contexto propio en `crypto/` (hoy la cancelación se firma como un cambio hacia la llave nula) y el primer simulacro del plan de respuesta a incidentes.
 
 ### 5.8 Operaciones, políticas e incidentes
 
@@ -349,6 +355,7 @@ Todos los componentes de la sección 5.1 están implementados. El cliente local 
 | Registros y alertas | JSON con IDs seudonimizados, filtro de redacción, 90 días; alertas por acceso ajeno, firmas inválidas, enumeración y cambios de llave | [directory/README.md](../directory/README.md) |
 | Tarea diaria | Copia, purga de la base y retención de registros en un solo comando programable | `python -m ops.scheduled daily` |
 | Análisis de código | Bandit, Semgrep, pip-audit y npm audit con SBOM CycloneDX, y gitleaks, en CI; reportes antes y después | [ops/reports](../ops/reports/README.md) |
+| Estadísticas con privacidad diferencial | Registros por semana, versión del aviso y operaciones por tipo, con Laplace discreto de OpenDP, ε = 1 por reporte y tope mensual de 4; lee con el rol de solo lectura | `python -m ops.dp.metrics report` ([experimento](../ops/reports/dp-experimento.md)) |
 | Políticas | Uso seguro para personas y operadores, con calendario de rotación de secretos | [politicas/uso-seguro.md](politicas/uso-seguro.md) |
 | Incidentes | Plan según NIST SP 800-61 rev. 3, con guías por escenario y notificación a la ANPD en 48 h. Ya se aplicó a un caso real: contraseñas de la CI publicadas en GitHub y detectadas por GitGuardian (INC-2026-01, sin datos personales), que dejó una regla nueva de gitleaks | [politicas/respuesta-incidentes.md](politicas/respuesta-incidentes.md) |
 
@@ -380,7 +387,7 @@ Antes de que entre un solo dato real, se evaluó el sistema con la plantilla de 
 
 **Medidas.** Cada riesgo se mitiga con restricciones verificables (24 en total), cada una con la prueba, archivo o revisión que la comprueba, su responsable y su estado real. Entre ellas: cifrado de extremo a extremo y *forward secrecy* (R1, R3, R13), verificación fuera de banda con *pin* de llaves (R2, R11), cifrado en reposo con Argon2id y bloqueo temporal tras intentos fallidos (R3, R4), esquema mínimo del directorio, TLS 1.3 con CA propia, registros sin datos personales y plazos de retención con borrado (R5, R6, R8), y consentimiento por versión con aviso de privacidad (R7, R12).
 
-**Decisión.** Ningún riesgo residual es alto, por lo que no se requiere consulta previa a la autoridad. El sistema **puede lanzarse con condiciones**: la demostración local puede usar lo ya implementado, pero **no debe usarse con datos reales de terceros** mientras estén pendientes las restricciones del servicio de directorio, el plan de incidentes y el análisis de código. Los cinco riesgos que quedan en nivel medio se aceptan de forma explícita en la DPIA, con sus razones. La DPIA es un documento vivo y se revisa ante cualquier cambio de datos, finalidad, tecnología o proveedor.
+**Decisión.** Ningún riesgo residual es alto, por lo que no se requiere consulta previa a la autoridad. El sistema **puede lanzarse con condiciones**: la demostración local puede usar lo ya implementado, pero **no debe usarse con datos reales de terceros** hasta cumplir las condiciones previas a un uso real (sección 8.1). Las restricciones del servicio de directorio, el plan de incidentes y el análisis de código, que eran condiciones de la primera versión de la DPIA, ya se cumplieron (secciones 5.7 y 5.8). Los cinco riesgos que quedan en nivel medio se aceptan de forma explícita en la DPIA, con sus razones. La DPIA es un documento vivo y se revisa ante cualquier cambio de datos, finalidad, tecnología o proveedor.
 
 ### 6.2 Cumplimiento de la Ley 29733 y su reglamento
 
@@ -466,7 +473,7 @@ El contenido de los mensajes es libre y puede incluir datos sensibles de cualqui
 
 Ninguna técnica sirve sola; se combinan sobre el dato y sobre el acceso a él.
 
-Las técnicas del lado del dispositivo (cifrado, *handshake*, derivación de claves) están implementadas y probadas. Las del directorio y los registros (esquema mínimo, rol de base de datos, seudonimización dentro de los registros reales) dependen del servicio que aún está en construcción; su estado figura en las restricciones C-05 a C-12 de la DPIA.
+Las técnicas del lado del dispositivo (cifrado, *handshake*, derivación de claves) y las del directorio y los registros (esquema mínimo, rol de base de datos, seudonimización dentro de los registros reales, privacidad diferencial en las estadísticas) están implementadas y probadas; su estado figura en las restricciones C-05 a C-12 de la DPIA y en la [tabla de trazabilidad](trazabilidad.md).
 
 | Técnica | Dónde se aplica | Qué consigue | Límite |
 |---|---|---|---|
@@ -478,8 +485,9 @@ Las técnicas del lado del dispositivo (cifrado, *handshake*, derivación de cla
 | **Enmascarado** (`1234…5678`) | Mensajes de diagnóstico y pantallas donde alguien debe reconocer un ID | Se reconoce sin revelar el dato completo | No protege datos almacenados |
 | **Control de acceso y mínimo privilegio** | Rol de base de datos sin permisos de DDL, token de la API local, una llave por propósito | Limita quién puede hacer qué, incluso dentro del sistema | Solo vale si la autenticación es sólida |
 | **Datos falsos en pruebas** | Todas las pruebas y los entornos de desarrollo usan IDs inventados | Los desarrolladores nunca ven datos reales | — |
+| **Privacidad diferencial** (Laplace discreto, OpenDP) | Estadísticas del directorio que se comparten fuera del equipo de operación (sección 9.4) | Garantía matemática: el reporte casi no cambia si una persona está o no en la base, así que no revela si alguien se registró o cambió su llave | Los conteos pequeños pierden precisión; cada reporte gasta presupuesto ε |
 | Tokenización | No aplica | No hay números de tarjeta ni datos de pago | — |
-| Anonimización | **No se pretende** | No se publica ningún conjunto de datos; no se afirma que algo sea anónimo | Ver los límites de abajo |
+| Anonimización de registros | **No se pretende** | No se publica ningún conjunto de datos fila por fila; no se afirma que algo sea anónimo. Lo único que sale del equipo son agregados con privacidad diferencial | Ver los límites de abajo |
 
 **Por qué HMAC y no un hash simple.** Un hash sin clave es unidireccional en teoría, pero un ID de Discord tiene una estructura conocida (lleva la fecha de creación) y se puede enumerar: bastaría recorrer los candidatos y comparar. Con HMAC y una clave secreta guardada en una variable de entorno, quien ve un registro no puede recuperar el ID. La clave se rota cada 90 días, el plazo de retención de los registros, para que no se pueda seguir a una persona entre periodos. Hay una implementación de referencia con pruebas en `crypto/pseudonym.py`.
 
@@ -511,7 +519,7 @@ La idea de fondo del diseño es que ninguna brecha de un servicio expone el **co
 | S5 | **Robo de la llave de identidad** | Permite firmar *handshakes* futuros y suplantar a la persona. No descifra lo ya grabado | La persona y sus contactos (engañados) | Integridad y autenticidad (R11) | *Forward secrecy* ✔; alerta de cambio de llave a los contactos ✔. Cambio de llave con OAuth2 y, opcionalmente, con la firma de la llave anterior; cancelación del registro ✔ |
 | S6 | **Fuga del token del bot** | Lectura del canal (texto cifrado y metadatos) y publicación de mensajes falsos: el protocolo los rechaza, pero pueden llenar la conversación de avisos de "mensaje no descifrable" | Dueño del bot; Discord (puede revocar el bot); personas del canal | Confidencialidad de metadatos y disponibilidad (R10) | Token en variables de entorno, sin repositorio; gitleaks en CI ✔; permisos mínimos del bot (`discord_adapter.check`) |
 | S7 | **Compromiso de la cadena de suministro**: una dependencia maliciosa en el cliente, el frontend o el servidor | Todo lo que ve la aplicación, **incluido el texto plano** | Todas las personas usuarias | Confidencialidad total | Pocas dependencias, con versión fija ✔; pip-audit, npm audit y SBOM en CI ✔. Es el riesgo más difícil de cerrar |
-| S8 | **Defecto en el protocolo o su implementación** | Contenido o suplantación, según el defecto | Todas las personas usuarias | Confidencialidad e integridad (R13) | Componentes estándar, pruebas automáticas de los caminos de rechazo (126 en la librería y 55 en el cliente local) y tabla de ataques considerados ✔. Sin auditoría externa |
+| S8 | **Defecto en el protocolo o su implementación** | Contenido o suplantación, según el defecto | Todas las personas usuarias | Confidencialidad e integridad (R13) | Componentes estándar, pruebas automáticas de los caminos de rechazo (127 en la librería y 86 en el cliente local) y tabla de ataques considerados ✔. Sin auditoría externa |
 | S9 | **Fuga de copias de seguridad o de registros** | Lo mismo que S2; los registros llevan IDs seudonimizados | Personas usuarias; equipo | Confidencialidad (R5, R8) | Copias cifradas fuera del servidor, registros con IDs seudonimizados y retención de 30 y 90 días ✔ |
 | S10 | **Uso indebido por un integrante del equipo o suplantación del equipo (*phishing*)** | Lo que el servidor del directorio contiene; podría intentar sustituir una llave | Personas usuarias; equipo | Confidencialidad e integridad | Permisos mínimos, registros de auditoría, ceremonia de verificación; el operador no tiene acceso al contenido |
 | S11 | **Página web maliciosa contra la API local** (otro sitio abierto en el navegador) | Con la aplicación desbloqueada, la lectura de conversaciones y el envío de mensajes | La persona y sus contactos | Confidencialidad e integridad | Token por ejecución, CORS restringido y validación del `Host` ✔ |
@@ -566,7 +574,8 @@ Estas medidas **no se implementan ahora**, pero se recomiendan. Para cada una se
 | **Varios dispositivos por persona**, con una llave por dispositivo, lista visible y revocación | R11, S5 | Hoy una identidad vive en un dispositivo o en una exportación manual; con llaves por dispositivo, perder uno no obliga a rotar todo | Cambia el modelo de identidad y el directorio |
 | **Respaldo de la identidad repartido** entre contactos de confianza (reparto de secretos de Shamir, 1979) | R4 | Evita elegir entre "no hay recuperación" y "el operador guarda una copia", que anularía la confidencialidad | Introduce un flujo de recuperación nuevo y difícil de explicar |
 | **Monitoreo y simulacros periódicos**: alertas sobre los registros, ejercicios de recuperación y simulacro del plan de incidentes | S2, S9 | Un plan que nunca se ensaya suele fallar cuando hace falta; la detección rápida limita el daño | Exige un servicio con usuarios reales |
-| **Código QR en la verificación** y otras vías accesibles | Accesibilidad | Comparar 60 dígitos no es viable para todas las personas | El cliente local ya entrega el contenido; falta dibujarlo |
+| **Otras vías accesibles de verificación** (lectura en voz alta, palabras en lugar de dígitos) | Accesibilidad | Comparar 60 dígitos no es viable para todas las personas; el código QR ya está implementado, pero exige estar en persona | Requiere probarlo con personas usuarias |
+| **Presupuesto anual de privacidad diferencial** | R1, R5 | Hoy el tope de ε es mensual; la tabla de versiones del aviso cuenta a las mismas personas cada mes, así que la pérdida total crece con el tiempo | Con el volumen y la duración de la demostración, el tope mensual basta |
 
 ### 8.3 A largo plazo
 
@@ -580,6 +589,136 @@ Estas medidas **no se implementan ahora**, pero se recomiendan. Para cada una se
 ### 8.4 Cómo se priorizó
 
 Se ordenó por **riesgo reducido frente al esfuerzo**, dando prioridad a lo que el uso real vuelve obligatorio (cumplimiento, secretos, cadena de suministro y autenticación reforzada) y a lo que reduce la mayor exposición aceptada (metadatos). Ninguna de estas medidas sustituye a las anteriores: la seguridad se construye con capas independientes, y cada una cubre la falla de otra.
+
+## 9. Resultados y experimentos
+
+Esta sección reúne la evidencia de que las medidas funcionan: pruebas automáticas, análisis de código, simulacros con servicios reales y el experimento de privacidad diferencial. Cada resultado enlaza a su reporte, y la [tabla de trazabilidad](trazabilidad.md) los conecta con los requerimientos.
+
+### 9.1 Pruebas automáticas
+
+| Componente | Pruebas | Qué demuestran |
+|---|---|---|
+| `crypto/` | 127 | Los caminos de rechazo: firma, confirmación de clave y etiqueta GCM inválidas, *replay*, reflexión, llaves efímeras destruidas y bóveda sin secretos en claro |
+| `client/` | 86 | Sesiones, cola de salida, rotación, alerta y revocación por cambio de llave, derechos ARCO y robustez de la API local |
+| `directory/` | 77 | Prueba de posesión, OAuth2, **acceso ajeno por endpoint**, esquema mínimo, TLS 1.3 con CA propia, auditoría sin datos personales y alertas |
+| `discord_adapter/` | 14 | Conversación cifrada completa entre dos clientes; el adaptador se niega a publicar texto plano |
+| `ops/` | 19 | Copias cifradas y restauración, rol de solo lectura, privacidad diferencial (calibración del ruido, contribución acotada, presupuesto) |
+| `frontend/` | 39 + e2e | Formato, validación de contraseñas, aviso y consentimiento, derechos ARCO; flujo completo en navegador |
+
+Todas corren en CI en cada *push*, contra un PostgreSQL 17 real, y ninguna usa datos reales: los IDs son inventados.
+
+### 9.2 Análisis de código antes y después
+
+| Herramienta | Antes | Después | ¿Detecta? (prueba con fallas plantadas) |
+|---|---|---|---|
+| Bandit 1.9.4 | 5 (severidad baja) | 0 | 6 de 6 fallas conocidas |
+| Semgrep 1.182.1 | 4 | 0 | 3 fallas plantadas (las demás las marca Bandit) |
+| pip-audit 2.10.1 con SBOM por componente | 0 | 0 | 49 vulnerabilidades en dependencias viejas |
+| npm audit con SBOM | 0 | 0 | — |
+| gitleaks 8.30.1 (historial + árbol) | 0 + 2 | 0 + 0 | 4 de 4 secretos falsos |
+
+Los 12 hallazgos se clasificaron uno por uno ([ops/reports](../ops/reports/README.md)): dos eran defectos reales (una exclusión de gitleaks mal anclada que no excluía nada y contraseñas de la CI publicadas, detectadas por GitGuardian), el resto falsos positivos o riesgos aceptados con su justificación en la misma línea. **Un cero solo vale si la herramienta es capaz de detectar**: por eso se plantaron fallas conocidas en un repositorio aparte y se comprobó que cada herramienta las encuentra ([f6-canarios.txt](../ops/reports/f6-canarios.txt)).
+
+### 9.3 Simulacros y ensayos con servicios reales
+
+| Ensayo | Resultado | Evidencia |
+|---|---|---|
+| Copia de seguridad cifrada y restauración | 16/16 comprobaciones: el archivo no tiene IDs ni llaves en claro, detecta un byte alterado o un archivo renombrado, la base restaurada coincide fila por fila. Restauración en 0,1 s frente a un RTO de 30 min | [f4-simulacro.txt](../ops/reports/f4-simulacro.txt) |
+| Auditoría, alertas y tarea diaria | 13/13: 36 consultas a IDs inexistentes disparan las alertas de enumeración; ni los registros ni el *webhook* contienen IDs, IPs o tokens; la purga respeta los 90 días | [f5-simulacro.txt](../ops/reports/f5-simulacro.txt) |
+| Adaptador con la API real de Discord | 9/9: publica y recibe, rechaza texto plano y mensajes largos, recupera lo atrasado al reconectar | [discord-smoke.txt](../ops/reports/discord-smoke.txt) |
+| Permisos del canal y del bot | Canal privado; el bot no es administrador ni tiene permisos extra | [discord-check.txt](../ops/reports/discord-check.txt) |
+| Login OAuth2 con una cuenta real | 13/13: un token no puede publicar la llave de otro ID, es de un solo uso, la cancelación borra la fila en el acto y el ID nunca aparece en claro en la auditoría | [oauth-discord.txt](../ops/reports/oauth-discord.txt) |
+| Conversación entre dos cuentas | Dos clientes, cada uno con su bot, intercambian mensajes cifrados por `#e2ee-relay`; en el canal solo se ve `E2EE1:…` | Sección 5.7 |
+| Presupuesto de privacidad diferencial | Con un tope mensual de ε = 4, cuatro reportes de ε = 1 se publican y el quinto se rechaza | [ops/reports/dp](../ops/reports/dp/) |
+| Incidente real INC-2026-01 | Contraseñas de la CI publicadas en GitHub: se aplicó el plan de respuesta, se rotaron y quedó una regla nueva de gitleaks | [respuesta-incidentes.md](politicas/respuesta-incidentes.md) |
+
+### 9.4 Privacidad diferencial en las estadísticas del directorio
+
+**Dónde tiene sentido.** El contenido de los mensajes está cifrado de extremo a extremo y el sistema no publica ningún conjunto de datos fila por fila, así que la privacidad diferencial no se aplica a los mensajes. Sí hace falta en un punto: el equipo necesita compartir **cómo se usa el directorio** (con el curso, en la DPIA o para decidir la operación), y un conteo exacto puede delatar a una persona. Si un reporte dice "1 cambio de llave esta semana" y alguien sabe que su compañero cambió de equipo, ya sabe quién fue; y restando dos reportes consecutivos se aísla a quien entró entre uno y otro (ataque de diferenciación). La privacidad diferencial (Dwork et al., 2006) garantiza que el resultado casi no cambia si una persona está o no en los datos, sin importar lo que el atacante ya sepa.
+
+**Diseño** (`ops/dp/metrics.py`, RS21):
+
+| Elemento | Decisión |
+|---|---|
+| Unidad de privacidad | Una persona (un ID de Discord). Dos bases son vecinas si difieren en una persona |
+| Consultas | (1) registros nuevos por semana; (2) personas por versión del aviso aceptado; (3) operaciones por tipo (registro, cambio de llave, cancelación, inicio de sesión, acceso, firma inválida, acceso ajeno), leídas de los registros de auditoría con IDs seudonimizados |
+| Contenedores | Públicos y fijados antes de mirar los datos: semanas del periodo, versiones conocidas del aviso (lo demás cae en "otra") y la lista de operaciones. Si los contenedores salieran de los datos, su sola existencia revelaría algo |
+| Sensibilidad | 1 en las consultas 1 y 2 (cada persona cae en un solo contenedor). En la 3, cada persona aporta como máximo 2 operaciones en el periodo y se descartan las demás, así que la sensibilidad es 2. Acotar es posible porque la auditoría seudonimiza con HMAC: se agrupa por persona sin conocer su ID |
+| Mecanismo | Laplace discreto sobre enteros, con escala = sensibilidad / ε. Garantía de ε-DP pura. El resultado se trunca en 0, que es posprocesamiento y no gasta presupuesto |
+| Presupuesto | ε = 1 por reporte, repartido en partes iguales entre las tres consultas (composición secuencial: ε/3 cada una). Un libro de presupuesto suma lo gastado en el mes y **el programa se niega a publicar** si se pasaría de ε = 4 (un reporte por semana) |
+| Acceso | Lee la base con el rol de solo lectura de las copias de seguridad; el reporte no contiene IDs, seudónimos ni conteos exactos |
+
+**Elección de la librería.** Se usó **OpenDP** (proyecto de código abierto de Harvard, con núcleo en Rust y una prueba de privacidad escrita para cada componente) en lugar de sumar ruido a mano. La razón principal es un defecto conocido: las implementaciones ingenuas del mecanismo de Laplace con números de punto flotante filtran información por los bits menos significativos del resultado, al punto de permitir reconstruir el valor exacto (Mironov, 2012). OpenDP muestrea el ruido de forma exacta sobre enteros y, además, **certifica** la pérdida de privacidad de cada mecanismo (`map`), que el código comprueba antes de publicar. Una salvedad honesta: OpenDP agrupa como `contrib` los componentes cuya prueba aún no terminó su revisión formal, y el Laplace discreto sobre vectores está en ese grupo, así que el código lo habilita de forma explícita (`enable_features("contrib")`). Se descartó diffprivlib (IBM) porque está pensada sobre todo para modelos de aprendizaje automático sobre arreglos de NumPy, y aquí solo se necesitan conteos enteros. OpenDP pasa por pip-audit y forma parte del SBOM como el resto de las dependencias.
+
+**Elección de ε.** No hay un valor universal; la guía de NIST (Near et al., 2025, SP 800-226) pide justificarlo con la utilidad que se necesita. Como referencia, Dwork y Roth (2014) consideran que ε ≤ 1 da una garantía fuerte; Apple usa presupuestos de entre 2 y 8 por día según el dato (Apple, 2017), y la Oficina del Censo de EE. UU., que adoptó la privacidad diferencial para el censo de 2020 (Abowd, 2018), terminó usando un ε total cercano a 20. Para elegir, se midió la utilidad con datos sintéticos (`python -m ops.dp.experiment`, 1000 repeticiones por fila; [resultados completos](../ops/reports/dp-experimento.md)):
+
+| ε del reporte | Error medio por semana | Error del total | Pico a ±1 semana | Error del grupo de 3 personas | El grupo de 3 "desaparece" |
+|---|---|---|---|---|---|
+| 0,1 | 20,8 personas | 68 % | 38 % | 522 % | 48 % |
+| 0,5 | 5,5 | 12 % | 82 % | 139 % | 32 % |
+| **1** | **2,8** | **6 %** | **96 %** | **77 %** | **21 %** |
+| 2 | 1,4 | 3 % | 100 % | 43 % | 9 % |
+| 5 | 0,4 | 1 % | 100 % | 13 % | 1 % |
+
+Con **ε = 1** la tendencia queda clara (el total se desvía un 6 % y la semana pico se ubica bien en el 96 % de los casos), mientras que los grupos pequeños quedan borrosos: con 3 personas el error es del 77 % y una de cada cinco veces el reporte dice 0. Eso es justamente lo que se busca: lo que describe a muchas personas se conserva y lo que podría señalar a pocas se pierde. Subir a ε = 2 apenas mejora la tendencia y duplica la pérdida de privacidad; bajar a 0,5 duplica el error. Por eso se eligió ε = 1 por reporte, en el rango que la literatura considera fuerte.
+
+**Lo que no se hace con privacidad diferencial.** El mismo experimento muestra que las alertas de seguridad **no pueden** llevar ruido: con ε = 1, un ataque de enumeración de 20 eventos se detecta solo el 56 % de las veces y hay un 9 % de alertas falsas con 10 eventos. Por eso las alertas usan los conteos exactos, que nunca salen del equipo de operación, y la privacidad diferencial se reserva para lo que se publica. Es una decisión de utilidad: la detección necesita exactitud y la publicación necesita privacidad.
+
+**Límites.** La garantía protege a una persona dentro de un reporte y a lo largo de un mes; como la tabla de versiones del aviso cuenta a las mismas personas cada mes, la pérdida total crece con el tiempo (se recomienda un tope anual, sección 8.2). La privacidad diferencial no protege los metadatos que ve Discord (R1) ni sustituye al esquema mínimo: es una capa más sobre lo poco que se guarda.
+
+### 9.5 Interpretación: privacidad frente a utilidad
+
+Cada técnica quita algo de utilidad. La pregunta de diseño fue **qué utilidad necesita cada actor** y quitar solo la que no necesita:
+
+| Técnica | Utilidad que se conserva | Utilidad que se pierde | Evidencia |
+|---|---|---|---|
+| Cifrado de extremo a extremo | La conversación completa para las dos personas | Discord y el operador no pueden moderar, buscar ni indexar el contenido | 9.1, 9.3 |
+| Minimización del directorio | Encontrar la llave de alguien por su ID | Cualquier análisis de nombres, correos o IPs (no existen) | Esquema, `test_esquema.py` |
+| Seudonimización con HMAC en la auditoría | Detectar un ataque repetido de la misma persona y acotar contribuciones | Saber quién es esa persona sin la clave | 9.3 (simulacro F5) |
+| Privacidad diferencial en las estadísticas | Tendencias de uso (error del 6 % en el total) | Conteos exactos de grupos pequeños | 9.4 |
+| *Forward secrecy* y rotación | Mensajes nuevos sin interrupción | Releer en otro equipo mensajes viejos desde Discord (el historial vive cifrado en el dispositivo) | 4.2.5 |
+| Retención de 30 y 90 días | Restaurar el directorio e investigar un incidente reciente | Investigar algo más antiguo que esos plazos | 9.3 (simulacros F4 y F5) |
+
+En todos los casos se pierde la utilidad que **no tiene una finalidad declarada** en el aviso de privacidad y se conserva la que sí la tiene. Ese es el principio de finalidad de la Ley 29733 convertido en decisiones de ingeniería.
+
+## 10. Conclusiones
+
+* **El objetivo se cumplió:** dos personas conversan por Discord sin que Discord, el operador del directorio ni un tercero con acceso al canal puedan leer el contenido. Los 36 requerimientos (RF1–RF15 y RS1–RS21) tienen evidencia en la [tabla de trazabilidad](trazabilidad.md), comprobada en cada *push*.
+* **La confianza se movió del servidor a la persona.** El directorio guarda lo mínimo, no puede leer nada y, si entrega una llave falsa, la ceremonia de verificación lo detecta. El precio es la responsabilidad de la persona: proteger su contraseña y verificar a sus contactos.
+* **La operación importa tanto como la criptografía.** Los dos defectos reales del proyecto no estuvieron en el protocolo sino en la configuración: una exclusión de gitleaks que no excluía nada y contraseñas de la CI publicadas. Ambos se encontraron gracias a las herramientas y se corrigieron con el plan de incidentes.
+* **Medir antes de afirmar.** Cada control se probó con una falla plantada (canarios, accesos ajenos, bytes alterados, presupuesto agotado). Un "0 hallazgos" o un "cifrado" sin esa prueba no habría significado nada.
+* **La privacidad diferencial tiene su lugar.** Sirve para publicar estadísticas de uso sin exponer a nadie (ε = 1 conserva las tendencias), pero no para la detección de abusos, que necesita conteos exactos. Elegir dónde aplicarla fue tan importante como aplicarla.
+* **Lo que queda es conocido y está declarado:** los metadatos visibles para Discord, el primer contacto sin verificar, la falta de auditoría externa y las obligaciones legales de un uso real (secciones 5.6, 6.1 y 8).
+
+*Conclusiones desde el diseño, la privacidad y la ética: pendiente (Elmer).*
+
+## 11. Lecciones aprendidas y retrospectiva
+
+### 11.1 Directorio, Discord y operaciones (Farid)
+
+**Qué funcionó**
+
+* **Acordar contratos antes de programar.** El formato de los mensajes, los puertos del cliente y las APIs se fijaron al inicio ([REPARTO.md](REPARTO.md), sección 3). Con `client/fakes.py` como referencia, el directorio y el adaptador se construyeron en paralelo sin bloquear al cliente, y la integración casi no necesitó cambios.
+* **Nombrar las pruebas por requerimiento** (`test_RS16_…`). Generar la tabla de trazabilidad desde esos nombres convirtió el informe en algo que la CI puede comprobar: si un requerimiento se queda sin evidencia, el *build* falla.
+* **Ensayar con los servicios reales** además de las pruebas simuladas: el ensayo con la API de Discord y el login OAuth2 con una cuenta real confirmaron supuestos que las pruebas con dobles no podían confirmar.
+
+**Qué fue difícil y qué aprendimos**
+
+* **Una herramienta que no detecta da una falsa tranquilidad.** La exclusión de gitleaks estaba anclada con `^` y gitleaks informa rutas con un prefijo, así que no excluía nada y, al revés, una regla mal escrita podía ocultar un secreto real. Desde entonces, cada herramienta se prueba con una falla plantada.
+* **Los secretos "de prueba" también son secretos.** Las contraseñas de la base efímera de la CI no protegían nada, pero publicarlas era una mala práctica que GitGuardian detectó y gitleaks no. Se trató como un incidente real (INC-2026-01), lo que además sirvió para ensayar el plan de respuesta.
+* **La concurrencia de `discord.py`.** Entregar los mensajes al cliente desde el bucle de eventos del bot producía un bloqueo mutuo, porque el cliente responde con `send()` mientras procesa. Se resolvió entregando desde un hilo propio.
+* **El entorno de cada persona es parte del sistema.** Diferencias entre Windows y Linux (servir el frontend, rutas, versiones de Python y de Node) y una regla del `.gitignore` que excluía `frontend/lib/` hicieron que el proyecto funcionara en una máquina y no en un clon limpio. La CI con un entorno desde cero es la única forma confiable de comprobarlo.
+* **La privacidad diferencial obliga a decidir antes de mirar.** Hubo que fijar los contenedores y la contribución máxima por persona antes de ver los datos, y aceptar que los grupos pequeños dejan de verse. El experimento con datos sintéticos permitió elegir ε con números y no por intuición.
+
+**Qué haríamos distinto**
+
+* Empezar el directorio y la CI al mismo tiempo que la librería criptográfica: la integración y los ensayos reales llegaron tarde y concentraron el trabajo al final.
+* Hacer el simulacro del plan de incidentes antes de necesitarlo, y no después del primer incidente real.
+* Definir desde el inicio qué estadísticas se iban a compartir, para diseñar los registros de auditoría pensando en la privacidad diferencial.
+
+### 11.2 Criptografía, cliente, frontend, privacidad y ética (Elmer)
+
+*Pendiente (Elmer, E9).*
 
 ---
 
@@ -635,4 +774,20 @@ Se ordenó por **riesgo reducido frente al esfuerzo**, dando prioridad a lo que 
 
 * Congreso de la República del Perú (2011). Ley N.° 29733, Ley de Protección de Datos Personales; y su reglamento, Decreto Supremo N.° 016-2024-JUS.
 
-* * Dolev, D., & Yao, A. C. (1983). On the security of public key protocols. IEEE Transactions on Information Theory, 29(2), 198–208. https://doi.org/10.1109/TIT.1983.1056650
+* Dolev, D., & Yao, A. C. (1983). On the security of public key protocols. IEEE Transactions on Information Theory, 29(2), 198–208. https://doi.org/10.1109/TIT.1983.1056650
+
+* Dwork, C., McSherry, F., Nissim, K., & Smith, A. (2006). Calibrating noise to sensitivity in private data analysis. En Theory of Cryptography Conference (TCC 2006) (LNCS 3876, pp. 265–284). Springer. https://doi.org/10.1007/11681878_14
+
+* Dwork, C., & Roth, A. (2014). The algorithmic foundations of differential privacy. Foundations and Trends in Theoretical Computer Science, 9(3–4), 211–407. https://doi.org/10.1561/0400000042
+
+* Mironov, I. (2012). On significance of the least significant bits for differential privacy. En Proceedings of the 2012 ACM Conference on Computer and Communications Security (CCS '12) (pp. 650–661). ACM. https://doi.org/10.1145/2382196.2382264
+
+* The OpenDP Project (2025). OpenDP Library (versión 0.16). Harvard University. https://docs.opendp.org
+
+* Near, J. P., Darais, D., Lefkovitz, N., & Howarth, G. (2025). Guidelines for Evaluating Differential Privacy Guarantees (NIST SP 800-226). National Institute of Standards and Technology. https://doi.org/10.6028/NIST.SP.800-226
+
+* Apple (2017). Learning with Privacy at Scale. Apple Machine Learning Journal, 1(8). https://machinelearning.apple.com/research/learning-with-privacy-at-scale
+
+* Abowd, J. M. (2018). The U.S. Census Bureau adopts differential privacy. En Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining (p. 2867). ACM. https://doi.org/10.1145/3219819.3226070
+
+* Nelson, A., Rekhi, S., Souppaya, M., & Scarfone, K. (2025). Incident Response Recommendations and Considerations for Cybersecurity Risk Management (NIST SP 800-61 rev. 3). National Institute of Standards and Technology. https://doi.org/10.6028/NIST.SP.800-61r3
