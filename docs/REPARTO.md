@@ -19,14 +19,14 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 | ID | Tarea | Estado |
 |---|---|---|
 | E1 | Protocolo (*handshake* autenticado con PFS), secciones 2, 4.2 y 5.2 del informe, diagramas y tabla de ataques considerados | ✔ |
-| E2 | Librería `crypto/`: identidad y bóveda (Argon2id + AES-GCM), exportación/importación, *handshake*, sesión, huella. Con pruebas de los caminos de rechazo | ✔ (110 pruebas) |
-| E3 | API local del cliente (`client/`): orquesta crypto, directorio y Discord; cola de salida, reintentos, rotación, alerta de cambio de llave | ✔ (55 pruebas) |
-| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, verificación, alertas | ✔ (18 pruebas + 15 en navegador). Falta dibujar el código QR |
+| E2 | Librería `crypto/`: identidad y bóveda (Argon2id + AES-GCM), exportación/importación, *handshake*, sesión, huella. Con pruebas de los caminos de rechazo | ✔ (127 pruebas) |
+| E3 | API local del cliente (`client/`): orquesta crypto, directorio y Discord; cola de salida, reintentos, rotación, alerta de cambio de llave | ✔ (86 pruebas) |
+| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, verificación con código QR, alertas, "Mis datos" (ARCO) | ✔ (39 pruebas + e2e en navegador) |
 | E5 | DPIA con la plantilla de siete pasos ([dpia/DPIA.md](dpia/DPIA.md)); consentimiento por versión en cliente y frontend | ✔ (firmas pendientes) |
 | E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | ✔ (falta completar domicilio y correo del equipo antes de un uso real) |
 | E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | ✔ (16 pruebas) |
 | E8 | Riesgos de una brecha y entidades afectadas (informe, sección 7) y recomendaciones futuras (sección 8) | ✔ |
-| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer) | ○ |
+| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer): informe, sección 11.2; y su parte de las conclusiones (sección 10) | ○ |
 
 ### Farid — Directorio, Discord, operaciones y herramientas
 
@@ -34,15 +34,16 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 
 | ID | Tarea | Estado |
 |---|---|---|
-| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`); solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Guarda solo ID, llave pública, fechas y **la versión del aviso aceptado**. Endpoint de cancelación | ✔ (48 pruebas contra Postgres; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
+| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`); solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Guarda solo ID, llave pública, fechas y **la versión del aviso aceptado**. Endpoint de cancelación | ✔ (77 pruebas contra Postgres, incluida la consulta del registro propio y el cambio de llave para los derechos ARCO; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
 | F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | ✔ (10 pruebas; [ops/certs/README.md](../ops/certs/README.md)) |
-| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | ✔ (14 pruebas con Discord simulado; ensayo con la API real y un bot en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); falta el bot de Elmer) |
+| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | ✔ (14 pruebas con Discord simulado; ensayo con la API real en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); conversación en local entre dos cuentas, cada una con su bot) |
 | F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | ✔ (10 pruebas; [ops/backup/README.md](../ops/backup/README.md)) |
 | F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | ✔ (10 pruebas; tarea diaria `ops.scheduled`) |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | ✔ ([ops/reports/README.md](../ops/reports/README.md)) |
 | F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | ✔ ([politicas/](politicas/), versión 1.1; primer incidente real registrado, INC-2026-01); falta tu revisión y el simulacro |
-| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ✔ (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad.md), generada y comprobada en CI) |
-| F9 | Lecciones aprendidas y retrospectiva (parte de Farid) | ○ |
+| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento ↔ evidencia | ✔ (informe 3.3, 5.7, 5.8 y 9; [trazabilidad.md](trazabilidad.md), generada y comprobada en CI) |
+| F9 | Lecciones aprendidas y retrospectiva (parte de Farid): informe, sección 11.1 | ✔ (falta tu revisión) |
+| F10 | **Privacidad diferencial** en las estadísticas del directorio (RS21): `ops/dp/` con OpenDP, ε = 1 por reporte y tope mensual; experimento de utilidad frente a ε; informe, secciones 9 y 10 | ✔ (9 pruebas; [ops/reports/dp-experimento.md](../ops/reports/dp-experimento.md)) |
 
 ### Compartido (al final)
 
@@ -114,9 +115,9 @@ frontend ──HTTP──▶ client ──▶ crypto
 ## 5. Orden de trabajo
 
 1. Hecho: diseño, `crypto/`, `client/`, `frontend/`, DPIA y aviso de privacidad.
-2. Ahora, en paralelo: **E9** (Elmer, al final) ‖ **F1, F2, F3** (Farid).
-3. Luego: **F4, F5, F6** y **F7** (Farid); integración.
-4. Al final: lecciones aprendidas, presentación y ensayo.
+2. Hecho: F1 a F10 (Farid), integración y ensayo con dos cuentas.
+3. Falta: **E9** y la parte de Elmer de las conclusiones; simulacro del plan de incidentes (F7); revisión cruzada.
+4. Al final: presentación y ensayo de la demostración.
 
 ## 6. Lista de comprobación de la demostración (local)
 
@@ -129,4 +130,5 @@ frontend ──HTTP──▶ client ──▶ crypto
 - [ ] *Forward secrecy*: tras rotar la sesión, un mensaje antiguo no se descifra con las claves actuales.
 - [ ] Un usuario no puede sobrescribir la llave de otro (prueba de acceso ajeno).
 - [ ] Registros de auditoría, una copia de seguridad cifrada con su restauración, y el reporte del análisis de código (antes y después).
+- [ ] Estadísticas con privacidad diferencial: `python -m ops.dp.metrics report` dos veces (los números cambian), la tabla del experimento y el rechazo cuando se agota el presupuesto del mes.
 - [ ] La DPIA y el plan de incidentes (48 h).
