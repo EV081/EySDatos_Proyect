@@ -1,3 +1,4 @@
+import base64
 import re
 import secrets
 import logging
@@ -39,8 +40,9 @@ def secret_from(page):
 
 def test_totp_rfc6238_y_no_reutilizacion():
     authenticator = Authenticator(Fernet.generate_key())
-    # Vector RFC 6238 SHA-1, reducido a los seis dígitos usados por Authenticator.
-    ciphertext = authenticator.cipher.encrypt(b"GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ").decode()
+    # Vector RFC 6238 SHA-1 (semilla ASCII "1234567890" x2), reducido a los seis dígitos usados por Authenticator.
+    rfc_seed = base64.b32encode(b"1234567890" * 2)
+    ciphertext = authenticator.cipher.encrypt(rfc_seed).decode()
     with patch("directory.app.mfa.time", return_value=59):
         assert authenticator.matching_step(ciphertext, "287082", -1) == 1
         assert authenticator.matching_step(ciphertext, "287082", 1) is None
