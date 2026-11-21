@@ -199,6 +199,17 @@ class Orchestrator:
             self._identity = self._store = self._my_id = None
             self._session_expires_at = None
 
+    def change_password(self, password: str, new_password: str) -> dict:
+        """Cambia la contraseña maestra: vuelve a cifrar la bóveda con la nueva. No cambia la llave (los contactos
+        no tienen que volver a verificar) ni toca el directorio. Exige la contraseña actual."""
+        with self._lock:
+            self._need_identity()
+            if new_password == password:
+                raise Conflict("la contraseña nueva es igual a la actual")
+            discord_id, identity = self._check_password(password)
+            self._vault_file.save(discord_id, identity.to_vault(new_password, self._kdf))
+            return self.status()
+
     def export_identity(self, new_password: str) -> bytes:
         with self._lock:
             return self._need_identity().to_vault(new_password, self._kdf)

@@ -227,6 +227,61 @@
         }
       }
     },
+    "/identity/password": {
+      "post": {
+        "summary": "Change Password",
+        "description": "Cambia la contraseña maestra (vuelve a cifrar la bóveda; la llave no cambia).",
+        "operationId": "change_password_identity_password_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePassword"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/identity/export": {
       "post": {
         "summary": "Export Identity",
@@ -1336,6 +1391,28 @@
         ],
         "title": "UnlockRequest",
         "type": "object"
+      },
+      "ChangePassword": {
+        "properties": {
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 10,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "password",
+          "new_password"
+        ],
+        "title": "ChangePassword"
       }
     }
   }

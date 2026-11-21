@@ -21,12 +21,12 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 | E1 | Protocolo (*handshake* autenticado con PFS), secciones 2, 4.2 y 5.2 del informe, diagramas y tabla de ataques considerados | Hecho |
 | E2 | Librería `crypto/`: identidad y bóveda (Argon2id + AES-GCM), exportación/importación, *handshake*, sesión, huella. Con pruebas de los caminos de rechazo | Hecho (129 pruebas de criptografía) |
 | E3 | API local del cliente (`client/`): orquesta crypto, directorio y Discord; cola, reintentos, rotación, alertas, desbloqueo con MFA y vencimiento local de sesión | Hecho (87 pruebas del cliente) |
-| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, QR de verificación, alertas y campo TOTP al desbloquear | Hecho (38 pruebas unitarias; QR implementado; ver `frontend/e2e/smoke.mjs`). MFA desplegado y probado con Microsoft Authenticator |
+| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, QR de verificación, alertas y campo TOTP al desbloquear | Hecho (38 pruebas unitarias; QR y sección "Mis datos" (ARCO) implementados; ver `frontend/e2e/smoke.mjs`). MFA desplegado y probado con Microsoft Authenticator |
 | E5 | DPIA con la plantilla de siete pasos ([dpia/DPIA.md](dpia/DPIA.md)); consentimiento por versión en cliente y frontend | Hecho (aprobación y correos como firma en el paso 7) |
 | E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | Hecho (correos publicados; falta domicilio postal antes de ampliar el uso) |
 | E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | Hecho (16 pruebas) |
 | E8 | Riesgos de una brecha y entidades afectadas (informe, sección 7) y recomendaciones futuras (sección 8) | Hecho |
-| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer; informe, sección 9) | Parcial borrador, falta que Elmer lo ajuste |
+| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer; informe, sección 11) y su parte de las conclusiones (sección 10) | Parcial borrador, falta que Elmer lo ajuste |
 
 ### Farid — Directorio, Discord, operaciones y herramientas
 
@@ -34,15 +34,16 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 
 | ID | Tarea | Estado |
 |---|---|---|
-| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`) y TOTP; solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Publica ID y llave pública; guarda también fechas, aviso y datos privados mínimos de MFA (secreto cifrado y hashes de recuperación). Endpoint de cancelación | Hecho (pruebas del directorio contra Postgres; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
+| F1 | **Directorio de llaves** (FastAPI + PostgreSQL). Publicar o cambiar una llave exige **prueba de posesión** (`verify_registration` ya está en `crypto/`) y vincular el ID con OAuth2 (`identify`) y TOTP; solo el dueño modifica su registro. Consultas parametrizadas, *rate-limit*, errores genéricos, **rol de base de datos con permisos mínimos**. Publica ID y llave pública; guarda también fechas, aviso y datos privados mínimos de MFA (secreto cifrado y hashes de recuperación). Endpoint de cancelación | Hecho (101 pruebas contra Postgres, incluidos MFA, la consulta del registro propio y el cambio de llave para los derechos ARCO; [directory/README.md](../directory/README.md)). Falta `sign_cancellation` con contexto propio en `crypto/` |
 | F2 | **TLS 1.3 con CA propia**: el cliente valida contra esa CA y no permite continuar si falla. Documentar la cadena de confianza y la revocación | Hecho (10 pruebas; [ops/certs/README.md](../ops/certs/README.md)) |
-| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | Hecho (14 pruebas con Discord simulado; ensayo con la API real y un bot en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); falta el bot de Elmer) |
+| F3 | **Adaptador de Discord** (`discord.py`): servidor privado, canal `#e2ee-relay` y un bot por persona; publicar y leer mensajes `E2EE1:` ignorando el autor; token en variables de entorno | Hecho (14 pruebas con Discord simulado; ensayo con la API real en [ops/reports/discord-smoke.txt](../ops/reports/discord-smoke.txt); conversación entre dos cuentas, cada una con su bot) |
 | F4 | **Copias de seguridad**: `pg_dump` programado y cifrado, fuera del servidor, con restauración probada y rotación de 30 días | Parcial: primera copia real a S3 verificada ([evidencia](../ops/reports/f4-s3-smoke.txt)); cron configurado y activo; restauración desde S3 ensayada con 2 registros y 1 factor MFA descifrable; falta observar una ejecución automática ([guía](guia/despliegue-ec2.md#8-activar-el-respaldo-diario-de-supabase-en-s3)) |
 | F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | Hecho (10 pruebas; tarea diaria `ops.scheduled`) |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | Hecho ([ops/reports/README.md](../ops/reports/README.md)) |
 | F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | Hecho ([politicas/](politicas/), plan v1.5 y uso seguro v1.3; primer incidente real registrado, INC-2026-01); falta registrar el simulacro |
-| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.3, 5.7, 5.8; [trazabilidad.md](trazabilidad/trazabilidad.md), generada y comprobada en CI) |
-| F9 | Lecciones aprendidas y retrospectiva (parte de Farid) | Pendiente |
+| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.3, 5.7, 5.8 y 9; [trazabilidad.md](trazabilidad/trazabilidad.md), generada y comprobada en CI) |
+| F9 | Lecciones aprendidas y retrospectiva (parte de Farid): informe, sección 11.1 | Hecho (falta la revisión de Elmer) |
+| F10 | **Privacidad diferencial** en las estadísticas del directorio (RS21): `ops/dp/` con OpenDP, ε = 1 por reporte y tope mensual; experimento de utilidad frente a ε; informe, secciones 9 y 10 | Hecho (9 pruebas; [ops/reports/dp-experimento.md](../ops/reports/dp-experimento.md)) |
 
 ### Compartido (al final)
 
@@ -118,10 +119,10 @@ frontend ──HTTP──▶ client ──▶ crypto
 
 ## 5. Orden de trabajo
 
-1. Implementamos la criptografía, el cliente, el frontend, el directorio, el transporte por Discord y las operaciones; desplegamos y probamos el MFA con Microsoft Authenticator.
+1. Implementamos la criptografía, el cliente, el frontend, el directorio, el transporte por Discord, las operaciones y las estadísticas con privacidad diferencial (F10); desplegamos y probamos el MFA con Microsoft Authenticator.
 2. Mantener el informe, la DPIA, el inventario de autenticación y las instrucciones de recuperación al día.
 3. Observar una ejecución automática de los respaldos en S3, registrar el simulacro de incidentes y probar el inicio de sesión del servicio recuperado con su clave de cifrado TOTP.
-4. Completar las lecciones aprendidas, la presentación y el ensayo conjunto. Aprobamos la DPIA y consignamos nuestros correos como firma en el paso 7.
+4. Completar la parte de Elmer de las lecciones aprendidas y de las conclusiones, la presentación y el ensayo conjunto. Aprobamos la DPIA y consignamos nuestros correos como firma en el paso 7.
 
 ## 6. Lista de comprobación de la demostración (clientes locales y directorio en EC2)
 
@@ -136,4 +137,5 @@ frontend ──HTTP──▶ client ──▶ crypto
 - [ ] Registros de auditoría, una copia de seguridad cifrada con su restauración, y el reporte del análisis de código (antes y después).
 - [ ] Mostrar desbloqueo con contraseña y Authenticator, rechazo de un código reutilizado y bloqueo por vencimiento de la sesión local.
 - [ ] Mostrar que una caída del directorio impide nuevos desbloqueos; no confundirlo con la demo offline sin MFA.
+- [ ] Estadísticas con privacidad diferencial: `python -m ops.dp.metrics report` dos veces (los números cambian), la tabla del experimento y el rechazo cuando se agota el presupuesto del mes.
 - [ ] La DPIA, la recuperación del autenticador y el plan de incidentes.

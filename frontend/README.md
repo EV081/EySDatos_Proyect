@@ -26,7 +26,7 @@ La prueba `e2e` levanta el backend, sirve el sitio y maneja dos pestañas por el
 | Insignia de verificado y ceremonia con la huella: código QR o 60 dígitos dictados en 12 casillas | RF6, RF7, RF9 |
 | Alerta de cambio de llave y re-verificación (sin botón "continuar") | RF8 |
 | Marcador "mensaje no descifrable" | RF11 |
-| "Mis datos y derechos ARCO": acceso (descarga en JSON), cambio de llave, cancelación/oposición y borrado de los datos del dispositivo | Ley 29733 (ARCO) |
+| "Mis datos y derechos ARCO": acceso (descarga en JSON), rectificación (cambio de contraseña maestra o de llave), cancelación/oposición y borrado de los datos del dispositivo | Ley 29733 (ARCO) |
 
 ## Decisiones de seguridad de la interfaz
 
