@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import type { Api } from '@/lib/api';
 import { directoryErrorText, errorMessage, formatDate } from '@/lib/format';
+import { isStrongPassword, MIN_PASSWORD_LENGTH, WEAK_PASSWORD_MESSAGE } from '@/lib/password';
 import type { MyData, Status } from '@/lib/types';
+import { PasswordRules } from './PasswordRules';
 
 interface Props {
   api: Api;
@@ -137,6 +139,8 @@ export function PrivacyDialog({ api, status, open, onClose, onStatus }: Props) {
         )}
       </section>
 
+      <PasswordChange api={api} onDone={(status) => done(status, 'Listo: desde ahora desbloquea con tu contraseña maestra nueva.')} />
+
       <ArcoAction
         letter="R"
         title="Rectificación: cambiar mi llave"
@@ -178,6 +182,61 @@ export function PrivacyDialog({ api, status, open, onClose, onStatus }: Props) {
         <button className="primary" onClick={onClose}>Cerrar</button>
       </div>
     </dialog>
+  );
+}
+
+/** Rectificación de la contraseña maestra: vuelve a cifrar la bóveda; la llave y el directorio no cambian. */
+function PasswordChange({ api, onDone }: { api: Api; onDone: (status: Status) => void }): ReactNode {
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [repeat, setRepeat] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!isStrongPassword(next)) return setError(WEAK_PASSWORD_MESSAGE);
+    if (next !== repeat) return setError('La contraseña nueva y su confirmación no coinciden.');
+    if (next === current) return setError('La contraseña nueva debe ser distinta de la actual.');
+    setBusy(true);
+    try {
+      onDone(await api.changePassword(current, next));
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setCurrent(''); // las contraseñas no se quedan en los campos, ni si falla
+      setNext('');
+      setRepeat('');
+      setBusy(false);
+    }
+  };
+
+  return (
+    <details className="arco">
+      <summary><span className="arco-letter">R</span> Rectificación: cambiar mi contraseña maestra</summary>
+      <form onSubmit={submit}>
+        <p className="muted">
+          Vuelve a cifrar tu identidad con una contraseña nueva. Tu llave no cambia: tus contactos no tienen que volver a
+          verificarte. No toca el directorio, así que no hace falta iniciar sesión con Discord.
+        </p>
+        <label>
+          Contraseña maestra actual
+          <input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
+        </label>
+        <label>
+          Contraseña maestra nueva
+          <input type="password" minLength={MIN_PASSWORD_LENGTH} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} required />
+        </label>
+        <PasswordRules password={next} />
+        <label>
+          Repite la contraseña nueva
+          <input type="password" minLength={MIN_PASSWORD_LENGTH} autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} required />
+        </label>
+        <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Cambiar contraseña</button>
+        {error && <p className="error" role="alert">{error}</p>}
+      </form>
+    </details>
   );
 }
 

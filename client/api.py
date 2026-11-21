@@ -45,6 +45,11 @@ class ExportRequest(BaseModel):
     password: str = Field(min_length=10, max_length=256)
 
 
+class ChangePassword(BaseModel):
+    password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=10, max_length=256)
+
+
 class CancelRequest(BaseModel):
     password: str = Field(min_length=1, max_length=256)
     delete_local: bool = True
@@ -116,6 +121,11 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
     @app.post("/identity/lock", status_code=204, dependencies=[api])
     def lock():
         orchestrator.lock()
+
+    @app.post("/identity/password", dependencies=[api])
+    def change_password(body: ChangePassword):
+        """Cambia la contraseña maestra (vuelve a cifrar la bóveda; la llave no cambia)."""
+        return orchestrator.change_password(body.password, body.new_password)
 
     @app.post("/identity/export", dependencies=[api])
     def export_identity(body: ExportRequest):

@@ -63,6 +63,8 @@ export class Api {
   unlock = (password: string, mfaCode?: string) =>
     this.request<Status>('POST', '/identity/unlock', { password, ...(mfaCode ? { mfa_code: mfaCode } : {}) });
   lock = () => this.request<null>('POST', '/identity/lock');
+  changePassword = (password: string, newPassword: string) =>
+    this.request<Status>('POST', '/identity/password', { password, new_password: newPassword });
   exportIdentity = (password: string) => this.request<{ vault: unknown }>('POST', '/identity/export', { password });
   conversations = () => this.request<Conversation[]>('GET', '/conversations');
   addContact = (discordId: string, alias?: string) =>

@@ -40,6 +40,12 @@ test('las fechas aceptan segundos Unix y texto ISO, y lo vacío se muestra como 
   for (const empty of [null, undefined, '', 'no-es-fecha']) assert.equal(formatDate(empty), '—');
 });
 
+test('cambiar contraseña maestra: envía la actual y la nueva', async () => {
+  const { calls, api } = recorder();
+  await api.changePassword('Actual-123!', 'Nueva-456!x');
+  assert.deepEqual(calls, [{ url: 'http://127.0.0.1:8001/identity/password', method: 'POST', body: { password: 'Actual-123!', new_password: 'Nueva-456!x' } }]);
+});
+
 test('quitar contacto: DELETE a la ruta del contacto, sin cuerpo', async () => {
   const { calls, api } = recorder();
   await api.removeContact('222222222222222222');
