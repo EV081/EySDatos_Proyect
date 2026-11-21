@@ -1,6 +1,7 @@
 """Copias de seguridad del directorio (F4, C-10, C-12).
 
     python -m ops.backup.backup create            # pg_dump cifrado en BACKUP_DIR + rotación de 30 días
+    python -m ops.backup.backup create-remote     # copia cifrada y subida verificada a BACKUP_S3_BUCKET
     python -m ops.backup.backup verify            # restaura la última copia en una base temporal y compara
     python -m ops.backup.backup restore <archivo> # restaura sobre DATABASE_ADMIN_URL (reemplaza el esquema)
     python -m ops.backup.backup rotate            # solo la rotación
@@ -10,18 +11,20 @@
   (`BACKUP_KEY`, base64url de 32 bytes) y solo se escribe el resultado. Para restaurar, se descifra en memoria y
   se pasa a `pg_restore` por la entrada estándar.
 * No se copian los datos efímeros (state de OAuth2, tokens y nonces): no hacen falta para recuperar el servicio.
-* `BACKUP_DIR` debe estar **fuera del servidor del directorio** (otro disco, un recurso de red o una carpeta
-  sincronizada): el script se niega a escribir dentro del repositorio.
+* Sin S3, `BACKUP_DIR` debe ser un destino externo. Con `BACKUP_S3_BUCKET`, es el área temporal de copias
+  ya cifradas antes de subirlas al bucket privado. El script impide escribir dentro del repositorio.
 * Rotación de 30 días: una cancelación (C-11) desaparece también de las copias a más tardar en ese plazo.
 """
 import base64
 import binascii
 import datetime as dt
+import hashlib
+import json
 import os
 import re
 import secrets
 import shutil
-# Bandit B404 aceptado: argumentos en lista, sin shell y solo los ejecutables de PostgreSQL.
+# Bandit B404 aceptado: argumentos en lista, sin shell; herramientas de PostgreSQL y AWS CLI.
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
@@ -34,7 +37,7 @@ from psycopg.conninfo import conninfo_to_dict
 
 MAGIC = b"E2EEBAK1"
 RETENTION_DAYS = 30
-EPHEMERAL = ("oauth_states", "auth_tokens", "challenges")
+EPHEMERAL = ("oauth_states", "auth_tokens", "challenges", "mfa_sessions")
 NAME = re.compile(r"^directory-(\d{8}T\d{6}Z)\.dump\.enc$")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -59,7 +62,7 @@ def _pg_env(url: str) -> dict:
     info = conninfo_to_dict(url)
     env = {**os.environ}
     for key, var in (("host", "PGHOST"), ("port", "PGPORT"), ("user", "PGUSER"), ("password", "PGPASSWORD"),
-                     ("dbname", "PGDATABASE")):
+                     ("dbname", "PGDATABASE"), ("sslmode", "PGSSLMODE"), ("sslrootcert", "PGSSLROOTCERT")):
         if info.get(key):
             env[var] = str(info[key])
     return env
@@ -75,7 +78,7 @@ def _tool(name: str) -> str:
 def check_destination(directory: Path) -> Path:
     directory = directory.resolve()
     if directory == REPO_ROOT or REPO_ROOT in directory.parents:
-        raise BackupError("BACKUP_DIR no puede estar dentro del repositorio ni del servidor del directorio")
+        raise BackupError("BACKUP_DIR no puede estar dentro del repositorio")
     directory.mkdir(parents=True, exist_ok=True)
     return directory
 
@@ -168,13 +171,99 @@ def verify(path: Path, key: bytes, admin_url: str, scratch: str = "directory_res
             conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(scratch)))
 
 
+def _aws(action: str, *args: str) -> dict:
+    executable = shutil.which("aws")
+    if not executable:
+        raise BackupError("falta AWS CLI v2 en el equipo que ejecuta el respaldo")
+    region = os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+    command = [executable, "s3api", action, *args, "--region", region, "--output", "json", "--no-cli-pager"]
+    try:
+        # AWS CLI se ejecuta con una lista, sin shell: la región del entorno es un argumento.
+        # Las operaciones s3api vienen del código y bucket/prefijo se validan en sync_s3.
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-tainted-env-args.dangerous-subprocess-use-tainted-env-args
+        result = subprocess.run(command, capture_output=True, check=False, timeout=300)  # nosec B603
+    except subprocess.TimeoutExpired:
+        raise BackupError(f"se agotó el tiempo de AWS S3: {action}") from None
+    if result.returncode:
+        # La salida de AWS puede contener detalles del entorno. No se vuelca al registro público.
+        raise BackupError(f"AWS S3 rechazó {action} (código {result.returncode}); revisa el rol y el bucket")
+    try:
+        data = json.loads(result.stdout or b"{}")
+        if not isinstance(data, dict):
+            raise ValueError
+        return data
+    except (ValueError, UnicodeError):
+        raise BackupError(f"respuesta inválida de AWS S3: {action}") from None
+
+
+def sync_s3(path: Path, bucket: str, prefix: str = "directory", now: dt.datetime | None = None) -> tuple[str, int]:
+    """Sube solo la copia cifrada, comprueba SHA-256 y borra copias propias de más de 30 días.
+
+    Exige un bucket privado sin versionado. La limpieza se limita al prefijo configurado y al patrón
+    de archivos del proyecto; nunca elimina otros objetos ni borra copias antes de verificar la nueva.
+    AWS CLI usa el rol de EC2 o las credenciales de la sesión, sin llaves de AWS en esta configuración.
+    """
+    prefix = prefix.strip("/")
+    if not re.fullmatch(r"[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]", bucket):
+        raise BackupError("BACKUP_S3_BUCKET debe ser el nombre del bucket, sin s3://")
+    if not prefix or any(not re.fullmatch(r"[A-Za-z0-9_-]+", part) for part in prefix.split("/")):
+        raise BackupError("BACKUP_S3_PREFIX debe contener segmentos simples, sin puntos ni rutas relativas")
+    if not NAME.fullmatch(path.name):
+        raise BackupError("solo se pueden publicar archivos de copia del proyecto")
+    size = path.stat().st_size
+    if size > 5 * 1024**3:
+        raise BackupError("la copia supera los 5 GiB admitidos por esta subida; requiere carga multiparte")
+    with path.open("rb") as source:
+        if source.read(len(MAGIC)) != MAGIC:
+            raise BackupError("la copia que se iba a subir no está cifrada")
+        source.seek(0)
+        digest = base64.b64encode(hashlib.file_digest(source, "sha256").digest()).decode("ascii")
+    controls = _aws("get-public-access-block", "--bucket", bucket).get("PublicAccessBlockConfiguration", {})
+    if not all(controls.get(key) is True for key in (
+            "BlockPublicAcls", "IgnorePublicAcls", "BlockPublicPolicy", "RestrictPublicBuckets")):
+        raise BackupError("el bucket debe tener activados los cuatro bloqueos de acceso público")
+    if _aws("get-bucket-versioning", "--bucket", bucket).get("Status"):
+        raise BackupError("usa un bucket nuevo sin versionado para cumplir la eliminación de las copias")
+    key = f"{prefix}/{path.name}"
+    _aws("put-object", "--bucket", bucket, "--key", key, "--body", str(path),
+         "--server-side-encryption", "AES256", "--checksum-algorithm", "SHA256",
+         "--checksum-sha256", digest, "--if-none-match", "*")
+    remote = _aws("head-object", "--bucket", bucket, "--key", key, "--checksum-mode", "ENABLED")
+    if remote.get("ContentLength") != size or remote.get("ChecksumSHA256") != digest:
+        raise BackupError("la copia remota no coincide en tamaño o SHA-256; se conservan las copias anteriores")
+    cutoff = (now or dt.datetime.now(dt.timezone.utc)) - dt.timedelta(days=RETENTION_DAYS)
+    objects = _aws("list-objects-v2", "--bucket", bucket, "--prefix", prefix + "/").get("Contents", [])
+    deleted = 0
+    for item in objects:
+        object_key = item.get("Key", "")
+        if not object_key.startswith(prefix + "/"):
+            continue
+        match = NAME.fullmatch(object_key[len(prefix) + 1:])
+        if not match:
+            continue
+        try:
+            created = dt.datetime.strptime(match[1], "%Y%m%dT%H%M%SZ").replace(tzinfo=dt.timezone.utc)
+        except ValueError:
+            continue
+        if object_key != key and created < cutoff:
+            _aws("delete-object", "--bucket", bucket, "--key", object_key)
+            deleted += 1
+    return f"s3://{bucket}/{key}", deleted
+
+
 def main(argv: list[str]) -> None:
     command = argv[0] if argv else ""
     directory = Path(os.environ.get("BACKUP_DIR", ""))
     try:
         key = load_key()
-        if command == "create":
+        if command in ("create", "create-remote"):
+            bucket = os.environ.get("BACKUP_S3_BUCKET", "").strip()
+            if command == "create-remote" and not bucket:
+                raise BackupError("falta BACKUP_S3_BUCKET; no se considerará remoto un respaldo solo local")
             path = create(os.environ["BACKUP_DATABASE_URL"], key, directory)
+            if bucket:
+                uri, deleted = sync_s3(path, bucket, os.environ.get("BACKUP_S3_PREFIX", "directory"))
+                print(f"copia remota verificada (SHA-256): {uri}; remotas rotadas: {deleted}")
             removed = rotate(directory)
             print(f"copia creada: {path.name} ({path.stat().st_size} bytes); rotadas: {len(removed)}")
         elif command == "rotate":
@@ -189,6 +278,8 @@ def main(argv: list[str]) -> None:
             raise SystemExit(__doc__)
     except BackupError as exc:
         raise SystemExit(f"error: {exc}") from None
+    except KeyError as exc:
+        raise SystemExit(f"falta la variable de configuración {exc.args[0]}") from None
 
 
 if __name__ == "__main__":

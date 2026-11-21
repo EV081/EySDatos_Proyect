@@ -1,0 +1,150 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 1134.00 546.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 524.16)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-524.16 1112.6,-524.16 1112.6,21.6 -21.6,21.6" />
+<g id="clust1" class="cluster">
+<title>cluster_local</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-dasharray="5,2" d="M20,-257.77C20,-257.77 452,-257.77 452,-257.77 458,-257.77 464,-263.77 464,-269.77 464,-269.77 464,-482.56 464,-482.56 464,-488.56 458,-494.56 452,-494.56 452,-494.56 20,-494.56 20,-494.56 14,-494.56 8,-488.56 8,-482.56 8,-482.56 8,-269.77 8,-269.77 8,-263.77 14,-257.77 20,-257.77" />
+<text xml:space="preserve" text-anchor="start" x="16" y="-479.21" font-family="Noto Sans" font-weight="bold" font-size="13.00" fill="#0f7b55">Dispositivo de cada persona</text>
+</g>
+
+<g id="node1" class="node">
+<title>front</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M153.78,-453.81C153.78,-453.81 28.22,-453.81 28.22,-453.81 22.22,-453.81 16.22,-447.81 16.22,-441.81 16.22,-441.81 16.22,-424.53 16.22,-424.53 16.22,-418.53 22.22,-412.53 28.22,-412.53 28.22,-412.53 153.78,-412.53 153.78,-412.53 159.78,-412.53 165.78,-418.53 165.78,-424.53 165.78,-424.53 165.78,-441.81 165.78,-441.81 165.78,-447.81 159.78,-453.81 153.78,-453.81" />
+<text xml:space="preserve" text-anchor="start" x="63.62" y="-434.77" font-family="Noto Sans" font-weight="bold" font-size="12.00">Frontend</text>
+<text xml:space="preserve" text-anchor="start" x="30.62" y="-422.77" font-family="Noto Sans" font-size="12.00">interfaz y texto plano</text>
+</g>
+
+<g id="node2" class="node">
+<title>cli</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M443.52,-459.81C443.52,-459.81 244.47,-459.81 244.47,-459.81 238.47,-459.81 232.47,-453.81 232.47,-447.81 232.47,-447.81 232.47,-418.53 232.47,-418.53 232.47,-412.53 238.47,-406.53 244.47,-406.53 244.47,-406.53 443.52,-406.53 443.52,-406.53 449.52,-406.53 455.52,-412.53 455.52,-418.53 455.52,-418.53 455.52,-447.81 455.52,-447.81 455.52,-453.81 449.52,-459.81 443.52,-459.81" />
+<text xml:space="preserve" text-anchor="start" x="306.88" y="-440.77" font-family="Noto Sans" font-weight="bold" font-size="12.00">Cliente local</text>
+<text xml:space="preserve" text-anchor="start" x="263.38" y="-428.77" font-family="Noto Sans" font-size="12.00">cifrado, identidad y sesiones</text>
+<text xml:space="preserve" text-anchor="start" x="246.88" y="-416.77" font-family="Noto Sans" font-size="12.00">contraseña + TOTP al desbloquear</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>front-&gt;cli</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M178.82,-433.17C192.06,-433.17 205.92,-433.17 219.74,-433.17" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="178.99,-429.67 168.99,-433.17 178.99,-436.67 178.99,-429.67" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="219.44,-436.67 229.44,-433.17 219.44,-429.67 219.44,-436.67" />
+<text xml:space="preserve" text-anchor="middle" x="199.12" y="-457.22" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">API local</text>
+<text xml:space="preserve" text-anchor="middle" x="199.12" y="-441.47" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">127.0.0.1</text>
+</g>
+
+<g id="node3" class="node">
+<title>boveda</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M249.28,-332.37C249.28,-336.04 201.64,-339.03 143,-339.03 84.36,-339.03 36.72,-336.04 36.72,-332.37 36.72,-332.37 36.72,-272.43 36.72,-272.43 36.72,-268.76 84.36,-265.77 143,-265.77 201.64,-265.77 249.28,-268.76 249.28,-272.43 249.28,-272.43 249.28,-332.37 249.28,-332.37" />
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M249.28,-332.37C249.28,-328.7 201.64,-325.71 143,-325.71 84.36,-325.71 36.72,-328.7 36.72,-332.37" />
+<text xml:space="preserve" text-anchor="start" x="81.12" y="-310" font-family="Noto Sans" font-weight="bold" font-size="12.00">Bóveda de identidad</text>
+<text xml:space="preserve" text-anchor="start" x="51.12" y="-298" font-family="Noto Sans" font-size="12.00">llave privada + clave del almacén</text>
+<text xml:space="preserve" text-anchor="start" x="72.5" y="-286" font-family="Noto Sans" font-size="12.00">Argon2id + AES-256-GCM</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>cli-&gt;boveda</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M292.72,-399.31C267.53,-383.18 236.87,-363.54 209.87,-346.24" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="290.49,-402.05 300.8,-404.49 294.27,-396.15 290.49,-402.05" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="212.07,-343.49 201.76,-341.05 208.3,-349.39 212.07,-343.49" />
+</g>
+
+<g id="node4" class="node">
+<title>store</title>
+<path fill="white" stroke="#0f7b55" stroke-width="1.6" d="M444.4,-332.37C444.4,-336.04 405.67,-339.03 358,-339.03 310.33,-339.03 271.6,-336.04 271.6,-332.37 271.6,-332.37 271.6,-272.43 271.6,-272.43 271.6,-268.76 310.33,-265.77 358,-265.77 405.67,-265.77 444.4,-268.76 444.4,-272.43 444.4,-272.43 444.4,-332.37 444.4,-332.37" />
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M444.4,-332.37C444.4,-328.7 405.67,-325.71 358,-325.71 310.33,-325.71 271.6,-328.7 271.6,-332.37" />
+<text xml:space="preserve" text-anchor="start" x="316" y="-310" font-family="Noto Sans" font-weight="bold" font-size="12.00">Almacén local</text>
+<text xml:space="preserve" text-anchor="start" x="286" y="-298" font-family="Noto Sans" font-size="12.00">historial, contactos y cola</text>
+<text xml:space="preserve" text-anchor="start" x="319.75" y="-286" font-family="Noto Sans" font-size="12.00">AES-256-GCM</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>cli-&gt;store</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M348.19,-393.63C349.62,-380.49 351.23,-365.63 352.74,-351.81" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="344.73,-393.07 347.13,-403.39 351.69,-393.83 344.73,-393.07" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="356.21,-352.22 353.81,-341.9 349.25,-351.47 356.21,-352.22" />
+</g>
+
+<g id="node5" class="node">
+<title>dir</title>
+<path fill="#e8f0ff" stroke="#1d4ed8" stroke-width="1.6" d="M670.15,-329.04C670.15,-329.04 483.85,-329.04 483.85,-329.04 477.85,-329.04 471.85,-323.04 471.85,-317.04 471.85,-317.04 471.85,-287.76 471.85,-287.76 471.85,-281.76 477.85,-275.76 483.85,-275.76 483.85,-275.76 670.15,-275.76 670.15,-275.76 676.15,-275.76 682.15,-281.76 682.15,-287.76 682.15,-287.76 682.15,-317.04 682.15,-317.04 682.15,-323.04 676.15,-329.04 670.15,-329.04" />
+<text xml:space="preserve" text-anchor="start" x="511.38" y="-310" font-family="Noto Sans" font-weight="bold" font-size="12.00">Directorio en AWS EC2</text>
+<text xml:space="preserve" text-anchor="start" x="486.25" y="-298" font-family="Noto Sans" font-size="12.00">Llaves públicas y validación MFA</text>
+<text xml:space="preserve" text-anchor="start" x="498.62" y="-286" font-family="Noto Sans" font-size="12.00">Virginia del Norte: us-east-1</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>cli-&gt;dir</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M402.44,-399.88C437.96,-380.24 483.16,-355.26 518.66,-335.64" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="400.89,-396.73 393.83,-404.63 404.28,-402.86 400.89,-396.73" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="520.17,-338.81 527.23,-330.91 516.79,-332.68 520.17,-338.81" />
+<text xml:space="preserve" text-anchor="middle" x="532.58" y="-378.08" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">TLS 1.3 + CA propia</text>
+<text xml:space="preserve" text-anchor="middle" x="532.58" y="-362.33" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">llaves y validación MFA</text>
+</g>
+
+<g id="node9" class="node">
+<title>discord</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M914.15,-329.04C914.15,-329.04 715.85,-329.04 715.85,-329.04 709.85,-329.04 703.85,-323.04 703.85,-317.04 703.85,-317.04 703.85,-287.76 703.85,-287.76 703.85,-281.76 709.85,-275.76 715.85,-275.76 715.85,-275.76 914.15,-275.76 914.15,-275.76 920.15,-275.76 926.15,-281.76 926.15,-287.76 926.15,-287.76 926.15,-317.04 926.15,-317.04 926.15,-323.04 920.15,-329.04 914.15,-329.04" />
+<text xml:space="preserve" text-anchor="start" x="792.5" y="-310" font-family="Noto Sans" font-weight="bold" font-size="12.00">Discord</text>
+<text xml:space="preserve" text-anchor="start" x="718.25" y="-298" font-family="Noto Sans" font-size="12.00">un bot por persona, canal privado</text>
+<text xml:space="preserve" text-anchor="start" x="741.88" y="-286" font-family="Noto Sans" font-size="12.00">texto cifrado + metadatos</text>
+</g>
+
+<g id="edge5" class="edge">
+<title>cli-&gt;discord</title>
+<path fill="none" stroke="#b42318" stroke-width="1.6" d="M468.11,-415.72C509.21,-408.94 554.92,-399.95 596,-388.53 647.12,-374.32 702.83,-352.57 745.27,-334.62" />
+<polygon fill="#b42318" stroke="#b42318" stroke-width="1.6" points="467.79,-412.23 458.48,-417.28 468.91,-419.14 467.79,-412.23" />
+<polygon fill="#b42318" stroke="#b42318" stroke-width="1.6" points="746.55,-337.88 754.37,-330.73 743.8,-331.44 746.55,-337.88" />
+<text xml:space="preserve" text-anchor="middle" x="759.3" y="-370.2" font-family="Noto Sans" font-size="11.00" fill="#b42318">handshake y mensajes E2EE</text>
+</g>
+
+<g id="node7" class="node">
+<title>db</title>
+<path fill="#e8f0ff" stroke="#1d4ed8" stroke-width="1.6" d="M701.27,-207.36C701.27,-211.03 645.57,-214.02 577,-214.02 508.43,-214.02 452.73,-211.03 452.73,-207.36 452.73,-207.36 452.73,-147.42 452.73,-147.42 452.73,-143.75 508.43,-140.76 577,-140.76 645.57,-140.76 701.27,-143.75 701.27,-147.42 701.27,-147.42 701.27,-207.36 701.27,-207.36" />
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M701.27,-207.36C701.27,-203.69 645.57,-200.7 577,-200.7 508.43,-200.7 452.73,-203.69 452.73,-207.36" />
+<text xml:space="preserve" text-anchor="start" x="508.75" y="-184.99" font-family="Noto Sans" font-weight="bold" font-size="12.00">PostgreSQL · Supabase</text>
+<text xml:space="preserve" text-anchor="start" x="490.75" y="-172.99" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas y aviso</text>
+<text xml:space="preserve" text-anchor="start" x="467.12" y="-160.99" font-family="Noto Sans" font-size="12.00">TOTP cifrado y hashes de recuperación</text>
+</g>
+
+<g id="edge6" class="edge">
+<title>dir-&gt;db</title>
+<path fill="none" stroke="#1d4ed8" stroke-width="1.6" d="M577,-262.7C577,-251.27 577,-238.61 577,-226.66" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="573.5,-262.59 577,-272.59 580.5,-262.59 573.5,-262.59" />
+<polygon fill="#1d4ed8" stroke="#1d4ed8" stroke-width="1.6" points="580.5,-226.96 577,-216.96 573.5,-226.96 580.5,-226.96" />
+<text xml:space="preserve" text-anchor="middle" x="622" y="-237.32" font-family="Noto Sans" font-size="11.00" fill="#1d4ed8">PostgreSQL + TLS</text>
+</g>
+
+<g id="node6" class="node">
+<title>backup</title>
+<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M1013.53,-204.03C1013.53,-204.03 826.48,-204.03 826.48,-204.03 820.48,-204.03 814.48,-198.03 814.48,-192.03 814.48,-192.03 814.48,-162.75 814.48,-162.75 814.48,-156.75 820.48,-150.75 826.48,-150.75 826.48,-150.75 1013.53,-150.75 1013.53,-150.75 1019.53,-150.75 1025.53,-156.75 1025.53,-162.75 1025.53,-162.75 1025.53,-192.03 1025.53,-192.03 1025.53,-198.03 1019.53,-204.03 1013.53,-204.03" />
+<text xml:space="preserve" text-anchor="start" x="861.12" y="-184.99" font-family="Noto Sans" font-weight="bold" font-size="12.00">Respaldo desde EC2</text>
+<text xml:space="preserve" text-anchor="start" x="828.88" y="-172.99" font-family="Noto Sans" font-size="12.00">pg_dump con rol de solo lectura</text>
+<text xml:space="preserve" text-anchor="start" x="839.75" y="-160.99" font-family="Noto Sans" font-size="12.00">AES-256-GCM antes de subir</text>
+</g>
+
+<g id="node8" class="node">
+<title>s3</title>
+<path fill="#fff4e0" stroke="#b45309" stroke-width="1.6" d="M1022.52,-66.6C1022.52,-70.27 976.57,-73.26 920,-73.26 863.43,-73.26 817.48,-70.27 817.48,-66.6 817.48,-66.6 817.48,-6.66 817.48,-6.66 817.48,-2.99 863.43,0 920,0 976.57,0 1022.52,-2.99 1022.52,-6.66 1022.52,-6.66 1022.52,-66.6 1022.52,-66.6" />
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M1022.52,-66.6C1022.52,-62.93 976.57,-59.94 920,-59.94 863.43,-59.94 817.48,-62.93 817.48,-66.6" />
+<text xml:space="preserve" text-anchor="start" x="855.88" y="-44.23" font-family="Noto Sans" font-weight="bold" font-size="12.00">Amazon S3 · us-east-1</text>
+<text xml:space="preserve" text-anchor="start" x="831.88" y="-32.23" font-family="Noto Sans" font-size="12.00">bucket privado: copias cifradas</text>
+<text xml:space="preserve" text-anchor="start" x="863" y="-20.23" font-family="Noto Sans" font-size="12.00">retención de 30 días</text>
+</g>
+
+<g id="edge8" class="edge">
+<title>backup-&gt;s3</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M920,-149.96C920,-131.95 920,-107.58 920,-86.13" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="923.5,-86.34 920,-76.34 916.5,-86.34 923.5,-86.34" />
+<text xml:space="preserve" text-anchor="middle" x="1005.5" y="-112.31" font-family="Noto Sans" font-size="11.00" fill="#b45309">HTTPS: copia cifrada</text>
+<text xml:space="preserve" text-anchor="middle" x="1005.5" y="-96.56" font-family="Noto Sans" font-size="11.00" fill="#b45309">verificación de tamaño y SHA-256</text>
+</g>
+
+<g id="edge7" class="edge">
+<title>db-&gt;backup</title>
+<path fill="none" stroke="#b45309" stroke-width="1.6" d="M701.8,-177.39C734.41,-177.39 769.46,-177.39 801.72,-177.39" />
+<polygon fill="#b45309" stroke="#b45309" stroke-width="1.6" points="801.52,-180.89 811.52,-177.39 801.52,-173.89 801.52,-180.89" />
+<text xml:space="preserve" text-anchor="middle" x="757.88" y="-185.69" font-family="Noto Sans" font-size="11.00" fill="#b45309">pg_dump por TLS</text>
+</g>
+</g>
+</svg></svg>

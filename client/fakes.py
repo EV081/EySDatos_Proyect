@@ -11,6 +11,8 @@ from .ports import DirectoryError
 class FakeDirectory:
     """Directorio en memoria; valida la prueba de posesión igual que el real."""
 
+    requires_mfa = False  # Solo demo offline y pruebas; DirectoryClient nunca omite MFA.
+
     CANCEL_MARKER = bytes(32)
 
     def __init__(self):

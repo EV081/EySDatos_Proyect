@@ -4,7 +4,7 @@ info:
   version: "1.0"
   description: |
     Asocia IDs de Discord con llaves públicas de firma Ed25519 (F1). Los binarios viajan en base64url sin relleno.
-    Publicar, cambiar o cancelar exige un token de registro (OAuth2 con Discord, 10 min, un solo uso, ligado al ID)
+    Publicar, cambiar o cancelar exige un token de registro (Discord + TOTP, 10 min, un solo uso, ligado al ID)
     y una prueba de posesión firmada sobre un nonce de un solo uso. Todos los errores son genéricos:
     `{"error": "solicitud inválida" | "solicitud rechazada" | "no encontrado" | "demasiadas solicitudes" | "error interno"}`.
 servers:
@@ -17,7 +17,7 @@ components:
     registrationToken:
       type: http
       scheme: bearer
-      description: Token emitido por /auth/callback. 32 bytes en base64url.
+      description: Token emitido por /auth/mfa/verify tras Discord y TOTP. 32 bytes en base64url.
   schemas:
     DiscordId:
       type: string
@@ -49,13 +49,86 @@ paths:
         "429": {$ref: "#/components/responses/TooMany"}
   /auth/callback:
     get:
-      summary: Vuelta de Discord; muestra el token de registro en una página HTML (no-store)
+      summary: Vuelta de Discord; muestra el formulario TOTP o el QR de vinculación (no-store)
       parameters:
         - {name: code, in: query, required: true, schema: {type: string}}
         - {name: state, in: query, required: true, schema: {type: string}}
       responses:
-        "200": {description: Página con el token de registro}
+        "200": {description: Página de segundo factor y cookie de sesión HttpOnly de cinco minutos}
         "400": {description: State inválido o Discord no confirmó la cuenta}
+  /auth/mfa/verify:
+    post:
+      summary: Confirma TOTP o un código de recuperación después de OAuth
+      description: |
+        Requiere la cookie de sesión emitida por /auth/callback y su token CSRF.
+        Acepta códigos TOTP de seis dígitos, no reutilizables, con pasos de 30 segundos.
+        Cinco errores bloquean la cuenta cinco minutos, incluso tras repetir OAuth.
+        Un código de recuperación obliga a confirmar un nuevo QR antes de emitir el token.
+        En el primer alta muestra diez códigos de recuperación una sola vez.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [csrf, code]
+              properties:
+                csrf: {type: string, minLength: 43, maxLength: 43}
+                code: {type: string, maxLength: 35}
+      responses:
+        "200": {description: HTML no-store con el token de registro o un nuevo QR tras recuperación}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {description: Código o sesión rechazados; no se emite token}
+        "429": {$ref: "#/components/responses/TooMany"}
+  /v1/sessions/challenge:
+    post:
+      summary: Entrega un nonce exclusivo para desbloquear una identidad local registrada con MFA
+      description: No requiere token de registro. El nonce vence en dos minutos y solo puede usarse una vez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [discord_id]
+              properties:
+                discord_id: {$ref: "#/components/schemas/DiscordId"}
+      responses:
+        "200":
+          description: Desafío de desbloqueo, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce: {$ref: "#/components/schemas/B64"}
+                  expires_in: {type: integer}
+        "401": {$ref: "#/components/responses/Rejected"}
+        "429": {$ref: "#/components/responses/TooMany"}
+  /v1/sessions/verify:
+    post:
+      summary: Valida la firma de la llave registrada y un código TOTP nuevo para desbloquear localmente
+      description: |
+        Exige firma sign_unlock del nonce, ligada al ID y a la llave registrada. No acepta firmas de registro
+        o cambio de llave. Comparte bloqueo de intentos y antirreplay TOTP con el flujo de Discord.
+        No acepta códigos de recuperación ni emite un token reutilizable. No recibe la contraseña maestra.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [discord_id, nonce, signature, code]
+              properties:
+                discord_id: {$ref: "#/components/schemas/DiscordId"}
+                nonce: {$ref: "#/components/schemas/B64"}
+                signature: {$ref: "#/components/schemas/B64"}
+                code: {type: string, pattern: "^[0-9]{6}$"}
+      responses:
+        "204": {description: Verificación completada, no-store}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Rejected"}
+        "429": {$ref: "#/components/responses/TooMany"}
   /v1/challenge:
     post:
       summary: Entrega un nonce de 32 bytes para la prueba de posesión (2 min, un solo uso)
@@ -104,6 +177,14 @@ paths:
                   key_changed_at: {type: string, format: date-time, nullable: true}
                   consent_version: {type: string}
                   consent_at: {type: string, format: date-time}
+                  mfa:
+                    type: object
+                    nullable: true
+                    description: Estado del factor; nunca incluye secretos ni hashes de recuperación.
+                    properties:
+                      enabled: {type: boolean}
+                      recovery_codes_remaining: {type: integer}
+                      created_at: {type: string, format: date-time}
                   replaced_keys:
                     type: array
                     items:

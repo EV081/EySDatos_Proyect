@@ -152,9 +152,11 @@ activemq-data/
 
 # Environments
 .env
-# Variables por persona (.env.a, .env.b): llevan el token del bot y el del cliente. La plantilla sí se versiona.
+# Variables por persona (.env.a, .env.b): llevan el token del bot y el del cliente. Las plantillas sí se versionan.
 .env.*
 !.env.example
+!.env.example.local
+!.env.example.ec2
 .envrc
 .venv
 env/
@@ -230,3 +232,11 @@ ops/certs/private/
 data/
 backups/
 logs/
+
+# Archivos antiguos de despliegue y pruebas remotas; se conserva la guía actual
+docs/despliegue-*.md
+!docs/guia/despliegue-ec2.md
+docs/prueba-remota-*.md
+render.yaml
+docs/github.txt
+docs/img/excalidraw/

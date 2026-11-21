@@ -25,6 +25,8 @@ export interface Status {
   vault_exists: boolean;
   discord_id: string | null;
   public_key: string | null;
+  mfa_required?: boolean;
+  session_expires_at?: number | null;
 }
 
 export interface FingerprintInfo {
@@ -52,6 +54,7 @@ export interface DirectoryRecord {
   key_changed_at: string | null;
   consent_version: string;
   consent_at: string | null;
+  mfa?: { enabled: boolean; recovery_codes_remaining: number; created_at: string } | null;
   replaced_keys: { public_key: string; replaced_at: string | null; delete_after: string | null }[];
 }
 

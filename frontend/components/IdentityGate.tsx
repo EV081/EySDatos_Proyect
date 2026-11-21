@@ -18,6 +18,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
   const [id, setId] = useState('');
   const [pass, setPass] = useState('');
   const [pass2, setPass2] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [accepted, setAccepted] = useState(false);
 
@@ -28,8 +29,10 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
       onStatus(await action());
       setPass('');
       setPass2('');
+      setMfaCode('');
     } catch (err) {
       setError(errorMessage(err));
+      setMfaCode('');
       setFails((n) => n + 1);
     } finally {
       setBusy(false);
@@ -47,8 +50,8 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
           <a className="out" href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer">Política de privacidad y derechos ARCO</a>
         </p>
         <ul>
-          <li><b>Qué se publica:</b> tu ID de Discord y tu llave pública de firma, en un directorio. Es lo único que el directorio guarda de ti, junto con las fechas de registro.</li>
-          <li><b>Para qué:</b> solo para que otras personas encuentren tu llave y puedan escribirte de forma cifrada. No se usa para publicidad ni análisis.</li>
+          <li><b>Qué se publica:</b> tu ID de Discord y tu llave pública de firma, en un directorio. También guarda fechas y datos privados de verificación en dos pasos: el secreto del autenticador cifrado y hashes de recuperación.</li>
+          <li><b>Para qué:</b> para encontrar llaves, verificar contactos y autenticar el registro y el desbloqueo con el segundo factor. No se usa para publicidad ni análisis.</li>
           <li><b>Qué no ve nadie más:</b> el contenido de tus mensajes y tu llave privada nunca salen de tu dispositivo. Discord solo guarda texto cifrado.</li>
           <li><b>Qué sí se puede ver:</b> quién se comunica con quién y cuándo (los metadatos) es visible para Discord y para quienes están en el canal.</li>
           <li><b>Tus derechos:</b> puedes pedir acceso, rectificación, cancelación u oposición, y exportar tu identidad, en cualquier momento.</li>
@@ -88,7 +91,7 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
 
   const unlock = (e: FormEvent) => {
     e.preventDefault();
-    void run(() => api.unlock(pass));
+    void run(() => api.unlock(pass, status.mfa_required ? mfaCode : undefined));
   };
 
   return (
@@ -96,11 +99,23 @@ export function IdentityGate({ api, status, onStatus }: { api: Api; status: Stat
       <h1><span className="rd">Identidad</span></h1>
       {status.vault_exists ? (
         <form onSubmit={unlock}>
-          <p className="muted">Ingresa tu contraseña maestra para abrir tu identidad.</p>
+          <p className="muted">{status.mfa_required
+            ? 'Ingresa tu contraseña maestra y un código nuevo de Microsoft Authenticator para abrir tu identidad.'
+            : 'Ingresa tu contraseña maestra para abrir tu identidad.'}</p>
           <label>
             Contraseña maestra
             <input type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} required autoFocus />
           </label>
+          {status.mfa_required && <>
+            <label>
+              Código de Microsoft Authenticator
+              <input name="mfa_code" type="text" inputMode="numeric" autoComplete="one-time-code"
+                pattern="[0-9]{6}" minLength={6} maxLength={6} value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} required />
+            </label>
+            <p className="hint">Necesitas conexión a internet para verificar tu código.
+              Para vincular o recuperar tu autenticador, inicia sesión con Discord.</p>
+          </>}
           <button className={`primary${busy ? ' busy' : ''}`} disabled={busy}>Desbloquear</button>
         </form>
       ) : mode === 'create' ? (

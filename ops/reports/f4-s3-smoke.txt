@@ -1,0 +1,32 @@
+# F4: primera copia remota de Supabase a S3
+# Fuente: salida de make backup-remote compartida por el equipo desde EC2.
+# Fecha UTC según el nombre generado por el programa: 2026-11-15 04:29:42.
+
+copia remota verificada (SHA-256): s3://proyecto-eticayseguridad/directory/directory-20261115T042942Z.dump.enc; remotas rotadas: 0
+copia creada: directory-20261115T042942Z.dump.enc (13308 bytes); rotadas: 0
+
+Resultado observado: ejecución manual completada; subida y comparación remota de tamaño y SHA-256 correctas.
+El programa exige bloqueo público y ausencia de versionado antes de subir la copia cifrada.
+La ejecución no encontró copias que debieran eliminarse.
+
+Programación compartida posteriormente por el equipo:
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+0 3 * * * cd /home/ubuntu/EySDatos_Proyect && /usr/bin/flock -n /var/tmp/eysd-backup.lock /usr/bin/make backup-remote >> /var/tmp/eysd-backup.log 2>&1
+sudo systemctl is-active cron -> active
+
+Confirmado: tarea instalada en el crontab del usuario y servicio cron activo.
+Pendiente: observar una ejecución automática.
+La configuración del horario no se presenta como evidencia de que ya ocurrió una ejecución automática.
+
+Restauración compartida por el equipo desde EC2:
+Archivo descargado: directory-20261115T042942Z.dump.enc
+Destino: contenedor temporal postgres:17, base aislada restore_check.
+migraciones aplicadas: 001_init.sql, 002_backup_role.sql, 003_mfa.sql, 004_session_mfa.sql
+restauración completa
+Registros restaurados: 2
+Factores MFA recuperados y descifrables: 1
+
+Resultado: descarga desde S3, descifrado del archivo y restauración completados.
+El secreto del factor MFA recuperado se pudo descifrar con TOTP_ENCRYPTION_KEY, sin mostrarlo.
+La salida no acredita un inicio de sesión completo en la aplicación restaurada ni mide el RTO.
+No se modificó la base de producción para este ensayo.

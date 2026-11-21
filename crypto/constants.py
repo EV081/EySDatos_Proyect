@@ -17,6 +17,7 @@ CTX_INITIATOR = b"handshake initiator"
 CTX_RESPONDER = b"handshake responder"
 CTX_REGISTER = b"directory register"
 CTX_KEY_CHANGE = b"directory key change"
+CTX_UNLOCK = b"directory session unlock"
 
 INFO_KEY_AB = b"e2ee-discord/v1 key A->B"
 INFO_KEY_BA = b"e2ee-discord/v1 key B->A"

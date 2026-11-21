@@ -58,12 +58,26 @@ def tls_context(ca_file: str, crl_file: str | None = None) -> ssl.SSLContext:
     return ctx
 
 
+def public_ca_context() -> ssl.SSLContext:
+    """Para un directorio detrás de una plataforma (Render): confía en las CA del sistema, TLS 1.3 y nombre verificado.
+    Solo se usa si se pide a propósito (`public_ca=True` / `DIRECTORY_PUBLIC_CA=1`)."""
+    ctx = ssl.create_default_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_3
+    return ctx
+
+
 class DirectoryClient:
+    # El cliente real siempre exige MFA para desbloquear; solo el entorno FakeDirectory es offline.
+    requires_mfa = True
+
     def __init__(self, base_url: str, ca_file: str | None = None, auth_token: str | None = None,
-                 timeout: float = 10.0, transport: httpx.BaseTransport | None = None, crl_file: str | None = None):
+                 timeout: float = 10.0, transport: httpx.BaseTransport | None = None, crl_file: str | None = None,
+                 public_ca: bool = False):
         parts = urlsplit(base_url)
         if transport is not None:
             verify = True
+        elif parts.scheme == "https" and public_ca and not ca_file:
+            verify = public_ca_context()
         elif parts.scheme == "https":
             if not ca_file:
                 raise ValueError("falta ca_file: el directorio solo se valida contra la CA del proyecto")
@@ -109,6 +123,27 @@ class DirectoryClient:
             return _b64d(body["public_key"], 32)
         except (ValueError, KeyError, TypeError):
             raise DirectoryError("respuesta inválida del directorio") from None
+
+    def authenticate_session(self, discord_id: str, code: str, sign: Callable[[bytes], bytes]) -> None:
+        """Valida el desbloqueo habitual con posesión de la llave y TOTP, sin token de registro.
+
+        Ni la contraseña ni la llave privada salen del cliente. No conservar autorizaciones entre desbloqueos.
+        """
+        try:
+            response = self._http.post("/v1/sessions/challenge", json={"discord_id": discord_id})
+            if response.status_code != 200:
+                raise DirectoryError("no se pudo iniciar la verificación de sesión", response.status_code)
+            try:
+                nonce = _b64d(response.json()["nonce"], 32)
+            except (ValueError, KeyError, TypeError):
+                raise DirectoryError("respuesta inválida del directorio") from None
+            response = self._http.post("/v1/sessions/verify", json={
+                "discord_id": discord_id, "nonce": _b64e(nonce), "signature": _b64e(sign(nonce)), "code": code,
+            })
+        except httpx.HTTPError:
+            raise DirectoryError("el directorio no respondió") from None
+        if response.status_code != 204:
+            raise DirectoryError("no se pudo verificar la sesión", response.status_code)
 
     # --- derechos ARCO ----------------------------------------------------------------
 

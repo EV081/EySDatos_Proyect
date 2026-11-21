@@ -13,7 +13,7 @@ Implementa `client.ports.DiscordPort` (`send`, `set_receiver`) con un **bot por 
    * Agregar el bot (o su rol) al canal: como `@everyone` no puede verlo, los permisos del servidor no bastan.
    * Quitar los permisos de más que el bot hereda del rol `@everyone` del servidor (reacciones, adjuntos, invitaciones…): `check` los marca.
 4. **Variables de entorno** (nunca en el código ni en git, RS10): `DISCORD_TOKEN` (el token de *tu* bot) y `DISCORD_CHANNEL_ID` (clic derecho en el **canal** → *Copiar ID del canal*, con el modo desarrollador activo; no el ID del servidor, que da `Unknown Channel`).
-5. **Revisión:** `python -m discord_adapter.check` muestra quién puede ver el canal y qué permisos tiene el bot, y sale con error si el canal es público o el bot tiene permisos de más. Guardar su salida como evidencia de C-23 (la última está en [`ops/reports/discord-check.txt`](../ops/reports/discord-check.txt)).
+5. **Revisión:** `python -m discord_adapter.check` muestra quién puede ver el canal y qué permisos tiene el bot, y sale con error si el canal es público o el bot tiene permisos de más. Guarda su salida como evidencia de C-23 (la última está en [`ops/reports/discord-check.txt`](../ops/reports/discord-check.txt)).
 6. **Ensayo con la API real:** `python -m discord_adapter.smoke` publica, lee, se niega a enviar texto plano, corta la conexión y comprueba que recupera lo atrasado sin repetir. Basta con un bot. Deja en el canal dos mensajes `E2EE1:prueba-f3-…` y uno normal.
 
 ## Comportamiento

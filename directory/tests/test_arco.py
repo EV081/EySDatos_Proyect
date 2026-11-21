@@ -23,6 +23,8 @@ def test_acceso_devuelve_todo_el_registro_del_dueno(api):
     assert body["discord_id"] == ALICE and body["public_key"] == b64e(new.public_key)
     assert body["consent_version"] == CONSENT
     assert body["registered_at"] and body["consent_at"] and body["key_changed_at"]
+    assert body["mfa"]["enabled"] and body["mfa"]["recovery_codes_remaining"] == 10
+    assert set(body["mfa"]) == {"enabled", "recovery_codes_remaining", "created_at"}
     assert [k["public_key"] for k in body["replaced_keys"]] == [b64e(old.public_key)]
     assert body["replaced_keys"][0]["delete_after"] > body["replaced_keys"][0]["replaced_at"]
 

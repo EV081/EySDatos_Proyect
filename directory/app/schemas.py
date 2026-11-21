@@ -40,3 +40,13 @@ class PublishKey(BaseModel):
 class CancelKey(BaseModel):
     nonce: str = Field(pattern=B64URL, max_length=64)
     signature: str = Field(pattern=B64URL, max_length=128)
+
+
+class SessionChallenge(BaseModel):
+    discord_id: str = Field(pattern=DISCORD_ID)
+
+
+class SessionVerify(SessionChallenge):
+    nonce: str = Field(pattern=B64URL, max_length=64)
+    signature: str = Field(pattern=B64URL, max_length=128)
+    code: str = Field(pattern=r"^[0-9]{6}$")

@@ -1,5 +1,6 @@
 """Genera flujo-handshake.svg/.png (diagrama del handshake autenticado y de la mensajería)."""
-import subprocess, html
+import html
+from formato_diagramas import guardar
 W, H = 1180, 860
 XA, XD, XB = 235, 590, 945
 out = []
@@ -39,18 +40,18 @@ box(XB-175, 90, 350, 56, "#f8fafc", "#64748b", ["0. Obtiene pk_A del directorio 
 arrow(XA, XB, 192, ["1. hs1:  ids, sid, R_A, epk_A = g^a"], "#1d4ed8")
 box(XB-205, 208, 410, 104, "#ecfdf5", "#047857",
     ["Bob genera b efímero y R_B; calcula g^ab y destruye b", "T = ids ‖ sid ‖ R_A ‖ R_B ‖ epk_A ‖ epk_B ‖ versión",
-     "PRK = HKDF(g^ab, sal = SHA-256(T)) → K_AB, K_BA, K_conf", "σ_B = Sign_B(ctx_resp ‖ T);  tag_B = HMAC(K_conf, \"B\" ‖ H(T))"], 12)
+     "PRK = HKDF(g^ab, sal = SHA-256(T)) -> K_AB, K_BA, K_conf", "σ_B = Sign_B(ctx_resp ‖ T);  tag_B = HMAC(K_conf, \"B\" ‖ H(T))"], 12)
 # hs2
 arrow(XB, XA, 354, ["2. hs2:  R_B, epk_B = g^b, σ_B, tag_B"], "#047857")
 box(XA-205, 372, 410, 122, "#eff6ff", "#1d4ed8",
-    ["Alice verifica σ_B con pk_B  → si falla: ABORTA",
+    ["Alice verifica σ_B con pk_B  -> si falla: ABORTA",
      "Deriva las mismas claves (g^ab = (g^b)^a)", "Verifica tag_B (confirmación de clave)",
      "σ_A = Sign_A(ctx_ini ‖ T);  tag_A = HMAC(K_conf, \"A\" ‖ H(T))",
      "Destruye a (efímero): sin él, el pasado no se recupera"], 12)
 # hs3
 arrow(XA, XB, 536, ["3. hs3:  σ_A, tag_A"], "#1d4ed8")
 box(XB-205, 552, 410, 78, "#ecfdf5", "#047857",
-    ["Bob verifica σ_A con pk_A y tag_A → si falla: ABORTA", "Si todo valida  →  SESIÓN ACTIVA (PFS en ambos lados)"], 12)
+    ["Bob verifica σ_A con pk_A y tag_A -> si falla: ABORTA", "Si todo valida  ->  SESIÓN ACTIVA (PFS en ambos lados)"], 12)
 # messages
 arrow(XA, XB, 672, ["4. msg:  sid, ctr, nonce, AES-256-GCM(K_AB, m; AAD)"], "#b45309", both=False)
 arrow(XB, XA, 712, ["4'. msg:  sid, ctr, nonce, AES-256-GCM(K_BA, m; AAD)"], "#b45309")
@@ -60,5 +61,4 @@ text(W/2, H-78, "ctx_ini ≠ ctx_resp (separación de dominio y roles asimétric
 text(W/2, H-56, "Claves distintas por dirección (K_AB, K_BA) y contador ctr por dirección: un mensaje no puede reflejarse ni repetirse.  AAD = sid ‖ emisor ‖ receptor ‖ ctr.", 12.5)
 text(W/2, H-34, "Tras 3 y 4, el robo de la llave de identidad no descifra el tráfico grabado: las llaves efímeras a, b ya no existen (PFS).", 12.5, "middle", "#b91c1c", "bold")
 out.append('</svg>')
-open("flujo-handshake.svg", "w").write("\n".join(out))
-subprocess.run(["rsvg-convert", "-z", "1.5", "-o", "flujo-handshake.png", "flujo-handshake.svg"], check=True)
+guardar("flujo-handshake", "\n".join(out))

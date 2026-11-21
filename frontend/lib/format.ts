@@ -6,6 +6,8 @@ const ERRORS: Record<string, string> = {
   unauthorized: 'El token de la API local no es válido.',
   locked: 'Desbloquea tu identidad con tu contraseña maestra.',
   bad_password: 'Contraseña incorrecta.',
+  mfa_required: 'Ingresa el código de seis dígitos de Microsoft Authenticator.',
+  mfa_rejected: 'No se pudo verificar el autenticador. Usa un código nuevo; si agotaste los intentos, espera cinco minutos. Si perdiste el celular, recupera el autenticador desde el inicio de sesión con Discord.',
   too_many_attempts: 'Demasiados intentos. Espera unos segundos.',
   not_found: 'No se encontró lo que buscas.',
   conflict: 'La operación no se pudo completar.',

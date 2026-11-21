@@ -1,7 +1,7 @@
 """Tabla de trazabilidad requerimiento ↔ evidencia (F8): `python -m ops.trazabilidad [--check]`.
 
 Lee los requerimientos del informe (`**RF1:**`, `**RS1:**`), las restricciones de la DPIA (`**C-05**`) y los nombres
-de las pruebas (`test_RS4_nonce_unico`, `test('RF9 ...')`), y escribe `docs/trazabilidad.md`. Con `--check`
+de las pruebas (`test_RS4_nonce_unico`, `test('RF9 ...')`), y escribe `docs/trazabilidad/trazabilidad.md`. Con `--check`
 (en CI) falla si el archivo no está al día o si un requerimiento no tiene ninguna evidencia.
 """
 import ast
@@ -11,7 +11,7 @@ from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "docs" / "trazabilidad.md"
+OUTPUT = ROOT / "docs" / "trazabilidad" / "trazabilidad.md"
 PY_TESTS = ("crypto", "client", "directory", "discord_adapter", "ops")
 TS_TESTS = ("frontend/test", "frontend/e2e")
 TAG = re.compile(r"^(RF\d+|RS\d+|C-?\d{2})$")
@@ -35,9 +35,11 @@ MANUAL = {
     "C-16": "`test_RF8_*` del cliente",
     "C-17": "Prueba e2e del frontend (`frontend/e2e/smoke.mjs`)",
     "C-18": "Pruebas de la API local (`client/tests/test_api.py`)",
-    "C-19": "[Plan de respuesta a incidentes](politicas/respuesta-incidentes.md)",
-    "C-20": "CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../ops/reports/README.md)",
-    "C-21": "Pendiente (Elmer): botón de borrado local",
+    "C-19": "[Plan de respuesta a incidentes](../politicas/respuesta-incidentes.md)",
+    "C-20": "CI (`.github/workflows/ci.yml`) y reportes antes/después en [`ops/reports/`](../../ops/reports/README.md)",
+    "C-21": "Implementado en `frontend/components/PrivacyDialog.tsx`; `client/tests/test_arco.py::test_borrado_local_funciona_aun_bloqueada_y_no_toca_el_directorio`",
+    "C-25": "`client/tests/test_session_mfa.py` (factor obligatorio, reinicio, vencimiento y fallo de red); "
+            "`directory/tests/test_session_mfa.py` (firma, propósito, antirreplay y bloqueo); `crypto/tests/test_unlock.py`",
     "C-22": "Informe 4.2.7 y pruebas negativas de `crypto/` y `client/`",
     "C-23": "`ops/reports/discord-check.txt` (revisión del canal real) y `ops/reports/discord-smoke.txt` (ensayo con la API)",
     "C-24": "Fuera del alcance de la entrega (requisitos previos a un uso real)",
@@ -112,11 +114,12 @@ def main(argv: list[str]) -> None:
     if "--check" in argv:
         current = OUTPUT.read_text(encoding="utf-8") if OUTPUT.exists() else ""
         if current.replace("\r\n", "\n") != text:
-            raise SystemExit("docs/trazabilidad.md no está al día: ejecuta python -m ops.trazabilidad")
+            raise SystemExit(f"{OUTPUT.relative_to(ROOT)} no está al día: ejecuta python -m ops.trazabilidad")
         if missing:
             raise SystemExit(f"requerimientos sin evidencia: {', '.join(missing)}")
         print("trazabilidad al día")
         return
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(text, encoding="utf-8", newline="\n")
     print(f"escrito {OUTPUT.relative_to(ROOT)}" + (f"; sin evidencia: {', '.join(missing)}" if missing else ""))
 

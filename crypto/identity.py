@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 from . import aead
-from .constants import AAD_VAULT, CTX_KEY_CHANGE, CTX_PREFIX, CTX_REGISTER
+from .constants import AAD_VAULT, CTX_KEY_CHANGE, CTX_PREFIX, CTX_REGISTER, CTX_UNLOCK
 from .encoding import b64d, b64e
 from .errors import DecryptError, SignatureError, VaultError
 
@@ -150,3 +150,12 @@ def sign_key_change(old: Identity, discord_id: str, new_public_key: bytes, nonce
 def verify_key_change(old_public_key: bytes, discord_id: str, new_public_key: bytes,
                       nonce: bytes, signature: bytes) -> None:
     verify(old_public_key, CTX_KEY_CHANGE, _registration_message(discord_id, new_public_key, nonce), signature)
+
+
+def sign_unlock(identity: Identity, discord_id: str, nonce: bytes) -> bytes:
+    """Autentica un desbloqueo local; no autoriza registrar, cambiar ni cancelar una llave."""
+    return identity.sign(CTX_UNLOCK, _registration_message(discord_id, identity.public_key, nonce))
+
+
+def verify_unlock(public_key: bytes, discord_id: str, nonce: bytes, signature: bytes) -> None:
+    verify(public_key, CTX_UNLOCK, _registration_message(discord_id, public_key, nonce), signature)

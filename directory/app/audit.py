@@ -100,6 +100,8 @@ class Rule:
 RULES = (
     Rule("acceso_ajeno", 1, 600, "intento de modificar el registro de otra persona"),
     Rule("firma_invalida", 5, 600, "pruebas de posesión inválidas repetidas"),
+    Rule("mfa_rechazado", 5, 600, "verificaciones del segundo factor rechazadas repetidamente"),
+    Rule("mfa_recuperacion", 1, 600, "se ha solicitado reemplazar un autenticador con recuperación"),
     Rule("limite", 3, 300, "límite de solicitudes alcanzado varias veces: posible enumeración"),
     Rule("consulta_inexistente", 20, 600, "muchas consultas de IDs no registrados: posible enumeración"),
     Rule("cambio_de_llave", 1, 3600, "cambio de llave registrado: revisar si fue legítimo"),

@@ -63,7 +63,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Incluye mfa_required y session_expires_at (segundos Unix o null). Las sesiones reales vencen según CLIENT_SESSION_TTL, 1800 segundos por defecto."
       }
     },
     "/identity": {
@@ -147,7 +148,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Password"
+                "$ref": "#/components/schemas/UnlockRequest"
               }
             }
           }
@@ -170,8 +171,21 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Contraseña incorrecta o segundo factor rechazado"
+          },
+          "403": {
+            "description": "Falta el código del autenticador"
+          },
+          "429": {
+            "description": "Bloqueo temporal por contraseñas incorrectas"
+          },
+          "502": {
+            "description": "El directorio no pudo validar la sesión"
           }
-        }
+        },
+        "description": "Con el directorio real exige contraseña maestra y un código TOTP nuevo; sin conexión no desbloquea. El modo de desarrollo offline no usa MFA."
       }
     },
     "/identity/lock": {
@@ -1294,6 +1308,34 @@
           "password"
         ],
         "title": "CancelRequest"
+      },
+      "UnlockRequest": {
+        "properties": {
+          "password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "mfa_code": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]{6}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mfa Code"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "UnlockRequest",
+        "type": "object"
       }
     }
   }

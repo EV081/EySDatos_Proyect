@@ -3,9 +3,13 @@
 El access token de Discord no sale de esta función: se usa una vez para leer `/users/@me` y se revoca."""
 import base64
 import hashlib
+import logging
+import time
 from urllib.parse import urlencode
 
 import httpx
+
+log = logging.getLogger(__name__)
 
 AUTHORIZE_URL = "https://discord.com/oauth2/authorize"
 TOKEN_URL = "https://discord.com/api/oauth2/token"  # nosec B105
@@ -31,14 +35,27 @@ class DiscordOAuth:
             "state": state, "code_challenge": code_challenge(verifier), "code_challenge_method": "S256",
         })
 
+    def _post_token(self, auth, code: str, verifier: str) -> httpx.Response:
+        """Un solo reintento ante 429: desde IPs de nube compartidas Cloudflare a veces frena la primera petición
+        sin que llegue a Discord, así que el código sigue sin usar."""
+        data = {"grant_type": "authorization_code", "code": code, "redirect_uri": self._redirect,
+                "code_verifier": verifier}
+        resp = self._http.post(TOKEN_URL, auth=auth, data=data)
+        if resp.status_code == 429:
+            try:
+                wait = min(float(resp.headers.get("Retry-After", "2")), 5.0)
+            except ValueError:
+                wait = 2.0
+            log.warning("discord token endpoint 429; reintento en %.1fs", wait)
+            time.sleep(wait)
+            resp = self._http.post(TOKEN_URL, auth=auth, data=data)
+        return resp
+
     def discord_id(self, code: str, verifier: str) -> str:
         """Canjea el código y devuelve el ID de la cuenta. Cualquier fallo lanza OAuthError."""
         auth = (self._id, self._secret)
         try:
-            token = self._http.post(TOKEN_URL, auth=auth, data={
-                "grant_type": "authorization_code", "code": code, "redirect_uri": self._redirect,
-                "code_verifier": verifier,
-            })
+            token = self._post_token(auth, code, verifier)
             token.raise_for_status()
             access = token.json()["access_token"]
             try:
@@ -51,6 +68,10 @@ class DiscordOAuth:
                                     data={"token": access, "token_type_hint": "access_token"})  # nosec B105
                 except httpx.HTTPError:
                     pass
-        except (httpx.HTTPError, KeyError, ValueError, TypeError):
+        except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
+            detail = ""
+            if isinstance(exc, httpx.HTTPStatusError):
+                detail = f" status={exc.response.status_code} body={exc.response.text[:200]!r}"
+            log.warning("oauth exchange failed: %s%s", type(exc).__name__, detail)
             raise OAuthError("no se pudo completar OAuth2") from None
         return discord_id

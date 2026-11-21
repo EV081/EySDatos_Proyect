@@ -107,7 +107,8 @@ def test_cancelacion_borra_el_registro_y_los_datos_locales(pair, tmp_path):
     world, alice, _ = pair
     status = alice.cancel_registration(PASSWORD, delete_local=True)
     assert ALICE not in world.directory.keys
-    assert status == {"unlocked": False, "vault_exists": False, "discord_id": None, "public_key": None}
+    assert status == {"unlocked": False, "vault_exists": False, "discord_id": None, "public_key": None,
+                      "mfa_required": False, "session_expires_at": None}
     assert not (tmp_path / ALICE / "vault.json").exists() and not (tmp_path / ALICE / "store.enc").exists()
 
 

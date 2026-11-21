@@ -1,11 +1,12 @@
 # API de `crypto/`
 
-Librería pura de Python 3.12: sin red, sin Discord, sin disco. El cliente local (`client/`) la usa; el directorio (`directory/`) y el adaptador de Discord (`discord_adapter/`) **no** la importan, salvo `verify_registration`/`verify_key_change` y `Pseudonymizer`/`mask_id` en el directorio, que solo verifican firmas con llaves públicas y protegen los IDs de los registros.
+Librería pura de Python 3.12: sin red, sin Discord, sin disco. El cliente local (`client/`) la usa; el directorio (`directory/`) y el adaptador de Discord (`discord_adapter/`) **no** la importan, salvo `verify_registration`/`verify_key_change`/`verify_unlock` y `Pseudonymizer`/`mask_id` en el directorio, que solo verifican firmas con llaves públicas y protegen los IDs de los registros.
 
 ```python
 from crypto import (Identity, Initiator, Responder, SidCache, Session, fingerprint,
                     encode, decode, Hs1, Hs2, Hs3, Msg,
-                    sign_registration, verify_registration, sign_key_change, verify_key_change)
+                    sign_registration, verify_registration, sign_key_change, verify_key_change,
+                    sign_unlock, verify_unlock)
 ```
 
 Todos los errores heredan de `CryptoError`. Los ids son los identificadores de Discord (cadenas de dígitos). Las llaves públicas son `bytes` de 32 bytes. Los parámetros `clock` (opcional) son un `callable` que devuelve segundos, para poder probar el tiempo.
@@ -31,6 +32,12 @@ Todos los errores heredan de `CryptoError`. Los ids son los identificadores de D
 | `verify_registration(public_key, discord_id, nonce, sig)` | Directorio: comprueba la posesión antes de guardar la llave |
 | `sign_key_change(old_identity, discord_id, new_public_key, nonce)` | Cliente: la llave anterior autoriza la nueva |
 | `verify_key_change(old_public_key, discord_id, new_public_key, nonce, sig)` | Directorio |
+
+## Desbloqueo habitual con MFA
+
+`sign_unlock(identity, discord_id, nonce)` firma el ID y el nonce del directorio con el contexto propio `CTX_UNLOCK`. `verify_unlock(public_key, discord_id, nonce, sig)` verifica con la llave pública registrada. Una firma de registro o cambio de llave no sirve para desbloquear, ni una de otro ID o nonce.
+
+Estas funciones no verifican TOTP ni abren sesiones locales: lo hacen el directorio y el cliente. Primero se abre la bóveda en memoria con la contraseña para firmar; solo después de validar el factor remoto se habilita el historial. El formato de la bóveda y de las exportaciones sigue dependiendo de la contraseña. Evidencia: `crypto/tests/test_unlock.py`.
 
 ## Handshake (RF4, RF13, RS12, RS13)
 
@@ -77,7 +84,7 @@ session = resp.finish(hs3)            # <- Hs3 recibido
 | Función | Qué hace |
 |---|---|
 | `Pseudonymizer(key)` / `Pseudonymizer.from_env("PSEUDONYM_KEY")` | HMAC-SHA256 con clave secreta (mínimo 32 bytes, base64url en la variable de entorno). Falla si la clave falta o es débil |
-| `pseudonymizer.pseudonym(discord_id)` | 16 caracteres hex estables mientras no cambie la clave. **Úsese para los IDs en los registros de auditoría**; nunca un SHA-256 sin clave |
+| `pseudonymizer.pseudonym(discord_id)` | 16 caracteres hex estables mientras no cambie la clave. **Úsalo para los IDs en los registros de auditoría**; nunca un SHA-256 sin clave |
 | `mask_id(discord_id)` | `1234…5678`, para mensajes de diagnóstico. No sirve para almacenar |
 | `generate_key()` | Clave nueva (rotarla cada 90 días, el plazo de retención de los registros) |
 

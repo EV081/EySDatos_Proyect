@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="white" /><svg width="1152" height="752" viewBox="0.00 0.00 503.00 543.00" x="24" y="24" preserveAspectRatio="xMidYMid meet">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(21.6 521.5)">
+<title>G</title>
+<polygon fill="white" stroke="none" points="-21.6,21.6 -21.6,-521.5 481.65,-521.5 481.65,21.6 -21.6,21.6" />
+
+<g id="node1" class="node">
+<title>alice</title>
+<path fill="#e8f0ff" stroke="#1d4ed8" stroke-width="1.6" d="M205.55,-499.9C205.55,-499.9 32,-499.9 32,-499.9 26,-499.9 20,-493.9 20,-487.9 20,-487.9 20,-458.62 20,-458.62 20,-452.62 26,-446.62 32,-446.62 32,-446.62 205.55,-446.62 205.55,-446.62 211.55,-446.62 217.55,-452.62 217.55,-458.62 217.55,-458.62 217.55,-487.9 217.55,-487.9 217.55,-493.9 211.55,-499.9 205.55,-499.9" />
+<text xml:space="preserve" text-anchor="start" x="104.15" y="-480.86" font-family="Noto Sans" font-weight="bold" font-size="12.00">Alice</text>
+<text xml:space="preserve" text-anchor="start" x="34.4" y="-468.86" font-family="Noto Sans" font-size="12.00">huella = SHA-256(pk_A ‖ pk_B)</text>
+<text xml:space="preserve" text-anchor="start" x="46.78" y="-456.86" font-family="Noto Sans" font-size="12.00">60 dígitos en grupos de 5</text>
+</g>
+
+<g id="node3" class="node">
+<title>cmp</title>
+<polygon fill="#fff4e0" stroke="#b45309" stroke-width="1.6" points="237.78,-358.87 54.48,-307.09 237.77,-255.31 421.08,-307.09 237.78,-358.87" />
+<text xml:space="preserve" text-anchor="middle" x="237.78" y="-312.94" font-family="Noto Sans" font-size="12.00">Comparar fuera de Discord</text>
+<text xml:space="preserve" text-anchor="middle" x="237.78" y="-295.69" font-family="Noto Sans" font-size="12.00">¿Las dos huellas coinciden?</text>
+</g>
+
+<g id="edge1" class="edge">
+<title>alice-&gt;cmp</title>
+<path fill="none" stroke="#475467" stroke-width="1.6" d="M137.89,-445.88C154.53,-422.94 179.13,-389 199.75,-360.54" />
+<polygon fill="#475467" stroke="#475467" stroke-width="1.6" points="202.41,-362.84 205.44,-352.69 196.74,-358.74 202.41,-362.84" />
+<text xml:space="preserve" text-anchor="middle" x="230.58" y="-400.17" font-family="Noto Sans" font-size="11.00" fill="#475467">llamada o en persona</text>
+</g>
+
+<g id="node2" class="node">
+<title>bob</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" d="M448.05,-499.9C448.05,-499.9 265.5,-499.9 265.5,-499.9 259.5,-499.9 253.5,-493.9 253.5,-487.9 253.5,-487.9 253.5,-458.62 253.5,-458.62 253.5,-452.62 259.5,-446.62 265.5,-446.62 265.5,-446.62 448.05,-446.62 448.05,-446.62 454.05,-446.62 460.05,-452.62 460.05,-458.62 460.05,-458.62 460.05,-487.9 460.05,-487.9 460.05,-493.9 454.05,-499.9 448.05,-499.9" />
+<text xml:space="preserve" text-anchor="start" x="345.15" y="-480.86" font-family="Noto Sans" font-weight="bold" font-size="12.00">Bob</text>
+<text xml:space="preserve" text-anchor="start" x="272.4" y="-468.86" font-family="Noto Sans" font-size="12.00">huella = SHA-256(pk_A ‖ pk_B)</text>
+<text xml:space="preserve" text-anchor="start" x="267.9" y="-456.86" font-family="Noto Sans" font-size="12.00">mismo orden, mismo resultado</text>
+</g>
+
+<g id="edge2" class="edge">
+<title>bob-&gt;cmp</title>
+<path fill="none" stroke="#475467" stroke-width="1.6" d="M337.66,-445.88C321.02,-422.94 296.42,-389 275.8,-360.54" />
+<polygon fill="#475467" stroke="#475467" stroke-width="1.6" points="278.81,-358.74 270.11,-352.69 273.14,-362.84 278.81,-358.74" />
+<text xml:space="preserve" text-anchor="middle" x="342.93" y="-400.17" font-family="Noto Sans" font-size="11.00" fill="#475467">o código QR</text>
+</g>
+
+<g id="node4" class="node">
+<title>ok</title>
+<path fill="#e8f7f0" stroke="#0f7b55" stroke-width="1.6" d="M218.18,-167.56C218.18,-167.56 15.38,-167.56 15.38,-167.56 9.38,-167.56 3.38,-161.56 3.38,-155.56 3.38,-155.56 3.38,-138.28 3.38,-138.28 3.38,-132.28 9.38,-126.28 15.38,-126.28 15.38,-126.28 218.18,-126.28 218.18,-126.28 224.18,-126.28 230.18,-132.28 230.18,-138.28 230.18,-138.28 230.18,-155.56 230.18,-155.56 230.18,-161.56 224.18,-167.56 218.18,-167.56" />
+<text xml:space="preserve" text-anchor="start" x="78.53" y="-148.52" font-family="Noto Sans" font-weight="bold" font-size="12.00">Sí: verificado</text>
+<text xml:space="preserve" text-anchor="start" x="17.78" y="-136.52" font-family="Noto Sans" font-size="12.00">se guarda un pin de la llave pública</text>
+</g>
+
+<g id="edge3" class="edge">
+<title>cmp-&gt;ok</title>
+<path fill="none" stroke="#0f7b55" stroke-width="1.6" d="M205.35,-263.7C184.65,-236.64 158.31,-202.21 139.75,-177.95" />
+<polygon fill="#0f7b55" stroke="#0f7b55" stroke-width="1.6" points="142.64,-175.97 133.78,-170.15 137.08,-180.22 142.64,-175.97" />
+<text xml:space="preserve" text-anchor="middle" x="174.16" y="-208.86" font-family="Noto Sans" font-size="11.00" fill="#0f7b55">sí</text>
+</g>
+
+<g id="node5" class="node">
+<title>no</title>
+<path fill="#fdecea" stroke="#b42318" stroke-width="1.6" d="M441.67,-167.56C441.67,-167.56 277.88,-167.56 277.88,-167.56 271.88,-167.56 265.88,-161.56 265.88,-155.56 265.88,-155.56 265.88,-138.28 265.88,-138.28 265.88,-132.28 271.88,-126.28 277.88,-126.28 277.88,-126.28 441.67,-126.28 441.67,-126.28 447.67,-126.28 453.67,-132.28 453.67,-138.28 453.67,-138.28 453.67,-155.56 453.67,-155.56 453.67,-161.56 447.67,-167.56 441.67,-167.56" />
+<text xml:space="preserve" text-anchor="start" x="314.02" y="-148.52" font-family="Noto Sans" font-weight="bold" font-size="12.00">No: no verificar</text>
+<text xml:space="preserve" text-anchor="start" x="280.27" y="-136.52" font-family="Noto Sans" font-size="12.00">posible sustitución de llaves</text>
+</g>
+
+<g id="edge4" class="edge">
+<title>cmp-&gt;no</title>
+<path fill="none" stroke="#b42318" stroke-width="1.6" d="M270.15,-264.12C291.03,-237.05 317.69,-202.48 336.49,-178.11" />
+<polygon fill="#b42318" stroke="#b42318" stroke-width="1.6" points="339.21,-180.31 342.54,-170.26 333.67,-176.04 339.21,-180.31" />
+<text xml:space="preserve" text-anchor="middle" x="323.58" y="-208.86" font-family="Noto Sans" font-size="11.00" fill="#b42318">no</text>
+</g>
+
+<g id="node6" class="node">
+<title>cambio</title>
+<path fill="white" stroke="#b42318" stroke-width="1.6" stroke-dasharray="5,2" d="M221.55,-53.28C221.55,-53.28 12,-53.28 12,-53.28 6,-53.28 0,-47.28 0,-41.28 0,-41.28 0,-12 0,-12 0,-6 6,0 12,0 12,0 221.55,0 221.55,0 227.55,0 233.55,-6 233.55,-12 233.55,-12 233.55,-41.28 233.55,-41.28 233.55,-47.28 227.55,-53.28 221.55,-53.28" />
+<text xml:space="preserve" text-anchor="start" x="38.4" y="-34.24" font-family="Noto Sans" font-weight="bold" font-size="12.00">Si después la llave cambia</text>
+<text xml:space="preserve" text-anchor="start" x="19.65" y="-22.24" font-family="Noto Sans" font-size="12.00">se revoca la verificación, se aborta</text>
+<text xml:space="preserve" text-anchor="start" x="14.4" y="-10.24" font-family="Noto Sans" font-size="12.00">el handshake y se avisa a la persona</text>
+</g>
+
+<g id="edge5" class="edge">
+<title>ok-&gt;cambio</title>
+<path fill="none" stroke="#475467" stroke-width="1.6" stroke-dasharray="5,2" d="M116.78,-125.59C116.78,-109.33 116.78,-86.07 116.78,-66.3" />
+<polygon fill="#475467" stroke="#475467" stroke-width="1.6" points="120.28,-66.34 116.78,-56.34 113.28,-66.34 120.28,-66.34" />
+</g>
+</g>
+</svg></svg>

@@ -11,6 +11,11 @@ class DirectoryError(Exception):
 
 
 class DirectoryPort(Protocol):
+    requires_mfa: bool
+
+    def authenticate_session(self, discord_id: str, code: str, sign: Callable[[bytes], bytes]) -> None:
+        """Exige un código nuevo del autenticador y la firma de la llave registrada para cada desbloqueo."""
+
     def register(self, discord_id: str, public_key: bytes, sign: Callable[[bytes], bytes],
                  consent_version: str, sign_old: Callable[[bytes], bytes] | None = None) -> None:
         """Publica la llave. El directorio entrega un nonce; `sign(nonce)` devuelve la prueba de posesión.

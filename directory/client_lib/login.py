@@ -1,6 +1,6 @@
 """Obtiene un token de registro: `python -m directory.client_lib.login`.
 
-Abre `/auth/login` del directorio en el navegador; tras iniciar sesión con Discord, la página muestra el token,
+Abre `/auth/login` del directorio en el navegador; tras Discord y Microsoft Authenticator, muestra el token,
 que se pega aquí y se guarda en `DIRECTORY_AUTH_TOKEN_FILE` (vale 10 minutos y una sola publicación).
 """
 import getpass
@@ -28,6 +28,7 @@ def main() -> None:
     target = Path(os.environ.get("DIRECTORY_AUTH_TOKEN_FILE", "./data/directory-token"))
     print(f"Abriendo {url} ...")
     webbrowser.open(url)
+    print("Completa Discord y Microsoft Authenticator en el navegador (la primera vez, escanea el QR).")
     token = getpass.getpass("Pega el token de registro una sola vez (no se muestra) y presiona Enter: ").strip()
     if not token:
         raise SystemExit("no se ingresó ningún token")
