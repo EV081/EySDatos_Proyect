@@ -329,7 +329,7 @@ En todos los casos se pierde la utilidad que **no tiene una finalidad declarada*
 
 **Qué funcionó**
 
-* **Acordar contratos antes de programar.** El formato de los mensajes, los puertos del cliente y las APIs se fijaron al inicio ([REPARTO.md](REPARTO.md), sección 3). Con `client/fakes.py` como referencia, el directorio y el adaptador se construyeron en paralelo sin bloquear al cliente, y la integración casi no necesitó cambios.
+* **Acordar contratos antes de programar.** Coordinamos con anticipación el formato de los mensajes, los puertos del cliente y las APIs. Con `client/fakes.py` como referencia, el directorio y el adaptador se construyeron en paralelo sin bloquear al cliente, y la integración casi no necesitó cambios.
 * **Nombrar las pruebas por requerimiento** (`test_RS16_…`). Generar la tabla de trazabilidad desde esos nombres convirtió el informe en algo que la CI puede comprobar: si un requerimiento se queda sin evidencia, el  *build* falla.
 * **Ensayar con los servicios reales** además de las pruebas simuladas: el ensayo con la API de Discord y el login OAuth2 con una cuenta real confirmaron supuestos que las pruebas con dobles no podían confirmar.
 
