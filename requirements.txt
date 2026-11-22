@@ -5,4 +5,3 @@
 -r client/requirements.txt
 -r directory/requirements.txt
 -r discord_adapter/requirements.txt
--r ops/requirements.txt

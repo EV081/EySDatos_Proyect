@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PYTHON_COMPONENTS = ("crypto", "client", "directory", "discord_adapter", "ops")
+PYTHON_COMPONENTS = ("crypto", "client", "directory", "discord_adapter")
 PY_SOURCES = ["crypto", "client", "directory", "discord_adapter", "ops"]
 GITLEAKS = "zricethezav/gitleaks:v8.30.1"
 SEMGREP = "semgrep/semgrep:1.182.1"
