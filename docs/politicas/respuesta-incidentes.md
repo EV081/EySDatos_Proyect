@@ -1,6 +1,6 @@
 # Plan de respuesta a incidentes
 
-**Versión 1.5, 15 de noviembre de 2026.** El plan cubre el directorio en EC2, el MFA de registro y desbloqueo, los contactos y los criterios de notificación. Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. El plan corresponde a la medida C-19 de la DPIA; el simulacro y la validación de los contactos operativos forman parte de las acciones pendientes.
+**Versión 1.6, 22 de noviembre de 2026.** El plan cubre el directorio en EC2, el MFA de registro y desbloqueo, los contactos y los criterios de notificación. También reúne los escenarios de brecha, las entidades afectadas y los puntos únicos de falla (sección 2). Sigue NIST SP 800-61 rev. 3 (2025): Gobernar, Identificar y Proteger como preparación; Detectar, Responder y Recuperar durante el incidente, con mejora continua. El plan corresponde a la medida C-19 de la DPIA; el simulacro y la validación de los contactos operativos forman parte de las acciones pendientes.
 
 **Alcance.** Directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL alojado en Supabase; respaldos, certificados y cuenta AWS; clientes locales, frontend y bots de Discord. Las copias cifradas se alojan en el bucket privado S3 `proyecto-eticayseguridad`, en Virginia del Norte (`us-east-1`). No se incluyen IP, credenciales ni tokens en este documento.
 
@@ -33,10 +33,53 @@ Lo que ya existe y que este plan usa:
 | Detección de secretos y de dependencias vulnerables | CI con gitleaks, pip-audit y npm audit (F6); GitGuardian revisa el repositorio público en GitHub |
 | Alerta de cambio de llave a los contactos | Cliente: revoca la verificación y avisa al detectar un cambio de llave |
 | Segundo factor y desbloqueo | OAuth2 + TOTP para el registro; desafío firmado + TOTP para desbloquear. Sesión local de 30 minutos por defecto; eventos `mfa_rechazado`, `mfa_recuperacion` y `sesion_local` en la auditoría |
-| Inventario de datos y riesgos | [DPIA](../dpia/DPIA.md) y secciones 6.4 y 7 del [informe](../README.md) |
+| Inventario de datos y riesgos | [DPIA](../dpia/DPIA.md), sección 6.3 del [informe](../README.md) y secciones 2.1 a 2.3 de este plan |
 | Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase; confirmar la región del proyecto de la base. Respaldos cifrados en S3, Virginia del Norte (`us-east-1`). Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado |
 
 **Comprobaciones operativas:** verificar TLS, permisos IAM, acceso de administración restringido y retención en el alojamiento. La tarea de copias está instalada y activa; descargamos una copia cifrada de S3 y la restauramos en PostgreSQL aislado, con 2 registros y 1 factor MFA descifrable mediante la clave original. Nos falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado. Custodiamos la llave privada de la CA y la clave de los respaldos fuera de la instancia.
+
+### 2.1 Escenarios de brecha
+
+La DPIA mira los riesgos desde la privacidad; aquí los miramos desde la seguridad: qué pasa si falla cada componente y a quién afecta. Separar los servicios y cifrar los mensajes busca limitar lo que se expone si uno falla. Esto tiene límites: un directorio alterado puede engañar a quien no verificó la huella, y un dispositivo infectado puede mostrar los mensajes. Por eso también revisamos las llaves y el código.
+
+| # | Escenario | Qué queda expuesto | Impacto | Defensa y estado |
+|---|---|---|---|---|
+| S1 | Brecha en Discord o intercepción de red | Texto cifrado y metadatos; **no** el contenido | Metadatos (R1) | E2EE con PFS; los metadatos son un límite aceptado |
+| S2 | Brecha de la base del directorio | IDs, llaves, fechas y aviso; además, secretos TOTP cifrados, hashes de recuperación y estado del factor | Datos personales y autenticación (R5) | Rol sin DDL, cifrado del secreto con clave externa a la base y copias cifradas; si también se compromete el entorno del servidor, el cifrado del TOTP pierde su protección |
+| S3 | Directorio comprometido entrega la llave del atacante | Una conversación completa con quien no verificó | Confidencialidad (R2) | Firmas, verificación, *pin* y alerta; el primer contacto sin verificar sigue expuesto |
+| S4 | Robo o infección del dispositivo | Desbloqueado: historial, contactos y claves de sesión. Bloqueado: solo bóveda cifrada | Confidencialidad (R3) | Argon2id, MFA en la aplicación y vencimiento local; una copia de los archivos con la contraseña correcta se abre fuera del cliente y un dispositivo ya comprometido sigue fuera de alcance |
+| S5 | Robo de la llave de identidad | Suplantar en sesiones futuras; no descifra lo grabado | Autenticidad (R11) | PFS, alerta de cambio de llave, cancelación del registro |
+| S6 | Fuga del token del bot | Lectura del canal cifrado y mensajes falsos (el protocolo los rechaza) | Metadatos y disponibilidad (R10) | Token en entorno, gitleaks en CI, permisos mínimos del bot |
+| S7 | Dependencia maliciosa (cadena de suministro) | Todo, **incluido el texto plano** | Confidencialidad total | Pocas dependencias con versión fija, pip-audit, npm audit y SBOM en CI. Es el más difícil de cerrar |
+| S8 | Defecto del protocolo o su implementación | Contenido o suplantación | Todo (R13) | Componentes estándar, pruebas de rechazo y tabla de ataques; sin auditoría externa |
+| S9 | Fuga de copias o registros | Copias en S3: los datos de S2, incluido el factor cifrado. Registros: eventos con IDs seudonimizados, sin códigos ni secretos | Confidencialidad (R5, R8) | Copias cifradas fuera del servidor, retención de 30 y 90 días |
+| S10 | Abuso interno o *phishing* al equipo | Lo que contiene el directorio | Confidencialidad e integridad | Permisos mínimos, auditoría, verificación; el operador no ve contenido |
+| S11 | Página maliciosa contra la API local | Con la app desbloqueada, leer chats y enviar mensajes | Confidencialidad e integridad | Token por ejecución, CORS restringido y validación de `Host` |
+| S12 | Caída de Discord o del directorio | Discord: se retrasan mensajes. Directorio: falla el próximo desbloqueo y no se abre el historial desde la aplicación | Disponibilidad y acceso local (R14) | Cola y reintentos para mensajes; el desbloqueo real no continúa sin MFA. La sesión ya abierta conserva solo el plazo restante |
+
+### 2.2 Entidades afectadas
+
+| Entidad | Cómo le afecta | Qué le toca hacer |
+|---|---|---|
+| **Persona usuaria** | Pierde confidencialidad, puede ser suplantada y se revela con quién habla | Cuidar su dispositivo y contraseña, exportar su identidad, verificar |
+| **Contactos** | Sus mensajes se exponen aunque su dispositivo esté seguro | Verificar la huella y atender alertas |
+| **Terceros mencionados** | Sus datos aparecen en chats que no controlan | No hay medida técnica; por eso se protege el dispositivo |
+| **Menores de edad** | Podrían declarar una edad que no tienen y no comprender el riesgo | Servicio para mayores de edad con declaración obligatoria, sin comprobación documental |
+| **Equipo responsable** | Debemos evaluar y documentar la brecha y comunicarla según los supuestos del art. 34 del reglamento | Este plan, auditoría y evidencia |
+| **Discord** | Puede revocar el bot o suspender el canal si se abusa de su API | Cumplir sus condiciones |
+| **Institución vinculada al proyecto** | Su nombre queda ligado al proyecto si hay una brecha con datos reales | Completar las acciones de la DPIA antes de ampliar el uso con datos de terceros |
+| **ANPD** | Recibe notificaciones y puede sancionar | Recibirlas a tiempo |
+| **Proveedores de alojamiento (AWS EC2, S3 y Supabase)** | Un incidente puede afectar al directorio, a la base o a su disponibilidad | Revisar accesos y condiciones de AWS y Supabase, región del proyecto Supabase y copias cifradas en S3 (`us-east-1`) |
+
+### 2.3 Puntos únicos de falla
+
+* **La contraseña maestra** protege con cifrado la bóveda, el historial, los contactos y los mensajes en espera. El TOTP limita el desbloqueo desde la aplicación, pero no el descifrado de una copia con la contraseña.
+* **El dispositivo desbloqueado** junta texto plano, claves de sesión y token de la API local (S4, S7, S11).
+* **El directorio** concentra la publicación de llaves y la validación del segundo factor. La huella limita la sustitución de llaves (S3), pero una caída también impide nuevos desbloqueos (S12).
+* **El autenticador y su recuperación** son necesarios para el acceso habitual. La clave `TOTP_ENCRYPTION_KEY` debe conservarse fuera de la instancia junto con un procedimiento para restaurarla sin publicarla.
+* **El directorio depende de EC2 y de Supabase.** Una caída de cualquiera puede impedir la validación del segundo factor. Un compromiso de EC2 puede exponer las credenciales con las que se accede a la base de Supabase, aunque los servicios estén separados.
+* **Directorio y copias en el mismo servidor** convertirían una pérdida de la instancia en pérdida de ambos. Por eso guardamos las copias cifradas en S3, fuera de EC2. Ambos servicios están en `us-east-1`: esta separación no equivale a un respaldo en otra región.
+* **Un mismo operador para el servidor y el bot** vería metadatos y datos del directorio, pero nunca el contenido.
 
 ## 3. Detectar: fuentes y clasificación
 
@@ -53,7 +96,7 @@ Lo que ya existe y que este plan usa:
 
 Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator. Restauramos una copia de S3 en una base aislada y desciframos un factor MFA con la clave TOTP original. Nos falta probar el inicio de sesión del servicio recuperado y realizar el simulacro del anexo B.
 
-**Referencias de escenarios:** S1 a S12 corresponden a la tabla 7.1 del informe.
+**Referencias de escenarios:** S1 a S12 corresponden a la tabla de la sección 2.1.
 
 **Reloj legal:** cuando el incidente cumple los supuestos de notificación, el plazo máximo de 48 horas corre desde que **conocemos o tenemos constancia** del incidente, no desde que termina la investigación. La primera entrada de la bitácora registra la fecha y hora de ese momento (T0).
 
@@ -64,7 +107,7 @@ Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authen
 1. **Declarar** el incidente: abrir la bitácora (plantilla en el anexo A) con T0, quién lo detectó y la severidad inicial.
 2. **Preservar evidencia sin retrasar la contención urgente:** copiar registros y calcular SHA-256; guardar fecha, origen y custodio. En EC2, preservar el estado y los registros relevantes en un destino con acceso restringido y separado de la instancia afectada; crear una instantánea si corresponde. No copiar secretos a la bitácora pública ni borrar evidencia. Documentar el plazo excepcional de conservación y eliminarla al cerrar su finalidad.
 3. **Contener** según la guía del escenario (4.2).
-4. **Evaluar el impacto:** qué datos, de cuántas personas, desde cuándo, y si el riesgo para ellas es alto. Usar el inventario de la DPIA y las entidades afectadas de la sección 7.2 del informe.
+4. **Evaluar el impacto:** qué datos, de cuántas personas, desde cuándo, y si el riesgo para ellas es alto. Usar el inventario de la DPIA y las entidades afectadas de la sección 2.2.
 5. **Decidir y registrar las comunicaciones** de la sección 5 según los datos y derechos afectados, aunque todavía falte parte de la investigación.
 6. **Erradicar y recuperar** (sección 6).
 7. **Cerrar** con la revisión posterior (sección 7).
@@ -85,6 +128,9 @@ Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authen
 | **Fuga del `.env`** (secretos del servidor) | Rotar los secretos expuestos según el calendario de uso seguro; para `TOTP_ENCRYPTION_KEY`, preservar la anterior hasta recifrar o reconstruir de forma controlada los factores | Revisar el historial de git (gitleaks), los registros y los accesos a la base | Si hay indicios de acceso a la base, tratar como S2 |
 | **S5 / S4: la llave o el dispositivo de una persona** | La persona cancela su registro o publica una llave nueva desde otro dispositivo; sus contactos reciben la alerta | La persona crea una identidad nueva y repite las verificaciones | Asistir a la persona; evaluar el tratamiento bajo responsabilidad del equipo y los criterios de la sección 5, sin descartar el incidente solo por ocurrir en un dispositivo personal |
 | **S7 / S8: dependencia maliciosa o defecto del protocolo** | Retirar la versión afectada; avisar a las personas que bloqueen la aplicación hasta actualizar | Corregir, agregar una prueba que reproduzca el defecto, publicar una versión nueva y pedir rotar las sesiones (las sesiones viejas se descartan al rotar) | Evaluar los datos, las personas y los derechos afectados conforme al art. 34 |
+| **S1: brecha en Discord o intercepción de red** | Confirmar con Discord el alcance; comprobar que en el canal solo hay mensajes `E2EE1:` y que ningún cliente aceptó mensajes alterados (se marcan "no descifrable") | No hay llaves que rotar: el contenido sigue cifrado y la PFS protege lo pasado. Si se sospecha que alguien suplantó un *handshake*, pedir a las personas que repitan la verificación de la huella | Evaluar los metadatos expuestos (quién habló con quién y cuándo) como datos personales según la sección 5 |
+| **S10: abuso interno o *phishing* al equipo** | Revocar de inmediato las sesiones y credenciales de la persona afectada (AWS, Supabase, GitHub, Discord Developer Portal) y cambiar sus contraseñas desde un equipo seguro | Revisar en la auditoría cambios de llave, cancelaciones y accesos en la ventana del incidente; restaurar llaves alteradas desde la última copia verificada; rotar los secretos que esa persona podía ver según el calendario de uso seguro | Evaluar art. 34.1 si hubo acceso a la base o a las copias; el contenido de los mensajes no está al alcance del operador |
+| **S11: página maliciosa contra la API local** | La persona bloquea la aplicación y detiene el cliente local; se genera un `CLIENT_API_TOKEN` nuevo | Revisar que `CLIENT_ALLOWED_ORIGIN` sea el origen del frontend; si se enviaron mensajes en su nombre, avisar a esos contactos por otra vía. Si el ataque explotó un defecto del cliente, tratarlo como S8 | Evaluar si se leyeron chats de terceros y aplicar la sección 5 |
 | **Enumeración o `acceso_ajeno`** | Bajar los límites de solicitudes; bloquear el origen en el firewall si persiste | Revisar si algún intento tuvo éxito (cambios de llave en la ventana) | No, salvo que haya tenido éxito |
 
 ## 5. Notificación
