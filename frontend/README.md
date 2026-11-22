@@ -10,7 +10,7 @@ Sigue la [guía de ejecución local](../docs/guia/ejecucion-local.md): incluye l
 
 ```bash
 npm run typecheck      # TypeScript
-npm test               # 28 pruebas unitarias (lib/): formato, huella y QR, estados, errores, cliente HTTP
+npm test               # 39 pruebas unitarias (lib/): formato, huella y QR, estados, errores, cliente HTTP
 npm run build && npm run e2e   # 19 comprobaciones en Chromium real contra client.dev
 ```
 

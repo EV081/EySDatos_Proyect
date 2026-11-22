@@ -1,19 +1,19 @@
 # Políticas de uso seguro
 
-**Versión 1.3, 15 de noviembre de 2026.** Estas políticas establecen el uso del MFA, el vencimiento de la sesión local y la custodia de la clave que cifra el TOTP. Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator.
+Estas políticas establecen el uso del MFA, el vencimiento de la sesión local, la custodia de la clave que cifra el TOTP y la concientización y formación del equipo. Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator.
 
 ## 1. Para las personas usuarias
 
 | Política | Por qué |
 |---|---|
-| Usa una **contraseña maestra** larga y única (una frase de 4 o más palabras), que no uses en otro sitio. No podemos restablecerla; conserva una exportación de identidad con otra contraseña que recuerdes | Protege a la vez tu llave, tu historial y tus contactos (punto único de falla, sección 7.3 del informe) |
+| Usa una **contraseña maestra** larga y única (una frase de 4 o más palabras), que no uses en otro sitio. No podemos restablecerla; conserva una exportación de identidad con otra contraseña que recuerdes | Protege a la vez tu llave, tu historial y tus contactos (punto único de falla, sección 2.3 del [plan de incidentes](respuesta-incidentes.md)) |
 | **Protege el autenticador y sus códigos de recuperación.** Guarda los códigos fuera del dispositivo, no los compartas y comprueba el dominio antes de escribir un TOTP | El código es temporal, pero un sitio falso puede usarlo mientras sigue vigente. La recuperación no recupera tu contraseña maestra |
 | **Verifica** a cada contacto comparando la huella **fuera de Discord** (en persona, por llamada o con el QR) antes de hablar de algo sensible | Es la única defensa contra un directorio que entregue una llave falsa (R2). Un contacto sin verificar se muestra como tal |
 | Si aparece la **alerta de cambio de llave**, no sigas la conversación: confirma con la persona por otra vía y repite la verificación. La aplicación no ofrece "continuar" | Un cambio de llave inesperado puede ser una suplantación |
 | **Bloquea** la aplicación cuando no la uses y protege el dispositivo (bloqueo de pantalla, sistema actualizado, antivirus) | Con la aplicación desbloqueada, quien tenga el dispositivo ve todo (S4) |
 | Guarda tu **exportación de identidad** en un medio fuera del dispositivo, con otra contraseña fuerte | Respalda la identidad y la clave del almacén, pero no incluye historial ni contactos. Para recuperarlos también hace falta el almacén local cifrado; una exportación con contraseña débil expone tus llaves |
 | Si pierdes el dispositivo o sospechas que tu llave se filtró, **cancela tu registro** o publica una llave nueva, y avisa a tus contactos | Tus contactos recibirán la alerta y dejarán de confiar en la llave vieja |
-| La aplicación es para **mayores de edad** y para conversaciones legítimas. No la uses para acosar, para el fraude ni para compartir contenido ilegal | Aviso de privacidad y consideraciones éticas (6.3) |
+| La aplicación es para **mayores de edad** y para conversaciones legítimas. No la uses para acosar, para el fraude ni para compartir contenido ilegal | Aviso de privacidad y consideraciones éticas (informe, sección 6.2) |
 | Recuerda que Discord y los miembros del canal ven **quién habla con quién y cuándo**, aunque no el contenido | Los metadatos no están protegidos (R1) |
 
 ## 2. Para el equipo que opera el servicio
@@ -69,6 +69,15 @@
 ### 2.6 Revisión interna y aprobación
 
 Completamos la revisión cruzada del proyecto, la revisión humana del protocolo y el análisis automatizado de seguridad. Aprobamos las medidas y los riesgos residuales descritos en la [DPIA](../dpia/DPIA.md), donde consignamos nuestros correos elmer.villegas@utec.edu.pe y farid.aquino@utec.edu.pe como firma. El [plan de respuesta a incidentes](respuesta-incidentes.md) establece los roles, contactos y procedimientos de actuación.
+
+### 2.7 Concientización y formación
+
+* **Al incorporarse**, cada integrante lee estas políticas, el [plan de respuesta a incidentes](respuesta-incidentes.md), la [DPIA](../dpia/DPIA.md) y la [política de privacidad](../privacidad/politica-de-privacidad.md), y confirma en el PR de su primer cambio que las leyó.
+* **Los incidentes reales se usan para aprender.** Cada revisión posterior (por ejemplo, INC-2026-01) termina con una regla, una prueba o un cambio de política, y se comenta con todo el equipo.
+* **Simulacros:** el simulacro en papel del plan de incidentes es también la práctica del equipo. Se hace cada semestre y antes de ampliar el uso.
+* **Revisión de código como formación:** quien revisa un PR comprueba los puntos de estas políticas (secretos, dependencias, registros sin datos personales) y explica en el comentario lo que falta.
+* **Concientización de las personas usuarias:** la sección 1 de estas políticas se muestra en lenguaje simple; el aviso de privacidad se acepta antes de crear la identidad, y la aplicación explica qué significan la huella, la alerta de cambio de llave y el bloqueo.
+* **Actualización:** cuando cambia una política, el plan o la DPIA, se sube su versión y se avisa al equipo en el PR que lo cambia.
 
 ## 3. Incumplimiento
 

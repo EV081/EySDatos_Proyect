@@ -1,7 +1,7 @@
 # Política de privacidad
 
-**Versión:** 1.4
-**Vigente desde:** 2026-11-14
+**Versión:** 1.5
+**Vigente desde:** 2026-11-22
 
 Esta política explica, con palabras simples, cómo cuidamos tus datos personales y cómo puedes ejercer tus derechos. Sigue la Ley N.° 29733, Ley de Protección de Datos Personales del Perú, y su reglamento. El detalle de qué datos se publican y para qué está en el Aviso de privacidad, que aceptas al crear tu identidad (página /privacidad).
 
@@ -18,6 +18,8 @@ Esta política explica, con palabras simples, cómo cuidamos tus datos personale
 ## Qué es la Ley 29733
 
 Es la ley peruana que protege tus datos personales: cualquier información que sirva para identificarte, como tu nombre, tu DNI o, en nuestro caso, tu ID de Discord. La ley dice que quien usa tus datos debe pedirte permiso, decirte para qué los usa, cuidarlos y dejarte controlarlos.
+
+Nos aplica porque el sistema se hace en Perú y trata datos de personas identificables. Seguimos la ley y su reglamento, el Decreto Supremo N.° 016-2024-JUS. Si algún día ofreciéramos el servicio a personas en la Unión Europea, también podría aplicar el GDPR (art. 3.2); hoy no es el caso.
 
 ## Quién es responsable de tus datos
 
@@ -37,7 +39,7 @@ La ley establece reglas básicas, llamadas principios. Así las cumplimos:
 - **Calidad:** tus datos deben ser correctos. Si tu llave cambia, puedes actualizarla.
 - **Seguridad:** ciframos tus mensajes de extremo a extremo, tu llave privada queda protegida con tu contraseña maestra y el directorio usa conexiones protegidas y permisos mínimos.
 - **Disposición de recurso:** si crees que algo está mal, tienes un camino para reclamar, primero con nosotros y luego ante la ANPD.
-- **Nivel de protección adecuado:** si tus datos pasan por otro país, como los servidores de Discord en Estados Unidos, el contenido viaja cifrado y nadie allí puede leerlo.
+- **Nivel de protección adecuado:** si tus datos pasan por otro país, como los servidores de Discord en Estados Unidos, el contenido viaja cifrado y nadie allí puede leerlo. Discord recibe solo texto cifrado y metadatos. El directorio en AWS EC2 (`us-east-1`) valida tu segundo factor, y Supabase guarda tu registro y los datos privados de autenticación cifrados. El cifrado no reemplaza revisar las garantías de esos proveedores, y esa revisión está pendiente.
 
 ## Tus derechos ARCO, en simple
 
@@ -72,6 +74,8 @@ Puedes oponerte a que usemos tus datos o retirar el permiso que nos diste, si ti
 - **Información:** conocer, antes de dar tus datos, quién los usará, para qué y por cuánto tiempo. Por eso te mostramos el aviso de privacidad antes de crear tu identidad.
 - **Portabilidad:** llevar tu identidad a otro dispositivo. La aplicación te permite exportarla en un archivo cifrado con la contraseña que elijas para esa exportación; no incluye el historial ni los contactos.
 - **Tutela:** reclamar ante la ANPD si no respetamos tus derechos.
+
+No tomamos decisiones automatizadas sobre ti.
 
 ## Cómo pedir tus derechos
 
@@ -115,6 +119,15 @@ Si no te respondemos a tiempo, o si nuestra respuesta no te convence, puedes pre
 Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authenticator. La contraseña cifra la bóveda; el TOTP permite abrirla desde la aplicación oficial. No modifica el cifrado de los archivos: quien tenga una copia y la contraseña correcta puede descifrarlos con otro programa. Cerrar la pestaña no bloquea por sí solo el cliente; debes bloquearlo o esperar a que venza el plazo local.
 
 Si pierdes el autenticador, usa un código de recuperación después de entrar con Discord para vincular uno nuevo. Esos códigos no recuperan la contraseña maestra. Cancelar el registro borra el factor: exporta lo necesario antes de cancelar, porque no podrás validar el próximo desbloqueo habitual de los archivos conservados.
+
+## Lo que nos exige la ley y cómo vamos
+
+- **Aviso de privacidad:** hecho. Lo ves dentro de la aplicación antes de crear tu identidad e incluye nuestros correos. Nos falta agregar un domicilio postal antes de ampliar el uso.
+- **Medidas de seguridad:** están en el código, incluido el borrado de los datos de tu dispositivo. Nos falta comprobar las medidas operativas en el servidor desplegado.
+- **Avisar si hay un incidente:** nuestro plan de respuesta a incidentes define cuándo avisamos a la ANPD (como máximo en 48 horas), a ti y al Centro Nacional de Seguridad Digital, según el artículo 34 del reglamento. Nos falta hacer el primer simulacro.
+- **Inscribir el banco de datos:** pendiente. Antes de ampliar el uso evaluaremos si corresponde inscribirlo ante la ANPD y, si corresponde, haremos el trámite.
+- **Oficial de datos personales:** no hemos designado uno. Los dos hacemos la revisión interna y respondemos los correos de contacto. Revisaremos si hace falta designarlo antes de ampliar el uso.
+- **Evaluación de impacto (DPIA):** hecha y aprobada por los dos.
 
 ## Menores de edad
 
