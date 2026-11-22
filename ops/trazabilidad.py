@@ -1,6 +1,6 @@
 """Tabla de trazabilidad requerimiento ↔ evidencia (F8): `python -m ops.trazabilidad [--check]`.
 
-Lee los requerimientos del informe (`**RF1:**`, `**RS1:**`), las restricciones de la DPIA (`**C-05**`) y los nombres
+Lee los requerimientos de la primera entrega y del informe (`**RF1:**`, `**RS1:**`), las restricciones de la DPIA (`**C-05**`) y los nombres
 de las pruebas (`test_RS4_nonce_unico`, `test('RF9 ...')`), y escribe `docs/trazabilidad/trazabilidad.md`. Con `--check`
 (en CI) falla si el archivo no está al día o si un requerimiento no tiene ninguna evidencia.
 """
@@ -16,7 +16,7 @@ PY_TESTS = ("crypto", "client", "directory", "discord_adapter", "ops")
 TS_TESTS = ("frontend/test", "frontend/e2e")
 TAG = re.compile(r"^(RF\d+|RS\d+|C-?\d{2})$")
 
-# Requerimientos que se cumplen con las pruebas de otra etiqueta (la sección 3.3 del informe los deriva de la DPIA).
+# Requerimientos que se cumplen con las pruebas de otra etiqueta (la sección 3.1 del informe los deriva de la DPIA).
 ALIASES = {"RF15": ["C-11"], "RS16": ["C-06"], "RS17": ["C-08"], "RS18": ["C-07"], "RS19": ["C-09"],
            "RS20": ["C-12"]}
 
@@ -52,9 +52,10 @@ def _norm(tag: str) -> str:
 
 def requirements() -> list[tuple[str, str]]:
     found = []
-    report = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
-    for m in re.finditer(r"^\* \*\*(R[FS]\d+):\*\* (.+)$", report, re.M):
-        found.append((m.group(1), m.group(2).strip()))
+    for doc in ("primera-entrega.md", "README.md"):  # RF1-RF14 y RS1-RS15; luego los agregados en la implementación
+        report = (ROOT / "docs" / doc).read_text(encoding="utf-8")
+        for m in re.finditer(r"^\* \*\*(R[FS]\d+):\*\* (.+)$", report, re.M):
+            found.append((m.group(1), m.group(2).strip()))
     dpia = (ROOT / "docs" / "dpia" / "DPIA.md").read_text(encoding="utf-8")
     seen = set()
     for m in re.finditer(r"^\| \*\*(C-\d{2})\*\* \| ([^|]+)\|", dpia, re.M):
@@ -90,7 +91,7 @@ def render() -> tuple[str, list[str]]:
     missing = []
     lines = ["# Trazabilidad requerimiento ↔ evidencia", "",
              "Generado por `python -m ops.trazabilidad` a partir de los nombres de las pruebas; la CI comprueba que esté "
-             "al día. Requerimientos: informe, sección 3; restricciones C-xx: DPIA, sección 6.", "",
+             "al día. Requerimientos: primera entrega e informe, sección 3; restricciones C-xx: DPIA, sección 6.", "",
              "| Requerimiento | Descripción | Pruebas | Evidencia |", "|---|---|---|---|"]
     for rid, text in reqs:
         found = index.get(rid, []) + [f"{ref} (vía {alias})" for alias in ALIASES.get(rid, [])

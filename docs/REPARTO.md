@@ -6,7 +6,7 @@ Leyenda de estado: Hecho = implementado con evidencia; Parcial = faltan acciones
 
 ## 1. Diseño de seguridad (resumen)
 
-El diseño completo y su justificación están en el informe ([README.md](README.md), secciones 2 y 4.2). En una línea: identidad Ed25519 que solo firma; *handshake* autenticado de tres mensajes con Diffie-Hellman efímero en ambos extremos (X25519), claves de sesión distintas por dirección con HKDF-SHA256, mensajes con AES-256-GCM, contador anti-*replay* y rotación a los 100 mensajes o 8 h; ceremonia de verificación fuera de banda con *pin* de llaves. El desbloqueo habitual exige contraseña, desafío firmado y TOTP; la sesión local vence a los 30 minutos por defecto.
+El diseño completo y su justificación están en el documento de la [primera entrega](primera-entrega.md) (secciones 2 y 4.2). En una línea: identidad Ed25519 que solo firma; *handshake* autenticado de tres mensajes con Diffie-Hellman efímero en ambos extremos (X25519), claves de sesión distintas por dirección con HKDF-SHA256, mensajes con AES-256-GCM, contador anti-*replay* y rotación a los 100 mensajes o 8 h; ceremonia de verificación fuera de banda con *pin* de llaves. El desbloqueo habitual exige contraseña, desafío firmado y TOTP; la sesión local vence a los 30 minutos por defecto.
 
 **Discord como transporte.** La API oficial no permite escribir en nombre de un usuario, así que cada persona usa su propio bot en un canal privado del servidor del proyecto. El autor que muestra Discord siempre es un bot y no se usa: el emisor y el receptor viajan dentro del mensaje y se autentican con el *handshake*.
 
@@ -18,15 +18,15 @@ Informe: Motivación, Trasfondo Teórico, Diseño, privacidad y ética (DPIA inc
 
 | ID | Tarea | Estado |
 |---|---|---|
-| E1 | Protocolo (*handshake* autenticado con PFS), secciones 2, 4.2 y 5.2 del informe, diagramas y tabla de ataques considerados | Hecho |
+| E1 | Protocolo (*handshake* autenticado con PFS), secciones 2, 4.2 y 5.1 de la [primera entrega](primera-entrega.md), diagramas y tabla de ataques considerados | Hecho |
 | E2 | Librería `crypto/`: identidad y bóveda (Argon2id + AES-GCM), exportación/importación, *handshake*, sesión, huella. Con pruebas de los caminos de rechazo | Hecho (129 pruebas de criptografía) |
-| E3 | API local del cliente (`client/`): orquesta crypto, directorio y Discord; cola, reintentos, rotación, alertas, desbloqueo con MFA y vencimiento local de sesión | Hecho (87 pruebas del cliente) |
-| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, QR de verificación, alertas y campo TOTP al desbloquear | Hecho (38 pruebas unitarias; QR y sección "Mis datos" (ARCO) implementados; ver `frontend/e2e/smoke.mjs`). MFA desplegado y probado con Microsoft Authenticator |
+| E3 | API local del cliente (`client/`): orquesta crypto, directorio y Discord; cola, reintentos, rotación, alertas, desbloqueo con MFA y vencimiento local de sesión | Hecho (91 pruebas del cliente) |
+| E4 | Frontend en Next.js (`frontend/`): identidad, contactos, chat, QR de verificación, alertas y campo TOTP al desbloquear | Hecho (39 pruebas unitarias; QR y sección "Mis datos" (ARCO) implementados; ver `frontend/e2e/smoke.mjs`). MFA desplegado y probado con Microsoft Authenticator |
 | E5 | DPIA con la plantilla de siete pasos ([dpia/DPIA.md](dpia/DPIA.md)); consentimiento por versión en cliente y frontend | Hecho (aprobación y correos como firma en el paso 7) |
-| E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 y consideraciones éticas (informe, secciones 6.2 y 6.3) | Hecho (correos publicados; falta domicilio postal antes de ampliar el uso) |
-| E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.4); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | Hecho (16 pruebas) |
-| E8 | Riesgos de una brecha y entidades afectadas (informe, sección 7) y recomendaciones futuras (sección 8) | Hecho |
-| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer; informe, sección 11) y su parte de las conclusiones (sección 10) | Parcial borrador, falta que Elmer lo ajuste |
+| E6 | Ética y privacidad: aviso de privacidad completo ([privacidad/aviso-de-privacidad.md](privacidad/aviso-de-privacidad.md), publicado también en la aplicación), cumplimiento de la Ley 29733 ([política de privacidad](privacidad/politica-de-privacidad.md)) y consideraciones éticas (informe, sección 6.2) | Hecho (correos publicados; falta domicilio postal antes de ampliar el uso) |
+| E7 | Clasificación de datos y técnicas de privacidad (informe, sección 6.3); seudonimización con HMAC y enmascarado de referencia en `crypto/pseudonym.py` | Hecho (16 pruebas) |
+| E8 | Riesgos de una brecha y entidades afectadas ([plan de incidentes](politicas/respuesta-incidentes.md), secciones 2.1 a 2.3) y recomendaciones futuras (informe, sección 7) | Hecho |
+| E9 | Lecciones aprendidas y retrospectiva (parte de Elmer; informe, sección 10) y su parte de las conclusiones (sección 9) | Parcial borrador, falta que Elmer lo ajuste |
 
 ### Farid — Directorio, Discord, operaciones y herramientas
 
@@ -41,9 +41,8 @@ Informe: Requerimientos, Implementación lograda, operaciones, políticas e inci
 | F5 | **Registros de auditoría y alertas**: eventos de registro y cambio de llave, fallos de firma, enumeración; sin texto, llaves ni IDs en claro (usar `Pseudonymizer` de `crypto/pseudonym.py` con la clave en `PSEUDONYM_KEY`); retención de 90 días | Hecho (10 pruebas; tarea diaria `ops.scheduled`) |
 | F6 | **Análisis de código**: Bandit o Semgrep, pip-audit con SBOM, gitleaks y pruebas de acceso ajeno por endpoint, en CI; reportes antes y después | Hecho ([ops/reports/README.md](../ops/reports/README.md)) |
 | F7 | **Políticas de uso seguro** y **plan de respuesta a incidentes** (NIST SP 800-61 rev. 3), con notificación a la ANPD en 48 h | Hecho ([politicas/](politicas/), plan v1.5 y uso seguro v1.3; primer incidente real registrado, INC-2026-01); falta registrar el simulacro |
-| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.3, 5.7, 5.8 y 9; [trazabilidad.md](trazabilidad/trazabilidad.md), generada y comprobada en CI) |
-| F9 | Lecciones aprendidas y retrospectiva (parte de Farid): informe, sección 11.1 | Hecho (falta la revisión de Elmer) |
-| F10 | **Privacidad diferencial** en las estadísticas del directorio (RS21): `ops/dp/` con OpenDP, ε = 1 por reporte y tope mensual; experimento de utilidad frente a ε; informe, secciones 9 y 10 | Hecho (9 pruebas; [ops/reports/dp-experimento.md](../ops/reports/dp-experimento.md)) |
+| F8 | Informe: requerimientos actualizados, implementación lograda y tabla de trazabilidad requerimiento <-> evidencia | Hecho (informe 3.1, 5.1, 5.2 y 8; [trazabilidad.md](trazabilidad/trazabilidad.md), generada y comprobada en CI) |
+| F9 | Lecciones aprendidas y retrospectiva (parte de Farid): informe, sección 10.1 | Hecho (falta la revisión de Elmer) |
 
 ### Compartido (al final)
 
@@ -119,7 +118,7 @@ frontend ──HTTP──▶ client ──▶ crypto
 
 ## 5. Orden de trabajo
 
-1. Implementamos la criptografía, el cliente, el frontend, el directorio, el transporte por Discord, las operaciones y las estadísticas con privacidad diferencial (F10); desplegamos y probamos el MFA con Microsoft Authenticator.
+1. Implementamos la criptografía, el cliente, el frontend, el directorio, el transporte por Discord y las operaciones; desplegamos y probamos el MFA con Microsoft Authenticator.
 2. Mantener el informe, la DPIA, el inventario de autenticación y las instrucciones de recuperación al día.
 3. Observar una ejecución automática de los respaldos en S3, registrar el simulacro de incidentes y probar el inicio de sesión del servicio recuperado con su clave de cifrado TOTP.
 4. Completar la parte de Elmer de las lecciones aprendidas y de las conclusiones, la presentación y el ensayo conjunto. Aprobamos la DPIA y consignamos nuestros correos como firma en el paso 7.
@@ -137,5 +136,4 @@ frontend ──HTTP──▶ client ──▶ crypto
 - [ ] Registros de auditoría, una copia de seguridad cifrada con su restauración, y el reporte del análisis de código (antes y después).
 - [ ] Mostrar desbloqueo con contraseña y Authenticator, rechazo de un código reutilizado y bloqueo por vencimiento de la sesión local.
 - [ ] Mostrar que una caída del directorio impide nuevos desbloqueos; no confundirlo con la demo offline sin MFA.
-- [ ] Estadísticas con privacidad diferencial: `python -m ops.dp.metrics report` dos veces (los números cambian), la tabla del experimento y el rechazo cuando se agota el presupuesto del mes.
 - [ ] La DPIA, la recuperación del autenticador y el plan de incidentes.
