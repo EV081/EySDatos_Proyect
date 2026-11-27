@@ -34,7 +34,7 @@ Lo que ya existe y que este plan usa:
 | Alerta de cambio de llave a los contactos | Cliente: revoca la verificación y avisa al detectar un cambio de llave |
 | Segundo factor y desbloqueo | OAuth2 + TOTP para el registro; desafío firmado + TOTP para desbloquear. Sesión local de 30 minutos por defecto; eventos `mfa_rechazado`, `mfa_recuperacion` y `sesion_local` en la auditoría |
 | Inventario de datos y riesgos | [DPIA](../dpia/DPIA.md), sección 6.3 del [informe](../README.md) y secciones 2.1 a 2.3 de este plan |
-| Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase; confirmar la región del proyecto de la base. Respaldos cifrados en S3, Virginia del Norte (`us-east-1`). Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado |
+| Inventario del alojamiento | EC2 en Virginia del Norte (`us-east-1`) y PostgreSQL en Supabase, también en `us-east-1`. Respaldos cifrados en S3, Virginia del Norte (`us-east-1`). Mantener los identificadores de instancia, grupos de seguridad y accesos IAM en el registro privado |
 
 **Comprobaciones operativas:** verificar TLS, permisos IAM, acceso de administración restringido y retención en el alojamiento. La tarea de copias está instalada y activa; descargamos una copia cifrada de S3 y la restauramos en PostgreSQL aislado, con 2 registros y 1 factor MFA descifrable mediante la clave original. Nos falta observar una ejecución automática y probar el inicio de sesión del servicio recuperado. Custodiamos la llave privada de la CA y la clave de los respaldos fuera de la instancia.
 

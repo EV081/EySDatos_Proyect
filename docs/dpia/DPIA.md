@@ -32,7 +32,7 @@
 
 ![Flujo de datos entre el dispositivo, el directorio en EC2 y Discord](../img/dpia-tratamiento.png)
 
-El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL está alojado en Supabase, en el proyecto que elegimos; debemos registrar su región por separado de la de EC2. El cliente y el frontend siguen en el dispositivo de cada persona. Desplegamos y probamos el MFA del registro y del desbloqueo habitual con Microsoft Authenticator. Las copias cifradas se guardan en el bucket privado S3 `proyecto-eticayseguridad`, en `us-east-1`; descargamos una copia y la restauramos en PostgreSQL aislado.
+El directorio está desplegado en Amazon EC2, en Virginia del Norte, Estados Unidos (`us-east-1`). PostgreSQL está alojado en Supabase, en la misma región (`us-east-1`). El cliente y el frontend siguen en el dispositivo de cada persona. Desplegamos y probamos el MFA del registro y del desbloqueo habitual con Microsoft Authenticator. Las copias cifradas se guardan en el bucket privado S3 `proyecto-eticayseguridad`, en `us-east-1`; descargamos una copia y la restauramos en PostgreSQL aislado.
 
 | Etapa | Qué ocurre | Dónde |
 |---|---|---|
@@ -77,7 +77,7 @@ Definimos estos plazos en el código y en las políticas. Debemos comprobar su p
 **Categorías especiales:** el sistema no las recoge ni puede leerlas; solo podrían aparecer dentro de los mensajes, que solo ven las personas que conversan.
 **Volumen y frecuencia:** demostración con 2 usuarios; uso real previsto de decenas. Un registro por persona; los mensajes dependen de ellas.
 **Personas afectadas:** usuarios de la aplicación y sus contactos (que solo se publican mediante registro con OAuth2, prueba de posesión y consentimiento: ver R7).
-**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio se aloja en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL se aloja en Supabase. Nos falta confirmar la región de Supabase; no podemos deducirla de la región de EC2. Las copias cifradas se alojan en S3, en Virginia del Norte (`us-east-1`).
+**Área geográfica:** Participantes del proyecto en Perú. Discord trata datos en su infraestructura internacional. El directorio se aloja en AWS EC2, en Virginia del Norte, Estados Unidos (`us-east-1`); PostgreSQL se aloja en Supabase, también en Virginia del Norte (`us-east-1`). Las copias cifradas se alojan en S3, en Virginia del Norte (`us-east-1`).
 
 ### 2.3 Contexto
 
@@ -132,7 +132,7 @@ Definimos estos plazos en el código y en las políticas. Debemos comprobar su p
 | Borrado local de datos | La persona borra la bóveda y el almacén cifrado mediante su contraseña maestra | Implementado en «Borrar mis datos de este dispositivo» |
 
 * **Encargados:** Discord **no** es un encargado nuestro: es un responsable independiente de su propia plataforma. AWS presta el alojamiento del directorio en EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y Supabase presta el alojamiento de PostgreSQL. El directorio se conecta a la base con el rol de aplicación y verificación TLS. Debemos revisar las condiciones de tratamiento y los accesos de administración, incluidos los respaldos cifrados en S3 (`us-east-1`). El cifrado E2EE no elimina el tratamiento de los identificadores por estos proveedores.
-* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio trata identificadores y datos de autenticación en Estados Unidos (`us-east-1`). Supabase almacena los registros y datos privados de autenticación en la región configurada para su proyecto; debemos confirmar y documentar esa región para evaluar el flujo internacional completo. Esto constituye otro flujo internacional de datos personales; debemos revisar las garantías aplicables, incluidas las de los respaldos cifrados en S3, en Virginia del Norte.
+* **Transferencias internacionales:** a Discord (EE. UU.) viajan solo texto cifrado y metadatos; el contenido no puede leerse en destino. El directorio trata identificadores y datos de autenticación en Estados Unidos (`us-east-1`). Supabase almacena los registros y datos privados de autenticación en la misma región (`us-east-1`). Esto constituye otro flujo internacional de datos personales desde Perú; debemos revisar las garantías aplicables, incluidas las de los respaldos cifrados en S3, en Virginia del Norte.
 
 ---
 
@@ -256,7 +256,7 @@ Identificamos las medidas como **restricciones verificables** (C-xx). Indicamos 
 | Acción | Responsable | Restricción | Para cuándo |
 |---|---|---|---|
 | Validar TLS, accesos de administración, registros, retención, copias externas y restauración en el despliegue | Infraestructura | C-05 a C-13 | Antes de ampliar el uso |
-| Confirmar la región del proyecto Supabase; revisar las condiciones de AWS y Supabase y las garantías de los respaldos en S3 | Equipo | C-24 | Antes de ampliar el uso |
+| Revisar las condiciones de AWS y Supabase y las garantías de los respaldos en S3 | Equipo | C-24 | Antes de ampliar el uso |
 | Completar la recuperación del autenticador en la aplicación; la restauración desde S3 ya recuperó la base y permitió descifrar 1 factor MFA con la clave original, sin probar todavía un inicio de sesión tras la recuperación | Equipo | C-25, R14 | Antes de ampliar el uso |
 | Realizar y registrar el simulacro del plan de incidentes | Equipo | C-19 | Antes de la entrega |
 | Incorporar un contexto exclusivo para la firma de solicitudes de cancelación | Criptografía y cliente | C-11 | Antes de ampliar el uso |

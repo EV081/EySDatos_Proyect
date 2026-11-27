@@ -107,7 +107,7 @@ digraph G {{
   local [label=<<b>Dispositivo de la persona</b><br/>Frontend + cliente local<br/>Bóveda de identidad y almacén cifrados>, color="{VERDE}", fillcolor="{VERDE_F}"];
   ec2 [label=<<b>Directorio en AWS EC2</b><br/>Virginia del Norte: us-east-1<br/>Registro, consultas y validación MFA>, color="{AZUL}", fillcolor="{AZUL_F}"];
   discord [label=<<b>Discord</b><br/>Canal privado con bots<br/>Texto cifrado + metadatos>, color="{ROJO}", fillcolor="{ROJO_F}"];
-  base [label=<<b>PostgreSQL en Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación<br/>Región del proyecto por confirmar>, shape=cylinder, color="{AZUL}", fillcolor="{AZUL_F}"];
+  base [label=<<b>PostgreSQL en Supabase</b><br/>ID, llave pública, fechas y aviso<br/>TOTP cifrado + hashes de recuperación<br/>Región us-east-1>, shape=cylinder, color="{AZUL}", fillcolor="{AZUL_F}"];
   backup [label=<<b>Respaldo desde EC2</b><br/>Lectura de la base con permisos mínimos<br/>Cifrado AES-256-GCM antes de subir>, color="{NARANJA}", fillcolor="{NARANJA_F}"];
   audit [label=<<b>Auditoría en EC2</b><br/>IDs seudonimizados, sin contenido<br/>Retención: 90 días>, shape=cylinder, color="{GRIS}", fillcolor="{GRIS_F}"];
   s3 [label=<<b>Amazon S3 · us-east-1</b><br/>Bucket privado, copias cifradas<br/>Retención: 30 días>, shape=cylinder, color="{NARANJA}", fillcolor="{NARANJA_F}"];

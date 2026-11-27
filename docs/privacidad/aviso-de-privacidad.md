@@ -57,14 +57,14 @@ Tu ID de Discord, tu llave pública y la vinculación de una app autenticadora s
 - **Otras personas usuarias:** ven tu ID de Discord y tu llave pública cuando te buscan.
 - **Discord:** recibe tus mensajes **ya cifrados** y los metadatos (quién escribe, a quién, cuándo y de qué tamaño). Discord es un responsable independiente de su propia plataforma.
 - **Quienes operamos el directorio:** accedemos a los datos que conserva, con permisos mínimos.
-- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase. Debemos confirmar y documentar la región del proyecto Supabase. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`).
+- **Proveedor de alojamiento:** el directorio se aloja en Amazon EC2 en Virginia del Norte, Estados Unidos (`us-east-1`), y PostgreSQL está alojado en Supabase, también en Virginia del Norte, Estados Unidos (`us-east-1`). Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`).
 - **Autoridades:** solo si una orden válida lo exige, y únicamente con los datos que realmente conservamos en el directorio y sus registros, descritos en este aviso. **No podemos entregar el contenido de tus mensajes ni tu llave privada, porque no los tenemos.** No existe ninguna llave de acceso excepcional ni puerta trasera.
 
 No vendemos ni cedemos tus datos a otras personas o empresas.
 
 ## Transferencias internacionales
 
-Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios; debemos confirmar la región del proyecto Supabase antes de ampliar el uso con datos de terceros. Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`). Debemos revisar las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
+Tus mensajes cifrados y sus metadatos pasan por los servidores de Discord, que están en Estados Unidos. El contenido viaja cifrado de extremo a extremo y no puede leerse allí. El directorio se aloja en AWS EC2, Virginia del Norte, Estados Unidos (`us-east-1`), y la base PostgreSQL se aloja en Supabase. Tu ID de Discord, llave pública, fechas y datos privados de autenticación se tratan en esos servicios, que están en la misma región (`us-east-1`). Las copias de seguridad se conservan cifradas en Amazon S3, en Virginia del Norte, Estados Unidos (`us-east-1`). Debemos revisar las condiciones del proveedor y las garantías aplicables antes de ampliar el uso con datos de terceros.
 
 ## Cuánto tiempo conservamos tus datos
 

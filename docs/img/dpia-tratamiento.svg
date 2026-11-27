@@ -51,7 +51,7 @@
 <text xml:space="preserve" text-anchor="start" x="57.52" y="-304.52" font-family="Noto Sans" font-weight="bold" font-size="12.00">PostgreSQL en Supabase</text>
 <text xml:space="preserve" text-anchor="start" x="45.52" y="-292.52" font-family="Noto Sans" font-size="12.00">ID, llave pública, fechas y aviso</text>
 <text xml:space="preserve" text-anchor="start" x="21.52" y="-280.52" font-family="Noto Sans" font-size="12.00">TOTP cifrado + hashes de recuperación</text>
-<text xml:space="preserve" text-anchor="start" x="33.9" y="-268.52" font-family="Noto Sans" font-size="12.00">Región del proyecto por confirmar</text>
+<text xml:space="preserve" text-anchor="start" x="84.52" y="-268.52" font-family="Noto Sans" font-size="12.00">Región us-east-1</text>
 </g>
 
 <g id="edge3" class="edge">
