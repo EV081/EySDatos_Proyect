@@ -119,7 +119,7 @@ Antes de usar datos reales hicimos una DPIA con la plantilla de siete pasos de l
 | R13 | Defecto del protocolo sin auditoría externa | Alto | Medio (aceptado) |
 | R14 | Pérdida del autenticador o indisponibilidad de la validación remota | Alto | Medio (aceptado) |
 
-**Medidas.** Definimos 25 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
+**Medidas.** Definimos 26 condiciones de seguridad y privacidad. Cada una se relaciona con una prueba o evidencia. Las principales: E2EE con PFS, verificación fuera de banda con *pin*, cifrado en reposo con Argon2id y bloqueo tras intentos fallidos, directorio mínimo, TLS 1.3 con CA propia, registros con IDs seudonimizados y plazos de retención, consentimiento por versión y desbloqueo con MFA y caducidad local (C-25).
 
 **Decisión.** Revisamos de forma cruzada el proyecto y realizamos la revisión humana del protocolo. Aprobamos la DPIA y aceptamos seis riesgos residuales de nivel medio por las razones expuestas en el paso 6. Consignamos nuestros correos como firma en el paso 7. El directorio está desplegado en EC2 y los clientes se ejecutan localmente. Implementamos el análisis de código, el borrado local y el MFA, que desplegamos y probamos con Microsoft Authenticator. Antes de ampliar el uso, debemos realizar el simulacro de incidentes, completar las comprobaciones operativas del alojamiento y revisar los requisitos de C-24.
 
