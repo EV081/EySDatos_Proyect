@@ -645,7 +645,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke
 </section>
 
 <!-- 12 · ÉTICA + INCIDENTES -->
-<section class="slide" data-time="60" data-short="1" data-notes="La decisión ética central es que no hay llave de custodia ni puerta trasera: tiene costo, porque ante una orden solo podemos entregar lo que guarda el directorio. Las llaves son de la persona: no podemos restablecer su contraseña. El cifrado protege también a quien abusa; la denuncia verificable queda como mejora. Y los metadatos delatan: con datos 'anónimos' de Netflix se reidentificó al 99 %. Si algo falla, el plan sigue NIST SP 800-61 rev. 3 y el art. 34 del reglamento: notificar a la ANPD en máximo 48 horas cuando corresponde. El peor caso es una dependencia maliciosa, porque corre donde está el texto plano.">
+<section class="slide" data-time="60" data-short="1" data-notes="La decisión ética central es que no hay llave de custodia ni puerta trasera: tiene costo, porque ante una orden solo podemos entregar lo que guarda el directorio. Las llaves son de la persona: no podemos restablecer su contraseña. El cifrado protege también a quien abusa; la denuncia verificable queda como mejora. Y los metadatos delatan: con datos 'anónimos' de Netflix se reidentificó al 99 %. Si algo falla, el plan sigue NIST SP 800-61 rev. 3 y el art. 34 del reglamento: notificar a la ANPD en máximo 48 horas cuando corresponde. El peor caso es una dependencia maliciosa, porque corre donde está el texto plano. Sobre los metadatos: con el mismo canal para todo el grupo, cualquiera de sus miembros ve quién habla con quién y cuándo; con un canal privado por par solo lo ven los dos y Discord. Hoy usamos un canal compartido, que es lo práctico para el grupo; un canal por contacto queda como mejora.">
   <div class="kicker">11 · Ética e incidentes</div>
   <h2 data-scr>Decisiones con <em>costo</em> real</h2>
   <div class="stage" style="align-items:stretch;padding:40px 0 10px">
@@ -653,7 +653,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke
       <div class="card rv" style="--i:0"><h3>Sin llave de custodia</h3><p>Ni autoridad ni operador pueden leer. Ante una orden solo entregamos lo que guarda el directorio.</p><p class="cite" style="margin-top:8px">Abelson et al., 2015</p></div>
       <div class="card rv" style="--i:1"><h3>Las llaves son tuyas</h3><p>No podemos restablecer la contraseña maestra; solo existe la exportación.</p></div>
       <div class="card rv" style="--i:2"><h3>Abuso</h3><p>El cifrado protege igual a quien acosa; la denuncia verificable queda como mejora.</p><p class="cite" style="margin-top:8px">Grubbs et al., 2017</p></div>
-      <div class="card bp rv" style="--i:3"><h3>Los metadatos delatan</h3><p><b class="bp" style="font-size:30px;font-family:var(--head)">99 %</b> reidentificados en Netflix.</p><p class="cite" style="margin-top:8px">Narayanan &amp; Shmatikov, 2008</p></div>
+      <div class="card bp rv" style="--i:3"><h3>Los metadatos delatan</h3><p><b>Mismo canal:</b> todos ven quién habla con quién. <b>Canal privado por par:</b> solo ustedes y Discord.</p><p class="cite" style="margin-top:8px"><b class="bp">99 %</b> reidentificados en Netflix · Narayanan &amp; Shmatikov, 2008</p></div>
     </div>
     <div class="vstack" style="flex:1;gap:18px">
       <div class="card rv" style="--i:4;display:flex;align-items:center;gap:22px;flex:1"><div class="mono r" style="font-size:76px;font-weight:600;white-space:nowrap">48 h</div><p>máximo para comunicar a la <b>ANPD</b> (art. 34 del reglamento), cuando corresponde.</p></div>
@@ -680,7 +680,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <li><svg class="i bp"><use href="#i-arrow"/></svg><span>WebAuthn y llaves en hardware</span></li>
         <li><svg class="i bp"><use href="#i-arrow"/></svg><span><i>Double ratchet</i> (Cohn-Gordon, 2016)</span></li>
         <li><svg class="i bp"><use href="#i-arrow"/></svg><span>Transparencia de llaves (CONIKS)</span></li>
-        <li><svg class="i bp"><use href="#i-arrow"/></svg><span>Poscuántica híbrida · MLS</span></li></ul></div>
+        <li><svg class="i bp"><use href="#i-arrow"/></svg><span>Poscuántica híbrida · MLS</span></li>
+        <li><svg class="i bp"><use href="#i-arrow"/></svg><span>Un canal privado por contacto</span></li></ul></div>
       <div class="card gr rv" style="--i:2"><div class="colh g"><svg class="i" style="width:26px;height:26px"><use href="#i-check"/></svg>Aprendimos</div><ul class="list">
         <li><svg class="i g"><use href="#i-check"/></svg><span>Revisar el protocolo completo, no solo los algoritmos</span></li>
         <li><svg class="i g"><use href="#i-check"/></svg><span>Hacer la DPIA al inicio simplifica todo</span></li>
