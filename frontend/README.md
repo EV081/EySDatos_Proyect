@@ -10,11 +10,11 @@ Sigue la [guía de ejecución local](../docs/guia/ejecucion-local.md): incluye l
 
 ```bash
 npm run typecheck      # TypeScript
-npm test               # 39 pruebas unitarias (lib/): formato, huella y QR, estados, errores, cliente HTTP
+npm test               # 40 pruebas unitarias (lib/): formato, huella y QR, estados, errores, cliente HTTP
 npm run build && npm run e2e   # 19 comprobaciones en Chromium real contra client.dev
 ```
 
-La prueba `e2e` levanta el backend, sirve el sitio y maneja dos pestañas por el protocolo de depuración de Chromium (sin dependencias): crea las identidades, intercambia mensajes con handshake automático, verifica la huella, comprueba que un mensaje con HTML se muestra como texto y que el bloqueo exige la contraseña. Deja capturas en `$SHOTS_DIR` (por defecto la carpeta temporal).
+La prueba `e2e` levanta el backend, sirve el sitio y maneja dos pestañas por el protocolo de depuración de Chromium (sin dependencias): crea las identidades, comprueba que sin verificar la huella no se puede escribir, verifica la huella en ambos extremos, intercambia mensajes con handshake automático, comprueba que un mensaje con HTML se muestra como texto y que el bloqueo exige la contraseña. Deja capturas en `$SHOTS_DIR` (por defecto la carpeta temporal).
 
 ## Qué cubre
 
@@ -23,7 +23,7 @@ La prueba `e2e` levanta el backend, sirve el sitio y maneja dos pestañas por el
 | Registro, importación y desbloqueo de la identidad; exportación cifrada | RF1, RF12 |
 | Código de Microsoft Authenticator en cada desbloqueo con el directorio real; vencimiento de sesión | `CLIENT_SESSION_TTL`, `client/tests/test_session_mfa.py`, `directory/tests/test_session_mfa.py` |
 | Candado y estado de sesión por conversación ("estableciendo sesión…", en cola) | RF9, RF14 |
-| Insignia de verificado y ceremonia con la huella: código QR o 60 dígitos dictados en 12 casillas | RF6, RF7, RF9 |
+| Insignia de verificado y ceremonia con la huella: código QR o 60 dígitos dictados en 12 casillas; sin verificar, el chat queda bloqueado | RF6, RF7, RF9 |
 | Alerta de cambio de llave y re-verificación (sin botón "continuar") | RF8 |
 | Marcador "mensaje no descifrable" | RF11 |
 | "Mis datos y derechos ARCO": acceso (descarga en JSON), rectificación (cambio de contraseña maestra o de llave), cancelación/oposición y borrado de los datos del dispositivo | Ley 29733 (ARCO) |

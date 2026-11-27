@@ -109,7 +109,7 @@ Desplegamos y probamos el MFA del registro y del desbloqueo con Microsoft Authen
 - **Guarda los códigos de recuperación del autenticador fuera del dispositivo.** Se usan después de iniciar sesión con Discord para vincular otro autenticador; no recuperan la contraseña maestra. Si pierdes el autenticador y los códigos, no hay restablecimiento automático.
 - **Antes de cancelar el registro, exporta lo que necesites.** La cancelación elimina el factor del servidor. Si conservas los archivos locales, su próximo desbloqueo habitual ya no podrá validarse.
 - **Los metadatos son visibles** para Discord y para las personas del canal.
-- **Verifica a tus contactos.** Hasta que compares la huella con la otra persona fuera de Discord, no puedes estar seguro de que hablas con quien crees.
+- **Verifica a tus contactos.** Para conversar con alguien, los dos deben comparar antes la huella fuera de Discord: hasta entonces la aplicación no envía ni recibe mensajes de esa persona. Es lo que te asegura que hablas con quien crees.
 - **Si el dispositivo está comprometido,** por ejemplo con un programa malicioso, la aplicación no puede protegerte.
 
 ## Cambios en este aviso

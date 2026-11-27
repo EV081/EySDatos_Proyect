@@ -22,7 +22,7 @@ from crypto.wire import Hs1, Hs2, Hs3, Msg
 
 from .errors import (
     BadPassword, Conflict, DirectoryUnavailable, KeyChanged, Locked, LoginRequired, NotFound, PeerUnavailable,
-    TooManyAttempts,
+    TooManyAttempts, VerificationRequired,
     MfaRequired, MfaRejected,
 )
 from .ports import DirectoryPort, DiscordPort
@@ -535,6 +535,8 @@ class Orchestrator:
         with self._lock:
             self._need_identity()
             contact = self._get_contact(discord_id)
+            if not contact.verified:
+                raise VerificationRequired("verifica la huella del contacto antes de conversar")
             if not text or not text.strip():
                 raise Conflict("el mensaje está vacío")
             for part in _chunks(text):
@@ -550,9 +552,17 @@ class Orchestrator:
             contact = self._get_contact(discord_id)
             peer = self._peer(discord_id)
             peer.attempts, peer.next_attempt_at = 0, 0.0
+            try:
+                self._peer_key(contact)  # vuelve a comparar con el directorio, aunque falte verificar
+            except (KeyChanged, PeerUnavailable):
+                pass
             self._save()
             self._pump(discord_id)
             return self._contact_view(contact)
+
+    def _verified(self, discord_id: str) -> bool:
+        contact = self._contacts.get(discord_id)
+        return contact is not None and contact.verified
 
     def _peer(self, discord_id: str) -> _Peer:
         return self._peers.setdefault(discord_id, _Peer())
@@ -564,6 +574,9 @@ class Orchestrator:
         if session is not None and session.destroyed:
             peer.session = session = None
         queue = self._doc["outbox"].get(discord_id, [])
+        contact = self._contacts.get(discord_id)
+        if contact is None or not contact.verified:
+            return  # sin verificación no se envía ni se abre sesión: los mensajes siguen en cola
         if session is not None and not session.expired():
             by_id = {e["id"]: e for e in self._doc["history"].get(discord_id, [])}
             while queue:
@@ -593,6 +606,8 @@ class Orchestrator:
         if now < peer.next_attempt_at:
             return
         contact = self._get_contact(discord_id)
+        if not contact.verified:
+            return  # la verificación de la huella es obligatoria antes de cualquier handshake
         try:
             pk = self._peer_key(contact)
         except (KeyChanged, PeerUnavailable):
@@ -653,6 +668,9 @@ class Orchestrator:
         contact = self._contacts.get(hs1.sender) or Contact(hs1.sender)
         pk = self._peer_key(contact)
         self._contacts[hs1.sender] = contact
+        if not contact.verified:
+            self._save()
+            return  # queda como contacto por verificar; no se responde hasta comparar la huella
         peer = self._peer(hs1.sender)
         if peer.initiator is not None and int(self._my_id) < int(hs1.sender):
             return  # los dos iniciaron a la vez: gana el id menor
@@ -666,7 +684,7 @@ class Orchestrator:
 
     def _on_hs2(self, hs2: Hs2) -> None:
         peer = self._peers.get(hs2.sender)
-        if peer is None or peer.initiator is None:
+        if peer is None or peer.initiator is None or not self._verified(hs2.sender):
             return
         hs3, session = peer.initiator[0].finish(hs2)
         self._activate(hs2.sender, session)
@@ -676,7 +694,7 @@ class Orchestrator:
     def _on_hs3(self, hs3: Hs3) -> None:
         peer = self._peers.get(hs3.sender)
         entry = peer.responders.get(hs3.sid) if peer else None
-        if entry is None:
+        if entry is None or not self._verified(hs3.sender):
             return
         session = entry[0].finish(hs3)
         peer.responders.pop(hs3.sid, None)
@@ -696,7 +714,7 @@ class Orchestrator:
     def _on_msg(self, msg: Msg) -> None:
         key = f"{msg.sid.hex()}:{msg.ctr}"
         bad_key = "x:" + hashlib.sha256(msg.nonce + msg.ct + key.encode()).hexdigest()
-        if msg.sender not in self._contacts or key in self._seen_set or bad_key in self._seen_set:
+        if not self._verified(msg.sender) or key in self._seen_set or bad_key in self._seen_set:
             return  # ya procesado (p. ej. historial del canal reentregado)
         peer = self._peer(msg.sender)
         session = next((s for s in (peer.session, peer.previous[0] if peer.previous else None)

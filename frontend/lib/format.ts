@@ -12,6 +12,7 @@ const ERRORS: Record<string, string> = {
   not_found: 'No se encontró lo que buscas.',
   conflict: 'La operación no se pudo completar.',
   key_changed: 'La llave del contacto cambió: hay que verificar la nueva huella.',
+  verification_required: 'Verifica la huella de este contacto antes de conversar.',
   peer_key_unavailable: 'No se pudo obtener la llave del contacto (¿está registrado en el directorio?).',
   invalid: 'Revisa los datos ingresados.',
   login_required: 'Antes inicia sesión con Discord (python -m directory.client_lib.login) y vuelve a intentarlo dentro de 10 minutos.',

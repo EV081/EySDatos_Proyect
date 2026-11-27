@@ -49,7 +49,7 @@ export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify, on
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
     const body = text.trim();
-    if (!body) return;
+    if (!body || !conv.verified) return;
     setError(null);
     try {
       await api.send(conv.discord_id, body);
@@ -120,6 +120,13 @@ export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify, on
         </div>
       )}
 
+      {!conv.verified && view.notice?.kind !== 'key' && (
+        <div className="alert bad" role="alert" data-testid="verify-required">
+          Verifica la huella de {name} para conversar. Sin esa verificación no se envía ni se recibe ningún mensaje.
+          <button className="small" onClick={onVerify}>Verificar ahora</button>
+        </div>
+      )}
+
       {view.notice && (
         <div className={`alert${view.notice.kind === 'key' ? ' bad' : ''}`} role="alert">
           {view.notice.text}
@@ -174,13 +181,14 @@ export function ChatPanel({ api, conv, messages, loaded, onChanged, onVerify, on
         <textarea
           rows={1}
           maxLength={8000}
-          placeholder="Escribe un mensaje cifrado de extremo a extremo..."
+          placeholder={conv.verified ? 'Escribe un mensaje cifrado de extremo a extremo...' : 'Verifica la huella para poder escribir'}
+          disabled={!conv.verified}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
           required
         />
-        <button className="primary">Enviar</button>
+        <button className="primary" disabled={!conv.verified}>Enviar</button>
       </form>
     </div>
   );

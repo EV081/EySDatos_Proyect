@@ -41,7 +41,7 @@ Estas funciones no verifican TOTP ni abren sesiones locales: lo hacen el directo
 
 ## Handshake (RF4, RF13, RS12, RS13)
 
-El cliente primero obtiene la llave pública del otro extremo del directorio, la compara con su *pin* si el contacto está verificado y **recién entonces** crea el objeto.
+El cliente primero obtiene la llave pública del otro extremo del directorio, comprueba que el contacto esté verificado, la compara con su *pin* y **recién entonces** crea el objeto.
 
 ```python
 # Iniciador (Alice)

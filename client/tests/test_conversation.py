@@ -1,6 +1,6 @@
 import pytest
 
-from client.errors import Conflict, NotFound, PeerUnavailable
+from client.errors import Conflict, NotFound, PeerUnavailable, VerificationRequired
 from client.orchestrator import MAX_ATTEMPTS
 from conftest import ALICE, BOB, CAROL, PASSWORD
 from crypto.constants import HANDSHAKE_TTL, MAX_PLAINTEXT, ROTATE_AFTER_MESSAGES
@@ -166,21 +166,52 @@ def test_se_ignora_lo_que_no_es_del_protocolo_ni_va_dirigido_al_usuario(pair):
         bob.on_discord_message(basura)
     carol = world.user(CAROL)
     carol.add_contact(ALICE)
+    carol._contacts[ALICE].verified = True
     carol.send_text(ALICE, "para alice, no para bob")
     world.flush()
     assert bob.history(ALICE) == []
     assert CAROL not in [c["discord_id"] for c in bob.contacts()]
 
 
-def test_un_desconocido_registrado_en_el_directorio_queda_como_contacto_sin_verificar(pair):
+def test_C26_un_desconocido_registrado_en_el_directorio_queda_sin_verificar_y_sin_sesion(pair):
     world, alice, bob = pair
     carol = world.user(CAROL)
     carol.add_contact(ALICE)
+    carol._contacts[ALICE].verified = True  # Carol ya comparó la huella; Alice todavía no
     carol.send_text(ALICE, "hola, soy Carol")
     world.flush()
     nuevo = {c["discord_id"]: c for c in alice.contacts()}[CAROL]
-    assert nuevo["verified"] is False and nuevo["session"] == "active"
-    assert textos(alice, CAROL) == [("in", "hola, soy Carol", "received")]
+    assert nuevo["verified"] is False and nuevo["session"] == "none"
+    assert alice.history(CAROL) == []  # nada se recibe hasta que Alice verifique la huella
+    alice.verify_contact(CAROL, carol.fingerprint(ALICE)["fingerprint"])
+    alice.send_text(CAROL, "hola Carol")
+    world.flush()
+    assert ("out", "hola Carol", "sent") in textos(alice, CAROL)
+    assert ("in", "hola Carol", "received") in textos(carol, ALICE)
+
+
+def test_C26_sin_verificar_la_huella_no_se_envia_ni_se_abre_sesion(pair_sin_verificar):
+    world, alice, bob = pair_sin_verificar
+    with pytest.raises(VerificationRequired):
+        alice.send_text(BOB, "hola")
+    assert alice.contact(BOB)["queued"] == 0 and world.channel.log == []
+    assert alice.contact(BOB)["session"] == "none"
+
+
+def test_C26_la_verificacion_es_necesaria_en_los_dos_extremos(pair_sin_verificar):
+    world, alice, bob = pair_sin_verificar
+    alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])  # Bob todavía no verificó a Alice
+    alice.send_text(BOB, "hola")
+    world.flush()
+    assert alice.contact(BOB)["session"] != "active" and bob.history(ALICE) == []
+    bob.verify_contact(ALICE, alice.fingerprint(BOB)["fingerprint"])
+    world.clock.advance(HANDSHAKE_TTL + 1)  # el intento sin respuesta caduca y se reintenta
+    alice.tick()
+    world.clock.advance(15 * 60 + 1)
+    alice.tick()
+    world.flush()
+    assert alice.contact(BOB)["session"] == bob.contact(ALICE)["session"] == "active"
+    assert textos(bob, ALICE) == [("in", "hola", "received")]
 
 
 def test_ids_no_registrados_en_el_directorio_no_crean_contactos(pair):

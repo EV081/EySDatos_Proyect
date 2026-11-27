@@ -70,6 +70,8 @@ def test_sesion_caduca_y_destruye_las_llaves_de_conversacion(secured):
     bob = world.user(BOB)
     alice.add_contact(BOB)
     bob.add_contact(ALICE)
+    alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])
+    bob.verify_contact(ALICE, alice.fingerprint(BOB)["fingerprint"])
     alice.send_text(BOB, "mensaje privado")
     world.flush()
     session = alice._peers[BOB].session

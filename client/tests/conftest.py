@@ -65,9 +65,18 @@ def world(tmp_path, clock):
 
 
 @pytest.fixture
-def pair(world):
-    """Alice y Bob con identidad creada y agregados como contactos."""
+def pair_sin_verificar(world):
+    """Alice y Bob con identidad creada y agregados como contactos, pero sin comparar la huella."""
     alice, bob = world.user(ALICE), world.user(BOB)
     alice.add_contact(BOB, "Bob")
     bob.add_contact(ALICE, "Alice")
+    return world, alice, bob
+
+
+@pytest.fixture
+def pair(pair_sin_verificar):
+    """Alice y Bob con la huella verificada en ambos lados: sin esto no hay conversación."""
+    world, alice, bob = pair_sin_verificar
+    alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])
+    bob.verify_contact(ALICE, alice.fingerprint(BOB)["fingerprint"])
     return world, alice, bob

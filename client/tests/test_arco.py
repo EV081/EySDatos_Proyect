@@ -20,7 +20,7 @@ def test_acceso_muestra_datos_locales_y_del_directorio(pair):
     local = data["local"]
     assert local["discord_id"] == ALICE and local["public_key"] == b64e(world.directory.keys[ALICE])
     assert local["consent"]["version"] == NOTICE_VERSION
-    assert local["contacts"] == [{"discord_id": BOB, "alias": "Bob", "verified": False}]
+    assert local["contacts"] == [{"discord_id": BOB, "alias": "Bob", "verified": True}]
     assert local["messages"] >= 1
     assert data["directory"]["consent_version"] == NOTICE_VERSION and data["directory_error"] is None
 

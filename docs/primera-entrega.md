@@ -50,11 +50,11 @@ En la siguiente tabla aplicamos esa distinción a nuestro proyecto.
 
 * **RF6:** El sistema debe generar y mostrar una huella digital criptográfica derivada de las llaves públicas de ambos interlocutores.
 
-* **RF7:** El usuario podrá marcar un contacto como _verificado_ tras completar el proceso de autentiación fuera del canal.
+* **RF7:** El usuario debe verificar a cada contacto completando el proceso de autenticación fuera del canal. Sin un contacto _verificado_ no se abre ninguna sesión, no se envía ni se recibe ningún mensaje y la interfaz no permite escribirle.
 
 * **RF8:** El sistema debe notificar al usuario cuando detecte, al consultar el directorio para iniciar o aceptar un *handshake* o al verificar, que la llave pública registrada de un contacto ya _verificado_ cambió, y revocar automáticamente su estado de verificación. Una sesión ya activa sigue funcionando hasta su próxima rotación.
 
-* **RF9:** El sistema debe indicar visualmente, por cada conversación, si el canal esta cifrado y si la contraparte está verificada.
+* **RF9:** El sistema debe indicar visualmente, por cada conversación, si el canal esta cifrado y si la contraparte está verificada; mientras no lo esté, la conversación permanece bloqueada.
 
 * **RF10:** El sistema debe autenticarse frente a Discord mediante OAuth2 o token de bot, sin exponer esas credenciales en la interfaz.
 
@@ -173,7 +173,7 @@ Antes de chatear, A y B intercambian tres mensajes por Discord para acordar las 
 
 | Paso | Qué pasa |
 |---|---|
-| **hs1** (A->B) | A genera su llave efímera y `R_A` y envía `ids, sid, R_A, epk_A`. Antes, ambos consultan la llave del otro en el directorio y la comparan con el *pin* si el contacto está verificado. |
+| **hs1** (A->B) | A genera su llave efímera y `R_A` y envía `ids, sid, R_A, epk_A`. Antes, ambos comprueban que el contacto está verificado y consultan la llave del otro en el directorio para compararla con el *pin*. Si falta la verificación, no se envía ni se responde ningún *handshake*. |
 | **hs2** (B->A) | B genera su llave efímera, calcula el secreto compartido, deriva las claves y **destruye su llave efímera**. Responde con su firma `σ_B` sobre `T` y una confirmación de clave `tag_B`. |
 | **hs3** (A->B) | A verifica `σ_B` y `tag_B` (si fallan, aborta), deriva las mismas claves, responde con `σ_A` y `tag_A` y **destruye su llave efímera**. |
 | **Activa** | B verifica `σ_A` y `tag_A`. Si todo valida, la sesión queda activa en ambos lados (RF13). |
@@ -208,7 +208,7 @@ La sesión de conversación se renueva con un nuevo *handshake* a los 100 mensaj
 
 #### 4.2.6 Comparación de huellas
 
-Las firmas no impiden que un directorio malicioso entregue una llave propia, así que añadimos la verificación (RS7). Ambos calculan `SHA-256(pk_A ‖ pk_B)` con las llaves ordenadas (RS8) y la muestran como 60 dígitos en grupos de cinco. La comparan **fuera de Discord**. Si coinciden, el cliente guarda "verificado" y una copia de la llave pública para detectar cambios; a esto lo llamamos *pin* (RF7). Si después la llave cambia, se revoca la verificación, se aborta el *handshake* y se avisa (RF8). No hay botón de "continuar de todos modos".
+Las firmas no impiden que un directorio malicioso entregue una llave propia, así que añadimos la verificación (RS7). Ambos calculan `SHA-256(pk_A ‖ pk_B)` con las llaves ordenadas (RS8) y la muestran como 60 dígitos en grupos de cinco. La comparan **fuera de Discord**; ambos extremos deben hacerlo antes de conversar y, sin esta comparación, no hay sesión ni mensajes (RF7). Si coinciden, el cliente guarda "verificado" y una copia de la llave pública para detectar cambios; a esto lo llamamos *pin*. Si después la llave cambia, se revoca la verificación, se aborta el *handshake* y se avisa (RF8). No hay botón de "continuar de todos modos".
 
 <p align="center">
   <img src="img/verificacion.png" alt="Comparación de huellas por otro canal" width="800" style="max-width: 100%; height: auto;" />
@@ -220,7 +220,7 @@ Las firmas no impiden que un directorio malicioso entregue una llave propia, as�
 |---|---|
 | Espionaje pasivo (Discord, red) | AES-256-GCM; las claves salen de DH efímero que no viaja |
 | *Man-in-the-middle* en el *handshake* | Las firmas cubren ambas llaves efímeras y los ids (RS13) |
-| Sustitución de llaves en el directorio | TLS 1.3 con CA propia, verificación fuera de banda y *pin* (RS6, RS7, RF8). **Riesgo que queda:** un primer contacto sin verificar |
+| Sustitución de llaves en el directorio | TLS 1.3 con CA propia, verificación fuera de banda y *pin* (RS6, RS7, RF8). **Riesgo que queda:** que la comparación fuera de banda la haga mal la persona o que ese otro canal también esté comprometido |
 | *Replay* de *handshake* o mensajes | Nonces, `sid`, contador `ctr` y ventana (RS14); caducidad de intentos |
 | Reflexión | Roles asimétricos, ids firmados, claves por dirección (RS13, RS15) |
 | Oráculo de firma o descifrado | La identidad solo firma con prefijo de contexto (RS15); `sign_unlock` usa un contexto distinto al registro y al cambio de llave |
@@ -277,5 +277,5 @@ El sistema protege el contenido, no el patrón de comunicación. Además:
 * Solo hay conversaciones de dos personas; no hay grupos. Quien esté en el canal ve quién habla con quién y cuándo (metadatos).
 * El *handshake* es interactivo: ambos deben estar conectados. Mientras tanto los mensajes esperan en la cola cifrada. Los reintentos solo corren con la app abierta, porque la llave efímera pendiente nunca se guarda en disco (para no romper la PFS).
 * Por la PFS, Discord guarda mensajes que ya no se pueden descifrar; el historial vive descifrado en el almacén local cifrado.
-* Un primer contacto sin verificar depende del directorio (TOFU).
+* La verificación depende de que la persona compare bien la huella por un canal ajeno a Discord y al directorio.
 * No hay seguridad posterior al compromiso dentro de una sesión (*ratchet* por mensaje) ni no repudio.

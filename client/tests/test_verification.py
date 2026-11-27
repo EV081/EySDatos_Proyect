@@ -21,16 +21,16 @@ def test_RF6_ambos_extremos_ven_la_misma_huella(pair):
     assert len(huella.split()) == 12
 
 
-def test_RF7_se_verifica_con_la_huella_leida_fuera_de_discord(pair):
-    _, alice, bob = pair
+def test_RF7_se_verifica_con_la_huella_leida_fuera_de_discord(pair_sin_verificar):
+    _, alice, bob = pair_sin_verificar
     assert alice.contact(BOB)["verified"] is False
     assert alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])["verified"] is True
     # también vale sin espacios (p. ej. lo escaneado de un QR)
     assert bob.verify_contact(ALICE, alice.fingerprint(BOB)["fingerprint"].replace(" ", ""))["verified"]
 
 
-def test_RF7_una_huella_incorrecta_no_verifica(pair):
-    _, alice, bob = pair
+def test_RF7_una_huella_incorrecta_no_verifica(pair_sin_verificar):
+    _, alice, bob = pair_sin_verificar
     huella = bob.fingerprint(ALICE)["fingerprint"]
     mala = huella[:-1] + str((int(huella[-1]) + 1) % 10)
     with pytest.raises(Conflict):
@@ -94,8 +94,8 @@ def test_la_llave_cambia_otra_vez_mientras_se_verifica(pair):
         alice.verify_contact(BOB, huella)
 
 
-def test_un_contacto_sin_verificar_que_cambia_de_llave_solo_se_marca(pair):
-    world, alice, bob = pair
+def test_un_contacto_sin_verificar_que_cambia_de_llave_solo_se_marca(pair_sin_verificar):
+    world, alice, bob = pair_sin_verificar
     nueva = Identity.create()
     world.directory.keys[BOB] = nueva.public_key
     alice._peer_key(alice._contacts[BOB])
@@ -112,6 +112,11 @@ def test_si_el_directorio_vuelve_a_la_llave_anclada_se_desbloquea(pair):
     alice.send_text(BOB, "hola")
     assert alice.contact(BOB)["session"] == "key_changed"
     world.directory.keys[BOB] = original
+    alice.retry(BOB)
+    world.flush()
+    # la verificación revocada no se recupera sola: hay que repetir la comparación de la huella
+    assert alice.contact(BOB)["verified"] is False and alice.contact(BOB)["session"] == "none"
+    alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])
     alice.retry(BOB)
     world.flush()
     assert alice.contact(BOB)["session"] == "active"

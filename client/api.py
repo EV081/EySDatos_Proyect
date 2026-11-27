@@ -194,6 +194,8 @@ def create_app(orchestrator: Orchestrator, token: str, allowed_origins: list[str
 
     @app.post("/conversations/{discord_id}/messages", status_code=202, dependencies=[api])
     def send(body: SendMessage, discord_id: str = PeerId):
+        """Encola y envía un mensaje. Exige que el contacto esté verificado: si no lo está responde 409 con el
+        código `verification_required`."""
         return orchestrator.send_text(discord_id, body.text)
 
     @app.post("/conversations/{discord_id}/retry", status_code=202, dependencies=[api])

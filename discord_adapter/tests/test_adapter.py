@@ -201,6 +201,8 @@ def test_RF3_RF5_dos_clientes_reales_conversan_por_el_adaptador(guild, tmp_path)
         orch[uid].create_identity(uid, "contraseña-maestra-123", NOTICE_VERSION)
     orch[ALICE].add_contact(BOB, "Bob")
     orch[BOB].add_contact(ALICE, "Alice")
+    orch[ALICE].verify_contact(BOB, orch[BOB].fingerprint(ALICE)["fingerprint"])  # sin verificar no hay chat
+    orch[BOB].verify_contact(ALICE, orch[ALICE].fingerprint(BOB)["fingerprint"])
     orch[ALICE].send_text(BOB, "hola bob, esto va cifrado")
     assert wait_for(lambda: [e.get("text") for e in orch[BOB].history(ALICE)] == ["hola bob, esto va cifrado"])
     orch[BOB].send_text(ALICE, "recibido")

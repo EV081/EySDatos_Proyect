@@ -50,6 +50,8 @@ def test_unlock_sin_identidad(world):
 def test_RS1_RS2_nada_secreto_en_claro_en_disco(world):
     alice, bob = world.user(ALICE), world.user(BOB)
     alice.add_contact(BOB)
+    bob.add_contact(ALICE)
+    alice.verify_contact(BOB, bob.fingerprint(ALICE)["fingerprint"])
     alice.send_text(BOB, "texto-secreto-que-no-debe-estar-en-disco")
     contenido = b"".join(p.read_bytes() for p in (world.tmp / ALICE).iterdir())
     assert b"texto-secreto" not in contenido

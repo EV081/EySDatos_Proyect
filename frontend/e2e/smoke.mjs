@@ -99,29 +99,9 @@ try {
   }
   check('cada uno ve al otro en su lista', await alice.has(BOB) && await bob.has(ALICE));
 
-  console.log('Mensajes');
   await alice.clickText(BOB, 'li.contact');
   await bob.clickText(ALICE, 'li.contact');
-  await alice.type('textarea', 'Hola Bob, este mensaje viaja cifrado');
-  await alice.key('Enter');
-  await bob.waitText('Hola Bob, este mensaje viaja cifrado', 15000);
-  check('Bob ve descifrado el mensaje de Alice (handshake automático)', true);
-  await alice.waitText('Cifrado AES-256-GCM', 10000);
-  check('Alice ve su mensaje como enviado y cifrado', true);
-  check('el candado de sesión activa aparece en ambos', await alice.has('Cifrado E2EE') && await bob.has('Cifrado E2EE'));
-  await bob.type('textarea', 'Recibido, Alice');
-  await bob.key('Enter');
-  await alice.waitText('Recibido, Alice', 10000);
-  check('la respuesta de Bob llega a Alice', true);
-
-  console.log('Seguridad de la interfaz');
-  const payload = '<img src=x onerror="window.__pwned=1"> <b>negrita</b>';
-  await alice.type('textarea', payload);
-  await alice.key('Enter');
-  await bob.waitText('negrita', 10000);
-  await sleep(300);
-  check('un mensaje con HTML se muestra como texto literal', await bob.has(payload));
-  check('no se creó ningún elemento ni se ejecutó código', await bob.eval(`!document.querySelector('.messages img, .messages b') && window.__pwned === undefined`));
+  check('sin verificar la huella no se puede escribir', await alice.eval(`document.querySelector('textarea').disabled`) && await alice.has('Verifica la huella'));
 
   console.log('Verificación fuera de banda');
   // La huella se dicta desde la pestaña «Dictar» y se escribe en las 12 casillas de «Escuchar».
@@ -155,6 +135,33 @@ try {
   await alice.waitText('Verificado');
   check('con la huella correcta el contacto queda verificado', true);
   await alice.shot('alice-verificado');
+  await typeFp(bob, fpAlice);
+  await bob.clickText('Confirmar', 'dialog button');
+  await bob.waitText('Verificado');
+  check('Bob también verifica a Alice: la verificación es obligatoria en los dos extremos', true);
+  await sleep(1200); // el diálogo se cierra solo tras confirmar
+
+  console.log('Mensajes');
+  await alice.type('textarea', 'Hola Bob, este mensaje viaja cifrado');
+  await alice.key('Enter');
+  await bob.waitText('Hola Bob, este mensaje viaja cifrado', 15000);
+  check('Bob ve descifrado el mensaje de Alice (handshake automático)', true);
+  await alice.waitText('Cifrado AES-256-GCM', 10000);
+  check('Alice ve su mensaje como enviado y cifrado', true);
+  check('el candado de sesión activa aparece en ambos', await alice.has('Cifrado E2EE') && await bob.has('Cifrado E2EE'));
+  await bob.type('textarea', 'Recibido, Alice');
+  await bob.key('Enter');
+  await alice.waitText('Recibido, Alice', 10000);
+  check('la respuesta de Bob llega a Alice', true);
+
+  console.log('Seguridad de la interfaz');
+  const payload = '<img src=x onerror="window.__pwned=1"> <b>negrita</b>';
+  await alice.type('textarea', payload);
+  await alice.key('Enter');
+  await bob.waitText('negrita', 10000);
+  await sleep(300);
+  check('un mensaje con HTML se muestra como texto literal', await bob.has(payload));
+  check('no se creó ningún elemento ni se ejecutó código', await bob.eval(`!document.querySelector('.messages img, .messages b') && window.__pwned === undefined`));
 
   console.log('Bloqueo');
   await alice.clickText('Gestión de identidad', 'button.identity');

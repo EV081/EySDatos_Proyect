@@ -130,7 +130,8 @@ La dirección del cliente siempre apunta a tu computadora; la dirección de EC2 
 2. Elige una contraseña maestra, repítela y acepta el aviso de privacidad. La aplicación exige declarar mayoría de edad.
 3. Crea la identidad. El cliente genera la llave y la publica utilizando el token del paso 4. Si ya tienes una exportación, elige importar en lugar de crear otra identidad.
 4. Agrega el ID personal de la otra persona. Ella debe usar su propio cliente, su bot y el mismo canal privado.
-5. Ambos deben tener abierta la aplicación para completar el handshake. Compara la huella fuera de Discord, mediante QR o lectura de los dígitos, y verifica al contacto.
+5. Cada uno debe verificar al otro antes de conversar: compara la huella fuera de Discord, mediante QR o lectura de los dígitos, y confírmala en la aplicación. Hasta entonces el contacto aparece bloqueado y no se puede escribir ni se recibe nada de esa persona.
+6. Con los dos verificados y la aplicación abierta en ambos extremos, el primer mensaje completa el handshake.
 
 En la app verás el texto descifrado; en Discord aparecerán los mensajes del protocolo y el texto cifrado.
 

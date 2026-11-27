@@ -77,3 +77,7 @@ test('los errores se muestran en español y sin detalles internos', () => {
 test('formatTime usa dos dígitos', () => {
   assert.match(formatTime(1_800_000_000), /^\d\d:\d\d$/);
 });
+
+test('C-26: enviar sin verificar la huella se explica con un mensaje propio', () => {
+  assert.match(errorMessage({ code: 'verification_required' }), /Verifica la huella/);
+});

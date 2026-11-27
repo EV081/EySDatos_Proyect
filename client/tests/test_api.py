@@ -66,19 +66,24 @@ def test_flujo_completo_por_http_entre_dos_usuarios(apis):
     for uid in (ALICE, BOB):
         assert c[uid].post("/contacts", headers=AUTH, json={"discord_id": other[uid], "alias": "x"}).status_code == 201
 
+    # sin verificar la huella no hay conversación
+    sin = c[ALICE].post(f"/conversations/{BOB}/messages", headers=AUTH, json={"text": "hola por http"})
+    assert sin.status_code == 409 and sin.json()["error"] == "verification_required"
+
+    huella = c[ALICE].get(f"/contacts/{BOB}/fingerprint", headers=AUTH).json()["fingerprint"]
+    assert c[BOB].get(f"/contacts/{ALICE}/fingerprint", headers=AUTH).json()["fingerprint"] == huella
+    mala = c[ALICE].post(f"/contacts/{BOB}/verify", headers=AUTH, json={"fingerprint": "00000"})
+    assert mala.status_code == 409
+    for uid in (ALICE, BOB):
+        ok = c[uid].post(f"/contacts/{other[uid]}/verify", headers=AUTH, json={"fingerprint": huella})
+        assert ok.status_code == 200 and ok.json()["verified"] is True
+
     r = c[ALICE].post(f"/conversations/{BOB}/messages", headers=AUTH, json={"text": "hola por http"})
     assert r.status_code == 202
     world.flush()
     mensajes = c[BOB].get(f"/conversations/{ALICE}/messages", headers=AUTH).json()
     assert [m["text"] for m in mensajes] == ["hola por http"] and mensajes[0]["status"] == "received"
     assert c[BOB].get(f"/conversations/{ALICE}/messages?since={mensajes[0]['seq']}", headers=AUTH).json() == []
-
-    huella = c[ALICE].get(f"/contacts/{BOB}/fingerprint", headers=AUTH).json()["fingerprint"]
-    assert c[BOB].get(f"/contacts/{ALICE}/fingerprint", headers=AUTH).json()["fingerprint"] == huella
-    mala = c[ALICE].post(f"/contacts/{BOB}/verify", headers=AUTH, json={"fingerprint": "00000"})
-    assert mala.status_code == 409
-    ok = c[ALICE].post(f"/contacts/{BOB}/verify", headers=AUTH, json={"fingerprint": huella})
-    assert ok.status_code == 200 and ok.json()["verified"] is True
     assert c[ALICE].get("/conversations", headers=AUTH).json()[0]["session"] == "active"
 
 

@@ -87,8 +87,8 @@ digraph G {{
   alice [label=<<b>Alice</b><br/>huella = SHA-256(pk_A ‖ pk_B)<br/>60 dígitos en grupos de 5>, color="{AZUL}", fillcolor="{AZUL_F}"];
   bob   [label=<<b>Bob</b><br/>huella = SHA-256(pk_A ‖ pk_B)<br/>mismo orden, mismo resultado>, color="{VERDE}", fillcolor="{VERDE_F}"];
   cmp [label="Comparar fuera de Discord\\n¿Las dos huellas coinciden?", shape=diamond, style="filled", color="{NARANJA}", fillcolor="{NARANJA_F}"];
-  ok  [label=<<b>Sí: verificado</b><br/>se guarda un pin de la llave pública>, color="{VERDE}", fillcolor="{VERDE_F}"];
-  no  [label=<<b>No: no verificar</b><br/>posible sustitución de llaves>, color="{ROJO}", fillcolor="{ROJO_F}"];
+  ok  [label=<<b>Sí: verificado</b><br/>se guarda un pin de la llave pública<br/>solo ahora se puede conversar>, color="{VERDE}", fillcolor="{VERDE_F}"];
+  no  [label=<<b>No: sin verificar</b><br/>no hay conversación<br/>posible sustitución de llaves>, color="{ROJO}", fillcolor="{ROJO_F}"];
   cambio [label=<<b>Si después la llave cambia</b><br/>se revoca la verificación, se aborta<br/>el handshake y se avisa a la persona>, color="{ROJO}", fillcolor="white", style="rounded,filled,dashed"];
   {{ rank=same; alice; bob; }}
   alice -> cmp [label="llamada o en persona"]; bob -> cmp [label="o código QR"];

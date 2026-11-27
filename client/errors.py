@@ -34,6 +34,12 @@ class KeyChanged(Conflict):
     code = "key_changed"
 
 
+class VerificationRequired(Conflict):
+    """Sin verificar la huella del contacto no hay conversación: ni se envía ni se recibe."""
+
+    code = "verification_required"
+
+
 class PeerUnavailable(ClientError):
     """No se pudo obtener la llave del contacto (directorio caído o contacto sin registrar)."""
 

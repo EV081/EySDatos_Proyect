@@ -45,7 +45,7 @@ def test_lo_que_llega_por_la_sesion_vieja_se_descarta(pair):
     assert alice.contacts() == []
 
 
-def test_si_el_contacto_quitado_abre_otra_sesion_reaparece_sin_verificar(pair, world):
+def test_si_el_contacto_quitado_escribe_reaparece_sin_verificar_y_sin_sesion(pair, world):
     _, alice, bob = pair
     alice.send_text(BOB, "hola")
     world.flush()
@@ -56,7 +56,8 @@ def test_si_el_contacto_quitado_abre_otra_sesion_reaparece_sin_verificar(pair, w
     world.flush()
     contacto = alice.contact(BOB)
     assert contacto["verified"] is False and contacto["alias"] is None
-    assert [e["text"] for e in alice.history(BOB)] == ["sigo aquí"]
+    assert contacto["session"] == "none"  # sin verificar no se responde ni se recibe nada
+    assert alice.history(BOB) == []
 
 
 def test_quitar_contacto_por_http(world):
